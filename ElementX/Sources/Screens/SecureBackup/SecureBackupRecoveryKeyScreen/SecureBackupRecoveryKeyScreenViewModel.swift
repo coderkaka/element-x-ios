@@ -41,7 +41,7 @@ class SecureBackupRecoveryKeyScreenViewModel: SecureBackupRecoveryKeyScreenViewM
             state.isGeneratingKey = true
             
             Task {
-                switch await secureBackupController.generateRecoveryKey() {
+                switch await secureBackupController.generateRecoveryKey(withPassphrase: nil) {
                 case .success(let key):
                     state.recoveryKey = key
                 case .failure(let error):

@@ -273,14 +273,14 @@ struct SecureBackupRecoveryKeyScreen_Previews: PreviewProvider, TestablePreview 
         .previewDisplayName("Unknown")
     }
     
-    static func viewModel(recoveryState: SecureBackupRecoveryState, generateKey: Bool = false, key: String? = nil) -> SecureBackupRecoveryKeyScreenViewModelType {
+    static func viewModel(recoveryState: SecureBackupRecoveryState, generateKey: Bool = false, key: String? = nil, viewState: SecureBackupRecoveryKeyScreenViewState? = nil) -> SecureBackupRecoveryKeyScreenViewModelType {
         let backupController = SecureBackupControllerMock()
         backupController.recoveryState = CurrentValueSubject<SecureBackupRecoveryState, Never>(recoveryState).asCurrentValuePublisher()
         
         if let key {
-            backupController.generateRecoveryKeyReturnValue = .success(key)
+            backupController.generateRecoveryKeyWithPassphraseReturnValue = .success(key)
         } else {
-            backupController.generateRecoveryKeyClosure = {
+            backupController.generateRecoveryKeyWithPassphraseClosure = { _ in
                 try? await Task.sleep(for: .seconds(1000))
                 return .success("youshouldntseeme")
             }
