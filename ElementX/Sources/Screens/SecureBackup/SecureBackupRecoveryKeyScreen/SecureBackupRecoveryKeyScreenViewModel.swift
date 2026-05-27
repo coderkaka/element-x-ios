@@ -22,12 +22,13 @@ class SecureBackupRecoveryKeyScreenViewModel: SecureBackupRecoveryKeyScreenViewM
     
     init(secureBackupController: SecureBackupControllerProtocol,
          userIndicatorController: UserIndicatorControllerProtocol,
+         mode: SecureBackupRecoveryKeyScreenViewMode,
          isModallyPresented: Bool) {
         self.secureBackupController = secureBackupController
         self.userIndicatorController = userIndicatorController
         
         super.init(initialViewState: .init(isModallyPresented: isModallyPresented,
-                                           mode: secureBackupController.recoveryState.value.viewMode,
+                                           mode: mode,
                                            bindings: .init()))
     }
     

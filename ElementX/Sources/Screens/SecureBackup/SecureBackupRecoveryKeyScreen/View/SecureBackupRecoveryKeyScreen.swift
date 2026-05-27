@@ -288,6 +288,7 @@ struct SecureBackupRecoveryKeyScreen_Previews: PreviewProvider, TestablePreview 
         
         let viewModel = SecureBackupRecoveryKeyScreenViewModel(secureBackupController: backupController,
                                                                userIndicatorController: UserIndicatorControllerMock(),
+                                                               mode: recoveryState.viewMode,
                                                                isModallyPresented: true)
         
         if generateKey {

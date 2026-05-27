@@ -117,7 +117,7 @@ class SecureBackupController: SecureBackupControllerProtocol {
             } else {
                 MXLog.info("Resetting recovery key")
             }
-                        
+            
             var keyUploadErrored = false
             let recoveryKey = try await encryption.enableRecovery(waitForBackupsToUpload: false, passphrase: passphrase, progressListener: SDKListener { [weak self] state in
                 guard let self else { return }

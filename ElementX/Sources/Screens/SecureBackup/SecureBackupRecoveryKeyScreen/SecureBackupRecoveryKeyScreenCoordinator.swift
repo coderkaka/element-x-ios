@@ -12,14 +12,18 @@ import SwiftUI
 struct SecureBackupRecoveryKeyScreenCoordinatorParameters {
     let secureBackupController: SecureBackupControllerProtocol
     let userIndicatorController: UserIndicatorControllerProtocol
+    let homeserver: String
     let isModallyPresented: Bool
+    var viewMode: SecureBackupRecoveryKeyScreenViewMode {
+        secureBackupController.recoveryState.value.viewMode
+    }
 }
 
 enum SecureBackupRecoveryKeyScreenCoordinatorAction {
     case complete
 }
 
-final class SecureBackupRecoveryKeyScreenCoordinator: CoordinatorProtocol {
+final class SecureBackupRecoveryKeyScreenCoordinator: SecureBackupRecoveryKeyCoordinatorProtocol {
     private let parameters: SecureBackupRecoveryKeyScreenCoordinatorParameters
     private var viewModel: SecureBackupRecoveryKeyScreenViewModelProtocol
     
@@ -34,6 +38,7 @@ final class SecureBackupRecoveryKeyScreenCoordinator: CoordinatorProtocol {
         self.parameters = parameters
         viewModel = SecureBackupRecoveryKeyScreenViewModel(secureBackupController: parameters.secureBackupController,
                                                            userIndicatorController: parameters.userIndicatorController,
+                                                           mode: parameters.viewMode,
                                                            isModallyPresented: parameters.isModallyPresented)
     }
     
