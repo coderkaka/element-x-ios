@@ -8,14 +8,14 @@
 "soft_logout_signin_title" = "Sign in";
 "untranslated" = "Untranslated";
 "pro_screen_recovery_key_mode_input_title" = "Enter a recovery key";
-"pro_screen_recovery_key_mode_input_subtitle" = "Choose a recovery key that you can memorize.";
+"pro_screen_recovery_key_mode_input_description" = "Choose a recovery key that you can memorize.";
 "pro_screen_recovery_key_mode_confirm_title" = "Confirm your recovery key";
-"pro_screen_recovery_key_mode_confirm_subtitle" = "Enter your recovery key again.";
-"pro_screen_recovery_key_passphrase_field_label" = "Recovery key";
+"pro_screen_recovery_key_mode_confirm_description" = "Enter your recovery key again.";
 "pro_screen_recovery_key_mode_input_passphrase_field_placeholder" = "Enter a recovery key";
 "pro_screen_recovery_key_mode_confirm_passphrase_field_placeholder" = "Re-enter your recovery key";
 "pro_screen_recovery_key_mode_input_passphrase_field_footer" = "Minimum %1$s characters";
 "pro_screen_recovery_key_mode_confirm_passphrase_field_footer" = "Hint: You can proceed once it matches";
+"pro_screen_recovery_key_mode_confirm_finish_button" = "Finish setup";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_base" = "Strength";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_garbage" = "Garbage";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_weak" = "Weak";
