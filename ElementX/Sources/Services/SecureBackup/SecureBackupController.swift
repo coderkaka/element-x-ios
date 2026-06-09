@@ -119,6 +119,8 @@ class SecureBackupController: SecureBackupControllerProtocol {
             }
             
             var keyUploadErrored = false
+            // Note: `enableRecovery` also handles the reset case (equivalent to `resetRecoveryKey`).
+            // Despite the name, it is the correct call for both initial setup and key rotation.
             let recoveryKey = try await encryption.enableRecovery(waitForBackupsToUpload: false, passphrase: passphrase, progressListener: SDKListener { [weak self] state in
                 guard let self else { return }
                 

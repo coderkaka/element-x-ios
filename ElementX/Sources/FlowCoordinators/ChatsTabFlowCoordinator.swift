@@ -670,10 +670,11 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
         let sheetNavigationStackCoordinator = NavigationStackCoordinator()
         let parameters = SecureBackupRecoveryKeyScreenCoordinatorParameters(secureBackupController: userSession.clientProxy.secureBackupController,
                                                                             userIndicatorController: flowParameters.userIndicatorController,
-                                                                            homeserver: userSession.clientProxy.homeserver,
                                                                             isModallyPresented: true)
         
-        let coordinator = flowParameters.appHooks.recoveryKeyScreenHook.makeCoordinator(parameters: parameters)
+        let coordinator = flowParameters.appHooks.recoveryKeyScreenHook.update(SecureBackupRecoveryKeyScreenCoordinator(parameters: parameters),
+                                                                               homeserver: userSession.clientProxy.homeserver,
+                                                                               viewMode: userSession.clientProxy.secureBackupController.recoveryState.value.viewMode)
         coordinator.actions.sink { [weak self] action in
             guard let self else { return }
             switch action {

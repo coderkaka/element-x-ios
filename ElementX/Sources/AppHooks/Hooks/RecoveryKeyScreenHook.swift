@@ -1,6 +1,5 @@
 //
-// Copyright 2025 Element Creations Ltd.
-// Copyright 2022-2025 New Vector Ltd.
+// Copyright 2026 Element Creations Ltd.
 //
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial.
 // Please see LICENSE files in the repository root for full details.
@@ -14,13 +13,11 @@ import SwiftUI
 }
 
 protocol RecoveryKeyScreenHookProtocol {
-    /// Returns a coordinator for the recovery key screen. The default implementation returns the standard FOSS coordinator.
-    /// Enterprise implementations may return a replacement coordinator when server-defined requirements are present.
-    @MainActor func makeCoordinator(parameters: SecureBackupRecoveryKeyScreenCoordinatorParameters) -> any SecureBackupRecoveryKeyCoordinatorProtocol
+    @MainActor func update(_ coordinator: any SecureBackupRecoveryKeyCoordinatorProtocol, homeserver: String, viewMode: SecureBackupRecoveryKeyScreenViewMode) -> any SecureBackupRecoveryKeyCoordinatorProtocol
 }
 
 struct DefaultRecoveryKeyScreenHook: RecoveryKeyScreenHookProtocol {
-    @MainActor func makeCoordinator(parameters: SecureBackupRecoveryKeyScreenCoordinatorParameters) -> any SecureBackupRecoveryKeyCoordinatorProtocol {
-        SecureBackupRecoveryKeyScreenCoordinator(parameters: parameters)
+    @MainActor func update(_ coordinator: any SecureBackupRecoveryKeyCoordinatorProtocol, homeserver: String, viewMode: SecureBackupRecoveryKeyScreenViewMode) -> any SecureBackupRecoveryKeyCoordinatorProtocol {
+        coordinator
     }
 }
