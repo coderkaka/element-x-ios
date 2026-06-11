@@ -13,7 +13,7 @@
 "pro_screen_recovery_key_mode_confirm_description" = "Enter your recovery key again.";
 "pro_screen_recovery_key_mode_input_passphrase_field_placeholder" = "Enter a recovery key";
 "pro_screen_recovery_key_mode_confirm_passphrase_field_placeholder" = "Re-enter your recovery key";
-"pro_screen_recovery_key_mode_input_passphrase_field_footer" = "Minimum %1$s characters";
+"pro_screen_recovery_key_mode_input_passphrase_field_footer" = "Minimum %1$s characters. Do not use your account password.";
 "pro_screen_recovery_key_mode_confirm_passphrase_field_footer" = "Hint: You can proceed once it matches";
 "pro_screen_recovery_key_mode_confirm_finish_button" = "Finish setup";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_base" = "Strength";

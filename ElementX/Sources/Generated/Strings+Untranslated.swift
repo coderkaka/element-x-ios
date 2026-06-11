@@ -22,7 +22,7 @@ internal enum UntranslatedL10n {
   internal static var proScreenRecoveryKeyModeConfirmTitle: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_confirm_title") }
   /// Choose a recovery key that you can memorize.
   internal static var proScreenRecoveryKeyModeInputDescription: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_description") }
-  /// Minimum %1$s characters
+  /// Minimum %1$s characters. Do not use your account password.
   internal static func proScreenRecoveryKeyModeInputPassphraseFieldFooter(_ p1: UnsafePointer<CChar>) -> String {
     return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_field_footer", p1)
   }
