@@ -161,12 +161,11 @@ class EncryptionSettingsFlowCoordinator: FlowCoordinatorProtocol {
     
     private func presentRecoveryKeyScreen() {
         let sheetNavigationStackCoordinator = NavigationStackCoordinator()
-        let defaultCoordinator = SecureBackupRecoveryKeyScreenCoordinator(parameters: .init(secureBackupController: userSession.clientProxy.secureBackupController,
-                                                                                            userIndicatorController: userIndicatorController,
-                                                                                            isModallyPresented: true))
-        let coordinator = appHooks.recoveryKeyScreenHook.update(defaultCoordinator,
-                                                                homeserver: userSession.clientProxy.homeserver,
-                                                                viewMode: userSession.clientProxy.secureBackupController.recoveryState.value.viewMode)
+        let parameters = SecureBackupRecoveryKeyScreenCoordinatorParameters(secureBackupController: userSession.clientProxy.secureBackupController,
+                                                                            userIndicatorController: userIndicatorController,
+                                                                            isModallyPresented: true)
+        let coordinator = appHooks.recoveryKeyScreenHook.makeCoordinator(parameters: parameters,
+                                                                         homeserver: userSession.clientProxy.homeserver)
         
         coordinator.actions.sink { [weak self] action in
             guard let self else { return }

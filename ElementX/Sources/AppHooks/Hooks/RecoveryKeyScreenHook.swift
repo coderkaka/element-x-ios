@@ -13,11 +13,11 @@ import SwiftUI
 }
 
 protocol RecoveryKeyScreenHookProtocol {
-    @MainActor func update(_ coordinator: any SecureBackupRecoveryKeyCoordinatorProtocol, homeserver: String, viewMode: SecureBackupRecoveryKeyScreenViewMode) -> any SecureBackupRecoveryKeyCoordinatorProtocol
+    @MainActor func makeCoordinator(parameters: SecureBackupRecoveryKeyScreenCoordinatorParameters, homeserver: String) -> any SecureBackupRecoveryKeyCoordinatorProtocol
 }
 
 struct DefaultRecoveryKeyScreenHook: RecoveryKeyScreenHookProtocol {
-    @MainActor func update(_ coordinator: any SecureBackupRecoveryKeyCoordinatorProtocol, homeserver: String, viewMode: SecureBackupRecoveryKeyScreenViewMode) -> any SecureBackupRecoveryKeyCoordinatorProtocol {
-        coordinator
+    @MainActor func makeCoordinator(parameters: SecureBackupRecoveryKeyScreenCoordinatorParameters, homeserver: String) -> any SecureBackupRecoveryKeyCoordinatorProtocol {
+        SecureBackupRecoveryKeyScreenCoordinator(parameters: parameters)
     }
 }

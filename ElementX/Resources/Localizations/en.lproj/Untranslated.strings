@@ -17,7 +17,7 @@
 "pro_screen_recovery_key_mode_confirm_passphrase_field_footer" = "Hint: You can proceed once it matches";
 "pro_screen_recovery_key_mode_confirm_finish_button" = "Finish setup";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_base" = "Strength";
-"pro_screen_recovery_key_mode_input_passphrase_strength_label_garbage" = "Garbage";
+"pro_screen_recovery_key_mode_input_passphrase_strength_label_garbage" = "Very weak";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_weak" = "Weak";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_moderate" = "Moderate";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_okay" = "Okay";

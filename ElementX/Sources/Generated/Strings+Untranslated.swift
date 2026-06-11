@@ -30,7 +30,7 @@ internal enum UntranslatedL10n {
   internal static var proScreenRecoveryKeyModeInputPassphraseFieldPlaceholder: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_field_placeholder") }
   /// Strength
   internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelBase: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_base") }
-  /// Garbage
+  /// Very weak
   internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelGarbage: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_garbage") }
   /// Cracking would take roughly milliseconds.
   internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelHintGarbage: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_garbage") }

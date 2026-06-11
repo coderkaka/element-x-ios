@@ -302,9 +302,8 @@ class OnboardingFlowCoordinator: FlowCoordinatorProtocol {
                                                                             userIndicatorController: userIndicatorController,
                                                                             isModallyPresented: false)
         
-        let coordinator = appHooks.recoveryKeyScreenHook.update(SecureBackupRecoveryKeyScreenCoordinator(parameters: parameters),
-                                                                homeserver: userSession.clientProxy.homeserver,
-                                                                viewMode: userSession.clientProxy.secureBackupController.recoveryState.value.viewMode)
+        let coordinator = appHooks.recoveryKeyScreenHook.makeCoordinator(parameters: parameters,
+                                                                         homeserver: userSession.clientProxy.homeserver)
         
         coordinator.actions
             .sink { action in
