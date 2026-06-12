@@ -19,17 +19,6 @@
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_base" = "Strength";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_garbage" = "Very weak";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_weak" = "Weak";
-"pro_screen_recovery_key_mode_input_passphrase_strength_label_moderate" = "Moderate";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_okay" = "Okay";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_strong" = "Strong";
 "pro_screen_recovery_key_mode_input_passphrase_strength_label_very_strong" = "Very Strong";
-"pro_screen_recovery_key_mode_input_passphrase_strength_label_ultra_strong" = "Super Strong";
-"pro_screen_recovery_key_mode_input_passphrase_strength_label_mega" = "Ideal";
-"pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_garbage" = "Cracking would take roughly milliseconds.";
-"pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_weak" = "Cracking would take roughly minutes to months.";
-"pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_moderate" = "Cracking would take roughly years.";
-"pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_okay" = "Cracking would take roughly hundreds of years.";
-"pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_strong" = "Cracking would take roughly billions of years.";
-"pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_very_strong" = "Cracking would take roughly trillions of years.";
-"pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_ultra_strong" = "Cracking would take roughly quadrillions of years.";
-"pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_mega" = "Cracking would take roughly quintillions of years.";

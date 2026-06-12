@@ -32,32 +32,10 @@ internal enum UntranslatedL10n {
   internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelBase: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_base") }
   /// Very weak
   internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelGarbage: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_garbage") }
-  /// Cracking would take roughly milliseconds.
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelHintGarbage: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_garbage") }
-  /// Cracking would take roughly quintillions of years.
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelHintMega: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_mega") }
-  /// Cracking would take roughly years.
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelHintModerate: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_moderate") }
-  /// Cracking would take roughly hundreds of years.
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelHintOkay: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_okay") }
-  /// Cracking would take roughly billions of years.
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelHintStrong: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_strong") }
-  /// Cracking would take roughly quadrillions of years.
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelHintUltraStrong: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_ultra_strong") }
-  /// Cracking would take roughly trillions of years.
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelHintVeryStrong: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_very_strong") }
-  /// Cracking would take roughly minutes to months.
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelHintWeak: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_hint_weak") }
-  /// Ideal
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelMega: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_mega") }
-  /// Moderate
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelModerate: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_moderate") }
   /// Okay
   internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelOkay: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_okay") }
   /// Strong
   internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelStrong: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_strong") }
-  /// Super Strong
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelUltraStrong: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_ultra_strong") }
   /// Very Strong
   internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelVeryStrong: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_very_strong") }
   /// Weak
