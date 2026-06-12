@@ -101,7 +101,7 @@ class SecureBackupRecoveryKeyScreenViewModel: SecureBackupRecoveryKeyScreenViewM
     }
 }
 
-extension SecureBackupRecoveryState {
+private extension SecureBackupRecoveryState {
     var viewMode: SecureBackupRecoveryKeyScreenViewMode {
         switch self {
         case .disabled:
