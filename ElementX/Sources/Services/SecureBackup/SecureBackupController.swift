@@ -9,6 +9,7 @@
 import Combine
 import Foundation
 import MatrixRustSDK
+import Synchronization
 
 class SecureBackupController: SecureBackupControllerProtocol {
     private let encryption: Encryption
@@ -36,7 +37,7 @@ class SecureBackupController: SecureBackupControllerProtocol {
     init(encryption: Encryption) {
         self.encryption = encryption
         
-        backupStateListenerTaskHandle = encryption.backupStateListener(listener: SDKListener { [weak self] state in
+        backupStateListenerTaskHandle = encryption.backupStateListener(listener: SDKListener.onMainActor { [weak self] state in
             guard let self else { return }
             
             switch state {
@@ -63,7 +64,7 @@ class SecureBackupController: SecureBackupControllerProtocol {
             }
         })
         
-        recoveryStateListenerTaskHandle = encryption.recoveryStateListener(listener: SDKListener { [weak self] state in
+        recoveryStateListenerTaskHandle = encryption.recoveryStateListener(listener: SDKListener.onMainActor { [weak self] state in
             guard let self else { return }
             
             switch state {
@@ -121,8 +122,8 @@ class SecureBackupController: SecureBackupControllerProtocol {
             
             MXLog.info("Enabling recovery")
             
-            var keyUploadErrored = false
-            let recoveryKey = try await encryption.enableRecovery(waitForBackupsToUpload: false, passphrase: nil, progressListener: SDKListener { [weak self] state in
+            let keyUploadErrored = Mutex(false)
+            let recoveryKey = try await encryption.enableRecovery(waitForBackupsToUpload: false, passphrase: nil, progressListener: SDKListener.onMainActor { [weak self] state in
                 guard let self else { return }
                 
                 switch state {
@@ -132,11 +133,11 @@ class SecureBackupController: SecureBackupControllerProtocol {
                     recoveryStateSubject.send(.enabled)
                 case .roomKeyUploadError:
                     MXLog.error("Failed enabling recovery: room key upload error")
-                    keyUploadErrored = true
+                    keyUploadErrored.withLock { $0 = true }
                 }
             })
             
-            return keyUploadErrored ? .failure(.failedGeneratingRecoveryKey) : .success(recoveryKey)
+            return keyUploadErrored.withLock { $0 } ? .failure(.failedGeneratingRecoveryKey) : .success(recoveryKey)
         } catch {
             MXLog.error("Failed generating recovery key with error: \(error)")
             
@@ -158,7 +159,7 @@ class SecureBackupController: SecureBackupControllerProtocol {
     func waitForKeyBackupUpload(uploadStateSubject: CurrentValueSubject<SecureBackupSteadyState, Never>) async -> Result<Void, SecureBackupControllerError> {
         do {
             MXLog.info("Waiting for backup upload steady state")
-            try await encryption.waitForBackupUploadSteadyState(progressListener: SDKListener { state in
+            try await encryption.waitForBackupUploadSteadyState(progressListener: SDKListener.onMainActor { state in
                 let uploadState: SecureBackupSteadyState = switch state {
                 case .waiting: .waiting
                 case .uploading(let backedUpCount, let totalCount): .uploading(uploadedKeyCount: Int(backedUpCount), totalKeyCount: Int(totalCount))
