@@ -1264,6 +1264,9 @@ class AppCoordinator: AppCoordinatorProtocol, AuthenticationFlowCoordinatorDeleg
         // As such, we introduced a MainActor conformance on the expirationHandler but we are also assuming main actor
         // isolated in the `pauseServices` method above.
         // https://sentry.tools.element.io/organizations/element/issues/4477794/
+        // BGTask isn't annotated but is documented as thread-safe, with
+        // setTaskCompleted(success:) being callable from any thread.
+        nonisolated(unsafe) let task = task
         task.expirationHandler = { @Sendable [weak self] in
             MXLog.info("Background app refresh task is about to expire.")
             
