@@ -31,7 +31,7 @@ struct JoinRoomByAddressView: View {
         }
     }
     
-    private var textFieldState: CompoundTextFieldStyle.State {
+    private var textFieldState: CompoundTextFieldStyle<EmptyView>.State {
         switch context.viewState.joinByAddressState {
         case .addressFound:
             .success

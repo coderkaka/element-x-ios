@@ -20,7 +20,7 @@ public extension Text {
 }
 
 @MainActor
-public extension TextFieldStyle where Self == CompoundTextFieldStyle {
+public extension TextFieldStyle where Self == CompoundTextFieldStyle<EmptyView> {
     /// A text field style that applies Compound design tokens to a test field with various configuration options.
     /// - Parameters:
     ///   - kind: The kind of text field being shown such as plain or raised.
@@ -28,35 +28,39 @@ public extension TextFieldStyle where Self == CompoundTextFieldStyle {
     ///   - footerText: The text shown in the footer label below the field.
     ///   - state: Specifies if the text field is currently in a success/error state.
     ///   - accessibilityIdentifier: An accessibility identifier that will be applied directly to the base text field.
-    static func compound(_ kind: CompoundTextFieldStyle.Kind = .plain,
+    static func compound(_ kind: Self.Kind = .plain,
                          labelText: String? = nil,
                          footerText: String? = nil,
-                         state: CompoundTextFieldStyle.State = .default,
-                         accessibilityIdentifier: String? = nil) -> CompoundTextFieldStyle {
+                         state: Self.State = .default,
+                         accessibilityIdentifier: String? = nil) -> Self {
         CompoundTextFieldStyle(kind: kind,
                                labelText: labelText.map(Text.init),
                                footerText: footerText.map(Text.init),
                                state: state,
-                               accessibilityIdentifier: accessibilityIdentifier)
+                               accessibilityIdentifier: accessibilityIdentifier) {
+            EmptyView()
+        }
     }
     
     @_disfavoredOverload
-    static func compound(_ kind: CompoundTextFieldStyle.Kind = .plain,
+    static func compound(_ kind: Self.Kind = .plain,
                          labelText: Text? = nil,
                          footerText: Text? = nil,
-                         state: CompoundTextFieldStyle.State = .default,
-                         accessibilityIdentifier: String? = nil) -> CompoundTextFieldStyle {
+                         state: Self.State = .default,
+                         accessibilityIdentifier: String? = nil) -> Self {
         CompoundTextFieldStyle(kind: kind,
                                labelText: labelText,
                                footerText: footerText,
                                state: state,
-                               accessibilityIdentifier: accessibilityIdentifier)
+                               accessibilityIdentifier: accessibilityIdentifier) {
+            EmptyView()
+        }
     }
 }
 
 /// The default text field style for standalone text fields.
 @MainActor
-public struct CompoundTextFieldStyle: @MainActor TextFieldStyle {
+public struct CompoundTextFieldStyle<TrailingView: View>: @MainActor TextFieldStyle {
     public enum Kind {
         /// The standard text field style for use on the default canvas.
         case plain
@@ -81,6 +85,9 @@ public struct CompoundTextFieldStyle: @MainActor TextFieldStyle {
     let footerText: Text?
     let state: State
     let accessibilityIdentifier: String?
+    
+    @ViewBuilder
+    var trailingAccessoryView: TrailingView
     
     private var isError: Bool {
         state == .error
@@ -152,6 +159,20 @@ public struct CompoundTextFieldStyle: @MainActor TextFieldStyle {
         }
     }
     
+    public static func compound(_ kind: Self.Kind = .plain,
+                                labelText: String? = nil,
+                                footerText: String? = nil,
+                                state: Self.State = .default,
+                                accessibilityIdentifier: String? = nil,
+                                @ViewBuilder trailingAccessoryView: () -> TrailingView) -> Self {
+        CompoundTextFieldStyle(kind: kind,
+                               labelText: labelText.map(Text.init),
+                               footerText: footerText.map(Text.init),
+                               state: state,
+                               accessibilityIdentifier: accessibilityIdentifier,
+                               trailingAccessoryView: trailingAccessoryView)
+    }
+    
     @MainActor
     public func _body(configuration: TextField<_Label>) -> some View {
         let shape = Compound.supportsGlass ? AnyShape(Capsule()) : AnyShape(RoundedRectangle(cornerRadius: 14.0))
@@ -162,26 +183,30 @@ public struct CompoundTextFieldStyle: @MainActor TextFieldStyle {
                 .foregroundColor(labelColor)
                 .padding(.horizontal, 16)
             
-            configuration
-                .focused($isFocused)
-                .font(.compound.bodyLG)
-                .foregroundColor(textColor)
-                .accentColor(accentColor)
-                .padding(.leading, 16.0)
-                .padding([.vertical, .trailing], 11.0)
-                .background {
-                    ZStack {
-                        shape.fill(backgroundColor)
-                        shape.stroke(borderColor, lineWidth: borderWidth)
+            HStack(spacing: 8) {
+                configuration
+                    .focused($isFocused)
+                    .font(.compound.bodyLG)
+                    .foregroundColor(textColor)
+                    .accentColor(accentColor)
+                    .padding(.leading, 16.0)
+                    .padding([.vertical, .trailing], 11.0)
+                    .background {
+                        ZStack {
+                            shape.fill(backgroundColor)
+                            shape.stroke(borderColor, lineWidth: borderWidth)
+                        }
+                        .onTapGesture { isFocused = true } // Set focus with taps outside of the text field
                     }
-                    .onTapGesture { isFocused = true } // Set focus with taps outside of the text field
-                }
-                .introspect(.textField, on: .supportedVersions) { textField in
-                    textField.clearButtonMode = .whileEditing
-                    textField.attributedPlaceholder = NSAttributedString(string: textField.placeholder ?? "",
-                                                                         attributes: [NSAttributedString.Key.foregroundColor: placeholderColor])
-                    textField.accessibilityIdentifier = accessibilityIdentifier
-                }
+                    .introspect(.textField, on: .supportedVersions) { textField in
+                        textField.clearButtonMode = .whileEditing
+                        textField.attributedPlaceholder = NSAttributedString(string: textField.placeholder ?? "",
+                                                                             attributes: [NSAttributedString.Key.foregroundColor: placeholderColor])
+                        textField.accessibilityIdentifier = accessibilityIdentifier
+                    }
+                
+                trailingAccessoryView
+            }
             
             if let footerText {
                 Label {
@@ -249,7 +274,7 @@ public struct CompoundTextFieldStyle_Previews: PreviewProvider, TestablePreview 
         }
     }
     
-    static func textFields(_ kind: CompoundTextFieldStyle.Kind = .plain,
+    static func textFields(_ kind: CompoundTextFieldStyle<EmptyView>.Kind = .plain,
                            labelText: String? = nil,
                            footerText: String? = nil) -> some View {
         VStack(spacing: 20) {
