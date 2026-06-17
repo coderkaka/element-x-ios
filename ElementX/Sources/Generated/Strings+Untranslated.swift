@@ -10,38 +10,6 @@ import Foundation
 // swiftlint:disable explicit_type_interface function_parameter_count identifier_name line_length
 // swiftlint:disable nesting type_body_length type_name vertical_whitespace_opening_braces
 internal enum UntranslatedL10n {
-  /// Enter your recovery key again.
-  internal static var proScreenRecoveryKeyModeConfirmDescription: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_confirm_description") }
-  /// Finish setup
-  internal static var proScreenRecoveryKeyModeConfirmFinishButton: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_confirm_finish_button") }
-  /// Hint: You can proceed once it matches
-  internal static var proScreenRecoveryKeyModeConfirmPassphraseFieldFooter: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_confirm_passphrase_field_footer") }
-  /// Re-enter your recovery key
-  internal static var proScreenRecoveryKeyModeConfirmPassphraseFieldPlaceholder: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_confirm_passphrase_field_placeholder") }
-  /// Confirm your recovery key
-  internal static var proScreenRecoveryKeyModeConfirmTitle: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_confirm_title") }
-  /// Choose a recovery key that you can memorize.
-  internal static var proScreenRecoveryKeyModeInputDescription: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_description") }
-  /// Minimum %1$s characters. Do not use your account password.
-  internal static func proScreenRecoveryKeyModeInputPassphraseFieldFooter(_ p1: UnsafePointer<CChar>) -> String {
-    return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_field_footer", p1)
-  }
-  /// Enter a recovery key
-  internal static var proScreenRecoveryKeyModeInputPassphraseFieldPlaceholder: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_field_placeholder") }
-  /// Strength
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelBase: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_base") }
-  /// Very weak
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelGarbage: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_garbage") }
-  /// Okay
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelOkay: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_okay") }
-  /// Strong
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelStrong: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_strong") }
-  /// Very Strong
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelVeryStrong: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_very_strong") }
-  /// Weak
-  internal static var proScreenRecoveryKeyModeInputPassphraseStrengthLabelWeak: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_passphrase_strength_label_weak") }
-  /// Enter a recovery key
-  internal static var proScreenRecoveryKeyModeInputTitle: String { return UntranslatedL10n.tr("Untranslated", "pro_screen_recovery_key_mode_input_title") }
   /// Clear all data currently stored on this device?
   /// Sign in again to access your account data and messages.
   internal static var softLogoutClearDataDialogContent: String { return UntranslatedL10n.tr("Untranslated", "soft_logout_clear_data_dialog_content") }
