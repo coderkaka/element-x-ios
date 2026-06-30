@@ -105,7 +105,8 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 guard let self else { return }
                 
                 state.shouldShowSpaceFilters = !filters.isEmpty
-                
+                state.availableSpaceFilters = filters
+
                 if let selectedSpaceFilter = spaceFilterSubject.value,
                    !filters.contains(selectedSpaceFilter) {
                     // Clear the spaces filter if the space has been left.
@@ -226,6 +227,8 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 }
                 .store(in: &cancellables)
             }
+        case .selectSpaceFilter(let filter):
+            spaceFilterSubject.send(filter)
         case .markRoomAsUnread(let roomIdentifier):
             Task {
                 guard case let .joined(roomProxy) = await userSession.clientProxy.roomForIdentifier(roomIdentifier) else {

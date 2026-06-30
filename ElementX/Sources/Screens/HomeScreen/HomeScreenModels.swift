@@ -50,6 +50,8 @@ enum HomeScreenViewAction {
     
     case acceptInvite(roomIdentifier: String)
     case declineInvite(roomIdentifier: String)
+
+    case selectSpaceFilter(SpaceServiceFilter?)
 }
 
 enum HomeScreenRoomListMode: CustomStringConvertible {
@@ -113,7 +115,16 @@ struct HomeScreenViewState: BindableState {
     var reportRoomEnabled = false
     
     var shouldShowSpaceFilters = false
+    var availableSpaceFilters: [SpaceServiceFilter] = []
     var selectedSpaceFilter: SpaceServiceFilter?
+
+    var topLevelSpaceFilters: [SpaceServiceFilter] {
+        availableSpaceFilters.filter { $0.level == 0 }
+    }
+
+    var shouldShowSpaceTabBar: Bool {
+        !topLevelSpaceFilters.isEmpty && shouldShowFilters
+    }
     
     /// Inline room list search is disabled when the dedicated global search tab is shown instead (see `UserSessionFlowCoordinator`).
     var isRoomListSearchEnabled = true

@@ -114,8 +114,17 @@ struct HomeScreenContent: View {
     @ViewBuilder
     private var topSection: some View {
         // An empty VStack causes glitches within the room list
-        if context.viewState.shouldShowFilters || context.viewState.shouldShowBanner {
+        if context.viewState.shouldShowSpaceTabBar || context.viewState.shouldShowFilters || context.viewState.shouldShowBanner {
             VStack(spacing: 0) {
+                if context.viewState.shouldShowSpaceTabBar {
+                    SpaceTabBarView(filters: context.viewState.topLevelSpaceFilters,
+                                    selectedFilter: context.viewState.selectedSpaceFilter,
+                                    mediaProvider: context.mediaProvider) { filter in
+                        context.send(viewAction: .selectSpaceFilter(filter))
+                    }
+                    Divider()
+                }
+
                 if context.viewState.shouldShowFilters {
                     RoomListFiltersView(state: $context.filtersState)
                 }
