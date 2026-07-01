@@ -1,6 +1,6 @@
 # Agent-in-Matrix Interaction Design: Chat as Backbone, Canvas as Workspace
 
-Status: draft, pending user review
+Status: architecture + catalog approved; scenario #1 (dedicated agent-turn message type) selected as build target
 Date: 2026-07-01
 
 ## Problem
@@ -68,11 +68,27 @@ Layered by how much new infrastructure each needs. Tier 1 needs nothing beyond w
 18. **Cross-device handoff for free** — because `CanvasState` is keyed by `(roomID, taskID)` and synced via Matrix events from day one, starting a task on iPhone and picking up approval on iPad (or Element Web, eventually) requires no extra work — it falls out of the architecture decision above.
 19. **Voice-first delegation via existing VoIP/CallKit** — the agent joins an active call as a participant; the canvas becomes the "shared screen" companion to a voice-driven task session.
 
+## Decided: scenario #1 build target
+
+**Dedicated agent-turn message type**, with a structured `tool_calls` list (not free-text summary, not mock-only):
+
+```json
+{
+  "msgtype": "io.element.agent.turn",
+  "body": "最终回复文本",
+  "tool_calls": [
+    {"name": "read_file", "status": "done", "summary": "读取 Foo.swift"},
+    {"name": "search", "status": "done", "summary": "搜索 xxx"}
+  ]
+}
+```
+
+`body` is the final reply text (required, same role as today's `m.text` body — this is the fallback text shown to clients that don't understand `tool_calls`). `tool_calls` is optional; each entry renders as an individually tappable/expandable chip in a collapsible section above `body`, letting the client render per-tool-call status/icon rather than one opaque summary blob. Structured now because this shape is the wire contract with a not-yet-built agent backend — cheaper to get right before any backend exists than to migrate later.
+
 ## Open questions (not yet decided)
 
-- Exact custom event type namespace/schema for canvas state (`io.element.agent.canvas.*` is a placeholder).
 - Whether Tier 3's "Agents" hub ships as its own tab or nests under the space tab bar's model — audited as feasible either way, not chosen yet.
-- Which single scenario to build first once this catalog is reviewed.
+- Canvas event schema/namespace for Tier 2+ (`io.element.agent.canvas.*` is a placeholder) — deferred until scenario #1 ships.
 
 ## Out of scope
 
