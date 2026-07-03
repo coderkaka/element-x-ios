@@ -551,6 +551,10 @@ extension AccessibilityTests {
         try await performAccessibilityAudit(named: "RoomListFiltersEmptyStateView_Previews")
     }
 
+    func testRoomListFiltersScreen() async throws {
+        try await performAccessibilityAudit(named: "RoomListFiltersScreen_Previews")
+    }
+
     func testRoomListFiltersView() async throws {
         try await performAccessibilityAudit(named: "RoomListFiltersView_Previews")
     }

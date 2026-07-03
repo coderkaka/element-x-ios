@@ -964,6 +964,13 @@ extension PreviewTests {
     }
 
     @Test
+    func roomListFiltersScreen() async throws {
+        for (index, preview) in RoomListFiltersScreen_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func roomListFiltersView() async throws {
         for (index, preview) in RoomListFiltersView_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)

@@ -140,6 +140,7 @@ enum TestablePreviewsDictionary {
             "RoomInviterLabel_Previews" : RoomInviterLabel_Previews.self,
             "RoomListFilterView_Previews" : RoomListFilterView_Previews.self,
             "RoomListFiltersEmptyStateView_Previews" : RoomListFiltersEmptyStateView_Previews.self,
+            "RoomListFiltersScreen_Previews" : RoomListFiltersScreen_Previews.self,
             "RoomListFiltersView_Previews" : RoomListFiltersView_Previews.self,
             "RoomMemberDetailsScreen_Previews" : RoomMemberDetailsScreen_Previews.self,
             "RoomMembersListMemberCell_Previews" : RoomMembersListMemberCell_Previews.self,
