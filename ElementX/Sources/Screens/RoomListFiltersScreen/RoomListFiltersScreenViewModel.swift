@@ -16,18 +16,18 @@ class RoomListFiltersScreenViewModel: RoomListFiltersScreenViewModelType, RoomLi
     var actionsPublisher: AnyPublisher<RoomListFiltersScreenViewModelAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-
+    
     let id = UUID()
-
+    
     init(initialFiltersState: RoomListFiltersState) {
         super.init(initialViewState: RoomListFiltersScreenViewState(filtersState: initialFiltersState))
     }
-
+    
     // MARK: - Public
-
+    
     override func process(viewAction: RoomListFiltersScreenViewAction) {
         MXLog.info("View model: received view action: \(viewAction)")
-
+        
         switch viewAction {
         case .toggleFilter(let filter):
             if state.filtersState.isFilterActive(filter) {

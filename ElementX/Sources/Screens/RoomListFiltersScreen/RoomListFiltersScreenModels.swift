@@ -21,7 +21,7 @@ enum RoomListFiltersScreenViewAction: CustomStringConvertible {
     case toggleFilter(RoomListFilter)
     case clearFilters
     case close
-
+    
     var description: String {
         switch self {
         case .toggleFilter(let filter): "Toggle \(filter)"

@@ -11,7 +11,7 @@ import SwiftUI
 
 struct RoomListFiltersScreen: View {
     @Bindable var context: RoomListFiltersScreenViewModel.Context
-
+    
     var body: some View {
         ElementNavigationStack {
             Form {
@@ -29,7 +29,7 @@ struct RoomListFiltersScreen: View {
         }
         .presentationDragIndicator(.visible)
     }
-
+    
     /// Only show filters that are either already active, or still selectable given the current
     /// selection — mirrors `RoomListFiltersState.availableFilters` excluding mutually-exclusive
     /// options from the list entirely, matching today's chip-row behaviour.
@@ -38,7 +38,7 @@ struct RoomListFiltersScreen: View {
             context.viewState.filtersState.isFilterActive(filter) || context.viewState.filtersState.availableFilters.contains(filter)
         }
     }
-
+    
     private func binding(for filter: RoomListFilter) -> Binding<Bool> {
         Binding<Bool>(get: {
             context.viewState.filtersState.isFilterActive(filter)
@@ -46,7 +46,7 @@ struct RoomListFiltersScreen: View {
             context.send(viewAction: .toggleFilter(filter))
         })
     }
-
+    
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         if context.viewState.filtersState.isFiltering {
@@ -56,7 +56,7 @@ struct RoomListFiltersScreen: View {
                 }
             }
         }
-
+        
         ToolbarItem(placement: .primaryAction) {
             ToolbarButton(role: .close) {
                 context.send(viewAction: .close)
@@ -70,7 +70,7 @@ struct RoomListFiltersScreen: View {
 struct RoomListFiltersScreen_Previews: PreviewProvider, TestablePreview {
     static let noFiltersViewModel = RoomListFiltersScreenViewModel(initialFiltersState: .init(appSettings: .volatile()))
     static let someFiltersViewModel = RoomListFiltersScreenViewModel(initialFiltersState: .init(activeFilters: [.rooms, .favourites], appSettings: .volatile()))
-
+    
     static var previews: some View {
         RoomListFiltersScreen(context: noFiltersViewModel.context)
             .previewDisplayName("No active filters")
