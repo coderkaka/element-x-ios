@@ -6,9 +6,8 @@
 // Please see LICENSE files in the repository root for full details.
 //
 
-import Testing
-
 @testable import ElementX
+import Testing
 
 struct AgentCanvasStepsRoomTimelineItemContentTests {
     @Test
@@ -28,7 +27,7 @@ struct AgentCanvasStepsRoomTimelineItemContentTests {
                                   CanvasStep(id: "step2", label: "Wait for approval", status: .inProgress),
                                   CanvasStep(id: "step3", label: "Run tests", status: .pending)])
     }
-
+    
     @Test
     func unknownStepStatusIsPreservedAsOther() {
         let json = """
@@ -38,7 +37,7 @@ struct AgentCanvasStepsRoomTimelineItemContentTests {
         let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
         #expect(content.steps == [CanvasStep(id: "s1", label: "L", status: .other("blocked"))])
     }
-
+    
     @Test
     func missingStepsFieldFallsBackToEmpty() {
         let json = """
@@ -48,7 +47,7 @@ struct AgentCanvasStepsRoomTimelineItemContentTests {
         #expect(content.steps.isEmpty)
         #expect(content.title == "T")
     }
-
+    
     @Test
     func malformedStepEntryFallsBackToEmptySteps() {
         let json = """
@@ -59,7 +58,7 @@ struct AgentCanvasStepsRoomTimelineItemContentTests {
         #expect(content.steps.isEmpty)
         #expect(content.title == "T")
     }
-
+    
     @Test
     func nilOriginalJSONFallsBackToEmptyDefaults() {
         let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: nil, latestEditJSON: nil)
@@ -68,7 +67,7 @@ struct AgentCanvasStepsRoomTimelineItemContentTests {
         #expect(content.isResolved == false)
         #expect(content.steps.isEmpty)
     }
-
+    
     @Test
     func unresolvedTaskHasInProgressStatus() {
         let json = """
@@ -78,7 +77,7 @@ struct AgentCanvasStepsRoomTimelineItemContentTests {
         let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
         #expect(content.isResolved == false)
     }
-
+    
     @Test
     func editedTaskWithDoneStatusIsResolved() {
         // latestEditJSON's shape is confirmed this session: raw m.replace edit event, replacement fields

@@ -17,7 +17,7 @@ nonisolated struct CanvasStep: Hashable, Decodable {
         /// agent backend can introduce new statuses without this client silently losing data.
         case other(String)
     }
-
+    
     let id: String
     let label: String
     let status: Status
@@ -38,13 +38,13 @@ extension CanvasStep.Status: Decodable {
 nonisolated struct AgentCanvasStepsRoomTimelineItemContent: Hashable {
     /// The custom `m.room.message` msgtype this content type is built from.
     static let msgType = "io.element.agent.canvas.steps"
-
+    
     let body: String
     let taskID: String
     let title: String
     let isResolved: Bool
     let steps: [CanvasStep]
-
+    
     init(body: String, taskID: String = "", title: String = "", isResolved: Bool = false, steps: [CanvasStep] = []) {
         self.body = body
         self.taskID = taskID
@@ -52,7 +52,7 @@ nonisolated struct AgentCanvasStepsRoomTimelineItemContent: Hashable {
         self.isResolved = isResolved
         self.steps = steps
     }
-
+    
     /// - Parameters:
     ///   - originalJSON: the raw Matrix event JSON from `EventTimelineItemProxy.debugInfo.originalJSON`.
     ///     The Rust SDK only exposes `body` for custom msgtypes via `MessageType.other`, so
@@ -71,20 +71,20 @@ nonisolated struct AgentCanvasStepsRoomTimelineItemContent: Hashable {
         isResolved = fields?.status == "done"
         steps = fields?.steps ?? []
     }
-
+    
     private struct Fields: Decodable {
         let taskID: String
         let title: String
         let status: String
         let steps: [CanvasStep]?
-
+        
         enum CodingKeys: String, CodingKey {
             case taskID = "task_id"
             case title
             case status
             case steps
         }
-
+        
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             taskID = try container.decode(String.self, forKey: .taskID)
@@ -93,14 +93,14 @@ nonisolated struct AgentCanvasStepsRoomTimelineItemContent: Hashable {
             steps = try? container.decodeIfPresent([CanvasStep].self, forKey: .steps)
         }
     }
-
+    
     private struct ContentEnvelope: Decodable {
         let fields: Fields
-
+        
         enum CodingKeys: String, CodingKey {
             case newContent = "m.new_content"
         }
-
+        
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             if let newContent = try container.decodeIfPresent(Fields.self, forKey: .newContent) {
@@ -110,11 +110,11 @@ nonisolated struct AgentCanvasStepsRoomTimelineItemContent: Hashable {
             }
         }
     }
-
+    
     private struct EventEnvelope: Decodable {
         let content: ContentEnvelope
     }
-
+    
     private static func parseFields(from json: String?) -> Fields? {
         guard let data = json?.data(using: .utf8) else { return nil }
         guard let event = try? JSONDecoder().decode(EventEnvelope.self, from: data) else { return nil }
