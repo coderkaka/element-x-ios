@@ -114,4 +114,35 @@ nonisolated extension EventTimelineItem {
         
         return .init(configuration: .init(sender: sender, content: content, originalJSON: defaultOriginalJSON))
     }
+    
+    static func mockCanvasSteps(sender: String = "",
+                                body: String = "Task: Refactor auth module",
+                                taskID: String = "task-1234",
+                                title: String = "Refactor auth module",
+                                status: String = "in_progress",
+                                steps: [(id: String, label: String, status: String)] = [
+                                    ("step1", "Read existing code", "done"),
+                                    ("step2", "Wait for approval", "in_progress"),
+                                    ("step3", "Run tests", "pending")
+                                ],
+                                originalJSON: String? = nil) -> EventTimelineItem {
+        let messageType = MessageType.other(msgtype: AgentCanvasStepsRoomTimelineItemContent.msgType, body: body)
+        
+        let content = TimelineItemContent.msgLike(content: .init(kind: .message(content: .init(msgType: messageType,
+                                                                                               body: body,
+                                                                                               isEdited: false,
+                                                                                               mentions: nil)),
+                                                                 reactions: [],
+                                                                 inReplyTo: nil,
+                                                                 threadRoot: nil,
+                                                                 threadSummary: nil))
+        
+        let stepsJSONArray = steps.map { "{\"id\":\"\($0.id)\",\"label\":\"\($0.label)\",\"status\":\"\($0.status)\"}" }.joined(separator: ",")
+        let defaultOriginalJSON = originalJSON ?? """
+        {"content":{"msgtype":"io.element.agent.canvas.steps","body":"\(body)","task_id":"\(taskID)","title":"\(title)",\
+        "status":"\(status)","steps":[\(stepsJSONArray)]}}
+        """
+        
+        return .init(configuration: .init(sender: sender, content: content, originalJSON: defaultOriginalJSON))
+    }
 }
