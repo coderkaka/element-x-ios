@@ -77,6 +77,7 @@ extension RoomFlowCoordinator {
         case pollsHistoryForm
         case rolesAndPermissions
         case pinnedEventsTimeline(previousState: State)
+        case canvasSteps(eventID: String, taskID: String, previousState: State)
         case resolveSendFailure(previousState: State)
         case knockRequestsList(previousState: State)
         case mediaEventsTimeline(previousState: State)
@@ -117,7 +118,10 @@ extension RoomFlowCoordinator {
         
         case presentThreadList
         case dismissThreadList
-        
+
+        case presentCanvasSteps(eventID: String, taskID: String)
+        case dismissCanvasSteps
+
         case startSpaceFlow
         case finishedSpaceFlow
         
@@ -239,7 +243,13 @@ extension RoomFlowCoordinator {
                 return .pinnedEventsTimeline(previousState: fromState)
             case (.pinnedEventsTimeline(let previousState), .dismissPinnedEventsTimeline):
                 return previousState
-                
+
+            case (.room, .presentCanvasSteps(let eventID, let taskID)):
+                return .canvasSteps(eventID: eventID, taskID: taskID, previousState: fromState)
+
+            case (.canvasSteps(_, _, let previousState), .dismissCanvasSteps):
+                return previousState
+
             // Thread List
             case (.room, .presentThreadList):
                 return .threadList

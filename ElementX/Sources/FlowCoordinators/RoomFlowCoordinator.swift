@@ -402,9 +402,12 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                 
             case (.room, .presentPinnedEventsTimeline, .pinnedEventsTimeline):
                 startPinnedEventsTimelineFlow()
-                
+
+            case (.room, .presentCanvasSteps, .canvasSteps(let eventID, let taskID, _)):
+                Task { await self.presentCanvasSteps(eventID: eventID, taskID: taskID, animated: animated) }
+
             // Thread List
-                
+
             case (.room, .presentThreadList, .threadList):
                 Task { await self.presentThreadList(animated: animated) }
                 
@@ -741,6 +744,8 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                     stateMachine.tryEvent(.presentThreadList, userInfo: EventUserInfo(animated: animated))
                 case .presentThread(let threadRootEventID, let focussedEventID):
                     stateMachine.tryEvent(.presentThread(threadRootEventID: threadRootEventID, focusEventID: focussedEventID))
+                case .presentCanvasSteps(let eventID, let taskID):
+                    stateMachine.tryEvent(.presentCanvasSteps(eventID: eventID, taskID: taskID), userInfo: EventUserInfo(animated: animated))
                 case .presentRoom(let roomID, let via):
                     stateMachine.tryEvent(.startChildFlow(roomID: roomID,
                                                           via: via,
@@ -769,7 +774,35 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
             stateMachine.tryEvent(.dismissThreadList)
         }
     }
-    
+
+    /// Looks up the already-loaded timeline item for `eventID` and pushes the full step list screen.
+    /// V1 is read-only and doesn't re-fetch: the item must already be in `timelineController.timelineItems`,
+    /// the same source `TimelineViewModel.updateActiveCanvasTask` reads from.
+    private func presentCanvasSteps(eventID: String, taskID: String, animated: Bool) async {
+        guard let canvasItem = timelineController?.timelineItems.first(where: { $0.id.eventID == eventID }) as? AgentCanvasStepsRoomTimelineItem else {
+            MXLog.error("Failed presenting canvas steps: item not found for eventID \(eventID), taskID \(taskID)")
+            stateMachine.tryEvent(.dismissCanvasSteps)
+            return
+        }
+
+        let title = canvasItem.content.title.isEmpty ? canvasItem.content.body : canvasItem.content.title
+        let coordinator = CanvasStepsScreenCoordinator(parameters: .init(title: title, steps: canvasItem.content.steps))
+
+        coordinator.actionsPublisher.sink { [weak self] action in
+            guard let self else { return }
+            switch action {
+            case .dismiss:
+                navigationStackCoordinator.pop()
+            }
+        }
+        .store(in: &cancellables)
+
+        navigationStackCoordinator.push(coordinator, animated: animated) { [weak self] in
+            guard let self else { return }
+            stateMachine.tryEvent(.dismissCanvasSteps)
+        }
+    }
+
     private func presentThread(threadRootEventID: String, focusEventID: String?, animated: Bool) async {
         showLoadingIndicator()
         defer { hideLoadingIndicator() }
