@@ -467,7 +467,7 @@ final class TimelineViewModelTests {
     @Test
     func mostRecentUnresolvedCanvasTaskDrivesActiveCanvasTask() {
         // Given a timeline with an older resolved canvas task followed by a newer unresolved one.
-        let items = [
+        let items: [RoomTimelineItemProtocol] = [
             AgentCanvasStepsRoomTimelineItem(eventID: "resolved-task", taskID: "task-1", title: "Old task", isResolved: true),
             TextRoomTimelineItem(eventID: "t1"),
             AgentCanvasStepsRoomTimelineItem(eventID: "unresolved-task", taskID: "task-2", title: "New task", isResolved: false)
