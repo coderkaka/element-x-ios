@@ -159,6 +159,13 @@ extension PreviewTests {
     }
 
     @Test
+    func canvasStepsScreen() async throws {
+        for (index, preview) in CanvasStepsScreen_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func canvasTaskBannerView() async throws {
         for (index, preview) in CanvasTaskBannerView_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)

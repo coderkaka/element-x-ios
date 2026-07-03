@@ -15,18 +15,18 @@ class CanvasStepsScreenViewModel: CanvasStepsScreenViewModelType, CanvasStepsScr
     var actionsPublisher: AnyPublisher<CanvasStepsScreenViewModelAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-
+    
     /// The title/steps are a one-time snapshot passed in by the caller (see `CanvasStepsScreenViewState`),
     /// there is no live re-subscription to the underlying timeline item in this V1 read-only screen.
     init(title: String, steps: [CanvasStep]) {
         super.init(initialViewState: CanvasStepsScreenViewState(title: title, steps: steps))
     }
-
+    
     // MARK: - Public
-
+    
     override func process(viewAction: CanvasStepsScreenViewAction) {
         MXLog.info("View model: received view action: \(viewAction)")
-
+        
         switch viewAction {
         case .close:
             actionsSubject.send(.dismiss)

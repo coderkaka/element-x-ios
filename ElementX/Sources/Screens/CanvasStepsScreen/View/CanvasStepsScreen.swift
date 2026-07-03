@@ -10,7 +10,7 @@ import SwiftUI
 
 struct CanvasStepsScreen: View {
     @Bindable var context: CanvasStepsScreenViewModel.Context
-
+    
     var body: some View {
         Form {
             Section {
@@ -30,7 +30,7 @@ struct CanvasStepsScreen: View {
             }
         }
     }
-
+    
     private func stepRow(_ step: CanvasStep) -> some View {
         HStack(spacing: 12) {
             statusIcon(for: step.status)
@@ -41,7 +41,7 @@ struct CanvasStepsScreen: View {
         }
         .padding(.vertical, 4)
     }
-
+    
     /// Adapted from `AgentTurnRoomTimelineView.statusIcon(for:)`, which uses the same icon/colour
     /// tokens for `ToolCallSummary.Status`. `CanvasStep.Status` has an `.inProgress` case instead
     /// of `.failed`, mapped to the "time" icon to indicate the step is currently underway.
@@ -72,19 +72,19 @@ struct CanvasStepsScreen_Previews: PreviewProvider, TestablePreview {
         CanvasStep(id: "s1", label: "Read existing code", status: .done),
         CanvasStep(id: "s2", label: "Run tests", status: .done)
     ])
-
+    
     static var previews: some View {
         ElementNavigationStack {
             CanvasStepsScreen(context: viewModel.context)
         }
         .previewDisplayName("In progress")
-
+        
         ElementNavigationStack {
             CanvasStepsScreen(context: allDoneViewModel.context)
         }
         .previewDisplayName("All done")
     }
-
+    
     static func makeViewModel(steps: [CanvasStep] = [
         CanvasStep(id: "s1", label: "Read existing code", status: .done),
         CanvasStep(id: "s2", label: "Wait for approval", status: .inProgress),

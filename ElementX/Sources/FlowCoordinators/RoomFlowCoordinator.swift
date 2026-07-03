@@ -402,12 +402,12 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                 
             case (.room, .presentPinnedEventsTimeline, .pinnedEventsTimeline):
                 startPinnedEventsTimelineFlow()
-
+                
             case (.room, .presentCanvasSteps, .canvasSteps(let eventID, let taskID, _)):
                 Task { await self.presentCanvasSteps(eventID: eventID, taskID: taskID, animated: animated) }
-
+                
             // Thread List
-
+                
             case (.room, .presentThreadList, .threadList):
                 Task { await self.presentThreadList(animated: animated) }
                 
@@ -774,7 +774,7 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
             stateMachine.tryEvent(.dismissThreadList)
         }
     }
-
+    
     /// Looks up the already-loaded timeline item for `eventID` and pushes the full step list screen.
     /// V1 is read-only and doesn't re-fetch: the item must already be in `timelineController.timelineItems`,
     /// the same source `TimelineViewModel.updateActiveCanvasTask` reads from.
@@ -784,10 +784,10 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
             stateMachine.tryEvent(.dismissCanvasSteps)
             return
         }
-
+        
         let title = canvasItem.content.title.isEmpty ? canvasItem.content.body : canvasItem.content.title
         let coordinator = CanvasStepsScreenCoordinator(parameters: .init(title: title, steps: canvasItem.content.steps))
-
+        
         coordinator.actionsPublisher.sink { [weak self] action in
             guard let self else { return }
             switch action {
@@ -796,13 +796,13 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
             }
         }
         .store(in: &cancellables)
-
+        
         navigationStackCoordinator.push(coordinator, animated: animated) { [weak self] in
             guard let self else { return }
             stateMachine.tryEvent(.dismissCanvasSteps)
         }
     }
-
+    
     private func presentThread(threadRootEventID: String, focusEventID: String?, animated: Bool) async {
         showLoadingIndicator()
         defer { hideLoadingIndicator() }

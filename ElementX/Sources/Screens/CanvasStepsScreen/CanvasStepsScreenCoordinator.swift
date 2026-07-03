@@ -20,19 +20,19 @@ enum CanvasStepsScreenCoordinatorAction {
 final class CanvasStepsScreenCoordinator: CoordinatorProtocol {
     private let parameters: CanvasStepsScreenCoordinatorParameters
     private let viewModel: CanvasStepsScreenViewModelProtocol
-
+    
     private var cancellables = Set<AnyCancellable>()
-
+    
     private let actionsSubject: PassthroughSubject<CanvasStepsScreenCoordinatorAction, Never> = .init()
     var actionsPublisher: AnyPublisher<CanvasStepsScreenCoordinatorAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-
+    
     init(parameters: CanvasStepsScreenCoordinatorParameters) {
         self.parameters = parameters
         viewModel = CanvasStepsScreenViewModel(title: parameters.title, steps: parameters.steps)
     }
-
+    
     func start() {
         viewModel.actionsPublisher.sink { [weak self] action in
             guard let self else { return }
@@ -43,7 +43,7 @@ final class CanvasStepsScreenCoordinator: CoordinatorProtocol {
         }
         .store(in: &cancellables)
     }
-
+    
     func toPresentable() -> AnyView {
         AnyView(CanvasStepsScreen(context: viewModel.context))
     }
