@@ -231,10 +231,10 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             spaceFilterSubject.send(filter)
         case .roomListFilters:
             let roomListFiltersViewModel = RoomListFiltersScreenViewModel(initialFiltersState: state.bindings.filtersState)
-
+            
             roomListFiltersViewModel.actionsPublisher.sink { [weak self] action in
                 guard let self else { return }
-
+                
                 switch action {
                 case .filtersChanged(let newFiltersState):
                     state.bindings.filtersState = newFiltersState
@@ -243,7 +243,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 }
             }
             .store(in: &cancellables)
-
+            
             state.bindings.roomListFiltersViewModel = roomListFiltersViewModel
         case .markRoomAsUnread(let roomIdentifier):
             Task {
