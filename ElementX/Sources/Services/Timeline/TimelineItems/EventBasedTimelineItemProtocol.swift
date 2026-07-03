@@ -105,7 +105,7 @@ nonisolated extension EventBasedTimelineItemProtocol {
         switch messageBasedItem.contentType {
         case .audio, .file, .image, .video, .location, .voice:
             return false
-        case .text, .emote, .notice, .agentTurn, .choiceRequest:
+        case .text, .emote, .notice, .agentTurn, .choiceRequest, .canvasSteps:
             return true
         }
     }

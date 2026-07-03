@@ -92,6 +92,10 @@ struct TimelineReplyView: View {
                         ReplyView(sender: sender,
                                   plainBody: content.question.isEmpty ? content.body : content.question,
                                   formattedBody: nil)
+                    case .canvasSteps(let content):
+                        ReplyView(sender: sender,
+                                  plainBody: content.title.isEmpty ? content.body : content.title,
+                                  formattedBody: nil)
                     }
                 case .poll(let question):
                     ReplyView(sender: sender,
