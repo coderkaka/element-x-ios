@@ -87,4 +87,31 @@ nonisolated extension EventTimelineItem {
         
         return .init(configuration: .init(sender: sender, content: content, originalJSON: originalJSON))
     }
+    
+    static func mockChoiceRequest(sender: String = "",
+                                  body: String = "Which environment?",
+                                  question: String = "Which environment?",
+                                  options: [(id: String, label: String)] = [("test", "Test"), ("prod", "Production")],
+                                  multiSelect: Bool = false,
+                                  originalJSON: String? = nil,
+                                  latestEditJSON: String? = nil) -> EventTimelineItem {
+        let messageType = MessageType.other(msgtype: AgentChoiceRequestRoomTimelineItemContent.msgType, body: body)
+        
+        let content = TimelineItemContent.msgLike(content: .init(kind: .message(content: .init(msgType: messageType,
+                                                                                               body: body,
+                                                                                               isEdited: false,
+                                                                                               mentions: nil)),
+                                                                 reactions: [],
+                                                                 inReplyTo: nil,
+                                                                 threadRoot: nil,
+                                                                 threadSummary: nil))
+        
+        let optionsJSONArray = options.map { "{\"id\":\"\($0.id)\",\"label\":\"\($0.label)\"}" }.joined(separator: ",")
+        let defaultOriginalJSON = originalJSON ?? """
+        {"content":{"msgtype":"io.element.agent.choice_request","body":"\(body)","question":"\(question)",\
+        "options":[\(optionsJSONArray)],"multi_select":\(multiSelect)}}
+        """
+        
+        return .init(configuration: .init(sender: sender, content: content, originalJSON: defaultOriginalJSON))
+    }
 }
