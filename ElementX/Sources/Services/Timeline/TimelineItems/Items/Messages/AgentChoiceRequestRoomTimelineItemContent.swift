@@ -61,6 +61,16 @@ nonisolated struct AgentChoiceRequestRoomTimelineItemContent: Hashable {
             case multiSelect = "multi_select"
             case resolvedSelection = "resolved_selection"
         }
+
+        // Custom init so a missing `options` key falls back to `[]` instead of failing the whole
+        // decode (the synthesized Decodable would throw keyNotFound, discarding `question` too).
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            question = try container.decode(String.self, forKey: .question)
+            options = try container.decodeIfPresent([ChoiceOption].self, forKey: .options) ?? []
+            multiSelect = try container.decode(Bool.self, forKey: .multiSelect)
+            resolvedSelection = try container.decodeIfPresent([String].self, forKey: .resolvedSelection)
+        }
     }
 
     /// Matrix message edits (`m.replace`) nest their replacement content under `m.new_content`, while an
