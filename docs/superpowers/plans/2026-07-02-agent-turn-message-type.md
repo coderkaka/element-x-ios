@@ -12,7 +12,7 @@
 
 - Swift API naming: `ID` not `Id`, `URL` not `Url` (per AGENTS.md) — not directly relevant here but keep in mind for any future field names.
 - No comments restating what the code already says; only comment non-obvious traps/justifications (AGENTS.md "Comments").
-- All new/changed strings must go through `L10n` — this plan introduces no new user-facing strings that need translation (tool-call status labels are rendered from data, not localized copy), so `Untranslated.strings` is untouched. If a reviewer decides to add static labels later (e.g. "Tool calls"), add the key to `Untranslated.strings`, not `Localizable.strings`.
+- All new/changed strings must go through `L10n`, never hardcoded. This plan does introduce one: the "N tool calls" disclosure label in Task 5 is a pluralized count string, so it's added as a new key to `Untranslated.stringsdict` (not `Localizable.stringsdict`, which is Localazy-managed and never hand-edited), following the exact precedent already in the codebase for this shape of string (`screen_room_timeline_state_changes` → `L10n.screenRoomTimelineStateChanges(count)`, used by `CollapsibleRoomTimelineView`).
 - Every new `RoomTimelineItemType`/`EventBasedMessageTimelineItemContentType` case must be added to *every* exhaustive switch over that type — Task 2 and Task 3 enumerate every call site found by grepping the whole codebase for `.location(` and `EventBasedMessageTimelineItemContentType` usages; do not assume the list is only "the obvious ones."
 - `nonisolated` on new structs/enums, matching every sibling type in `Services/Timeline/TimelineItems/` (project uses `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, so service-layer types opt out explicitly).
 
@@ -389,39 +389,15 @@ git commit -m "Register AgentTurnRoomTimelineItem as a RoomTimelineItemType case
 
 **Interfaces:**
 - Consumes: `AgentTurnRoomTimelineItem`/`AgentTurnRoomTimelineItemContent` (Tasks 1–2), `EventTimelineItemProxy.debugInfo.originalJSON` (existing, `TimelineItemProxy.swift:139-142`).
-- Produces: `EventTimelineItem.mockAgentTurn(toolCallsJSON:)` static mock factory for tests.
+- Produces: `EventTimelineItem.mockAgentTurn(body:originalJSON:)` static mock factory for tests.
 
 - [ ] **Step 1: Remove the throwaway spike test, if still present**
 
-If `UnitTests/Sources/TimelineItemFactoryTests.swift` still has the `spikeOtherMsgTypeLabels()` test from the plan-writing spike, delete that whole `@Test func spikeOtherMsgTypeLabels()` block now — it's superseded by Step 2 below.
+If `UnitTests/Sources/TimelineItemFactoryTests.swift` still has the `spikeOtherMsgTypeLabels()` test from the plan-writing spike, delete that whole `@Test func spikeOtherMsgTypeLabels()` block now — it's superseded by Step 3 below.
 
-- [ ] **Step 2: Add the mock fixture**
+- [ ] **Step 2: Add an `originalJSON` field to the mock configuration**
 
-In `ElementX/Sources/Mocks/SDK/EventTimelineItem.swift`, add this to the `EventTimelineItem` extension (after `mockCallInvite`):
-
-```swift
-    static func mockAgentTurn(body: String = "Final reply", originalJSON: String? = nil) -> EventTimelineItem {
-        let messageType = MessageType.other(msgtype: AgentTurnRoomTimelineItemContent.msgType, body: body)
-
-        let content = TimelineItemContent.msgLike(content: .init(kind: .message(content: .init(msgType: messageType,
-                                                                                               body: body,
-                                                                                               isEdited: false,
-                                                                                               mentions: nil)),
-                                                                 reactions: [],
-                                                                 inReplyTo: nil,
-                                                                 threadRoot: nil,
-                                                                 threadSummary: nil))
-
-        var configuration = EventTimelineItemSDKMockConfiguration(content: content)
-        // EventTimelineItemSDKMockConfiguration doesn't expose originalJSON directly (it's set on the
-        // lazyProvider inside EventTimelineItem's own init), so build the item then patch debugInfo after.
-        let item = EventTimelineItem(configuration: configuration)
-        _ = configuration // keep the local binding intentional (see note below if the compiler warns unused)
-        return item
-    }
-```
-
-Note before writing this for real: `EventTimelineItemSDKMockConfiguration` (seen in full at `ElementX/Sources/Mocks/SDK/EventTimelineItem.swift:14-28`) has **no** `originalJSON` field — `debugInfoReturnValue` is hardcoded to `.init(model: "", originalJson: nil, latestEditJson: nil)` inside `EventTimelineItem.init(configuration:)` (line 35) and there is no way to override it from outside that init today. Since Task 4 needs a mock event whose `debugInfo.originalJSON` returns a specific string, **this step must first add an `originalJSON: String?` field to `EventTimelineItemSDKMockConfiguration`** and thread it through to `lazyProvider.debugInfoReturnValue`. Do that first:
+`EventTimelineItemSDKMockConfiguration` (`ElementX/Sources/Mocks/SDK/EventTimelineItem.swift:14-28`) has **no** `originalJSON` field today — `debugInfoReturnValue` is hardcoded to `.init(model: "", originalJson: nil, latestEditJson: nil)` inside `EventTimelineItem.init(configuration:)` (line 35), with no way to override it from outside. Task 4's test needs a mock event whose `debugInfo.originalJSON` returns a specific string, so add the field and thread it through:
 
 ```swift
 // In EventTimelineItemSDKMockConfiguration (ElementX/Sources/Mocks/SDK/EventTimelineItem.swift:14-28), add:
@@ -431,7 +407,9 @@ Note before writing this for real: `EventTimelineItemSDKMockConfiguration` (seen
     lazyProvider.debugInfoReturnValue = .init(model: "", originalJson: configuration.originalJSON, latestEditJson: nil)
 ```
 
-Then `mockAgentTurn` becomes:
+- [ ] **Step 3: Add the mock fixture**
+
+In `ElementX/Sources/Mocks/SDK/EventTimelineItem.swift`, add this to the `EventTimelineItem` extension (after `mockCallInvite`):
 
 ```swift
     static func mockAgentTurn(body: String = "Final reply", originalJSON: String? = nil) -> EventTimelineItem {
@@ -450,9 +428,9 @@ Then `mockAgentTurn` becomes:
     }
 ```
 
-(`EventTimelineItemSDKMockConfiguration`'s memberwise-style calls elsewhere, e.g. `.init(sender: sender, content: .callInvite)` in `mockCallInvite`, keep compiling unchanged since `originalJSON` defaults to `nil`.)
+`EventTimelineItemSDKMockConfiguration`'s memberwise-style calls elsewhere, e.g. `.init(sender: sender, content: .callInvite)` in `mockCallInvite`, keep compiling unchanged since `originalJSON` defaults to `nil`.
 
-- [ ] **Step 3: Write the failing factory test**
+- [ ] **Step 4: Write the failing factory test**
 
 Add to `UnitTests/Sources/TimelineItemFactoryTests.swift`:
 
@@ -505,12 +483,12 @@ Add to `UnitTests/Sources/TimelineItemFactoryTests.swift`:
     }
 ```
 
-- [ ] **Step 4: Run the tests to verify they fail**
+- [ ] **Step 5: Run the tests to verify they fail**
 
 Run: `swift test --filter TimelineItemFactoryTests`
 Expected: FAIL — `mockAgentTurn` doesn't exist yet / factory still returns `nil` for `io.element.agent.turn` (whichever compiles first will fail first; both must eventually pass).
 
-- [ ] **Step 5: Update the factory**
+- [ ] **Step 6: Update the factory**
 
 In `ElementX/Sources/Services/Timeline/TimelineItems/RoomTimelineItemFactory.swift`, change the `buildMessageTimelineItem` switch (currently ending `case .other: return nil`):
 
@@ -551,12 +529,12 @@ and add a new private method next to `buildLocationTimelineItem` (same file), co
     }
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [ ] **Step 7: Run the tests to verify they pass**
 
 Run: `swift test --filter TimelineItemFactoryTests`
 Expected: PASS, including the pre-existing `callInvite` test (make sure nothing regressed).
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add ElementX/Sources/Services/Timeline/TimelineItems/RoomTimelineItemFactory.swift ElementX/Sources/Mocks/SDK/EventTimelineItem.swift UnitTests/Sources/TimelineItemFactoryTests.swift
@@ -575,7 +553,32 @@ git commit -m "Build AgentTurnRoomTimelineItem from io.element.agent.turn messag
 
 This task has no unit test of its own — correctness is covered by the Sourcery-generated snapshot + accessibility tests, which key off `PreviewProvider, TestablePreview` conformance (`Tools/Sourcery/PreviewTests.stencil:28-34`) and require no manual annotation.
 
-- [ ] **Step 1: Create the view**
+- [ ] **Step 1: Add the pluralized "N tool calls" string**
+
+Add to `ElementX/Resources/Localizations/en.lproj/Untranslated.stringsdict` (new top-level `<key>`/`<dict>` pair, same shape as the existing `screen_room_timeline_state_changes` entry in `Localizable.stringsdict:501-516`, which is what `CollapsibleRoomTimelineView` uses for its own "N room changes" label):
+
+```xml
+	<key>screen_room_timeline_agent_turn_tool_calls_count</key>
+	<dict>
+		<key>COUNT</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%1$d tool call</string>
+			<key>other</key>
+			<string>%1$d tool calls</string>
+		</dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@COUNT@</string>
+	</dict>
+```
+
+Run `swiftgen config run --config Tools/SwiftGen/swiftgen-config.yml` to regenerate `ElementX/Sources/Generated/Strings.swift` — this produces `L10n.screenRoomTimelineAgentTurnToolCallsCount(_ p1: Int) -> String` (matching the naming SwiftGen already derives for `screenRoomTimelineStateChanges`, `Generated/Strings.swift:3182`).
+
+- [ ] **Step 2: Create the view**
 
 ```swift
 //
@@ -613,7 +616,7 @@ struct AgentTurnRoomTimelineView: View {
                 }
             } label: {
                 HStack(spacing: 4) {
-                    Text("\(timelineItem.content.toolCalls.count) tool calls")
+                    Text(L10n.screenRoomTimelineAgentTurnToolCallsCount(timelineItem.content.toolCalls.count))
                         .font(.compound.bodySM)
                     CompoundIcon(\.chevronRight, size: .small, relativeTo: .compound.bodySM)
                         .rotationEffect(.degrees(isToolCallsExpanded ? 90 : 0))
@@ -701,9 +704,9 @@ struct AgentTurnRoomTimelineView_Previews: PreviewProvider, TestablePreview {
 }
 ```
 
-Before finalizing this file, verify the icon key paths used (`\.time`, `\.check`, `\.error`, `\.info`, `\.chevronRight`) actually exist on `CompoundIcons` — grep `compound-ios/Sources/Compound/` for the closest matches and swap in whatever the design system actually names them; these four were picked by best guess from common Compound icon naming and were not individually confirmed against the icon catalogue.
+The icon key paths used (`\.time`, `\.check`, `\.error`, `\.info`, `\.chevronRight`) are confirmed against the resolved `compound-design-tokens` package (v10.2.2) source, `assets/ios/swift/CompoundIcons.swift:32,37,68,102,205` — all five exist with exactly these names.
 
-- [ ] **Step 2: Wire it into the dispatch switch**
+- [ ] **Step 3: Wire it into the dispatch switch**
 
 In `ElementX/Sources/Services/Timeline/TimelineItems/RoomTimelineItemView.swift`, add (next to the `.location` case):
 
@@ -716,25 +719,26 @@ In `ElementX/Sources/Services/Timeline/TimelineItems/RoomTimelineItemView.swift`
             PollRoomTimelineView(timelineItem: item)
 ```
 
-- [ ] **Step 3: Regenerate Sourcery-derived test files**
+- [ ] **Step 4: Regenerate Sourcery-derived test files**
 
 Run: `sourcery --config Tools/Sourcery/PreviewTestsConfig.yml`
 Expected: `PreviewTests/Sources/GeneratedPreviewTests.swift` gains a new `agentTurnRoomTimelineView()` test function. Also run the `AccessibilityTests.yml` and `TestablePreviewsDictionary.yml` configs the same way (AGENTS.md lists all Sourcery configs under one `sourcery` command per config).
 
-- [ ] **Step 4: Build and run the generated snapshot test**
+- [ ] **Step 5: Build and run the generated snapshot test**
 
-Run: `xcodebuild test -scheme ElementX -only-testing:PreviewTests/GeneratedPreviewTests/agentTurnRoomTimelineView` (adjust test identifier to whatever Sourcery actually generated in Step 3)
+Run: `xcodebuild test -scheme ElementX -only-testing:PreviewTests/GeneratedPreviewTests/agentTurnRoomTimelineView` (adjust test identifier to whatever Sourcery actually generated in Step 4)
 Expected: PASS on first run (snapshot tests record a reference image the first time in this codebase's snapshot-testing setup — confirm against `swift-snapshot-testing`'s recording mode if it instead fails asking you to record).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add ElementX/Sources/Screens/Timeline/View/TimelineItemViews/AgentTurnRoomTimelineView.swift ElementX/Sources/Services/Timeline/TimelineItems/RoomTimelineItemView.swift PreviewTests/Sources/GeneratedPreviewTests.swift AccessibilityTests/Sources/*.swift
+git add ElementX/Sources/Screens/Timeline/View/TimelineItemViews/AgentTurnRoomTimelineView.swift ElementX/Sources/Services/Timeline/TimelineItems/RoomTimelineItemView.swift ElementX/Resources/Localizations/en.lproj/Untranslated.stringsdict ElementX/Sources/Generated/Strings.swift PreviewTests/Sources/GeneratedPreviewTests.swift AccessibilityTests/Sources/*.swift
 git commit -m "Render agent-turn messages with a collapsible tool-calls section"
 ```
 
 ## Self-Review Notes
 
 - **Spec coverage:** the design doc's decided scenario #1 (dedicated agent-turn message type, structured `tool_calls`) is fully covered — Tasks 1-2 build the model, Task 3 registers it with the view-state layer, Task 4 wires the factory (including the fallback-to-`nil` behavior for *other* unrecognized custom msgtypes, which stays unchanged — explicitly tested in Task 4's second test so nobody "fixes" that as a drive-by), Task 5 renders it.
-- **Placeholder scan:** the two facts that were originally unverified (SDK label names, `originalJSON` shape) are now both confirmed against real sources (compiled binary, `matrix-rust-sdk` Rust source) — no open assumptions remain in the plan.
+- **Placeholder scan:** the two facts that were originally unverified (SDK label names, `originalJSON` shape) are now both confirmed against real sources (compiled binary, `matrix-rust-sdk` Rust source); the Compound icon key paths in Task 5 are confirmed against the resolved `compound-design-tokens` package source — no open assumptions remain in the plan.
 - **Type consistency:** `AgentTurnRoomTimelineItemContent`, `ToolCallSummary`, `ToolCallSummary.Status` are named identically across all five tasks; `AgentTurnRoomTimelineItem`'s stored properties match every sibling `*RoomTimelineItem` struct's shape exactly.
+- **Caught on 2026-07-03 re-review, now fixed:** (1) Task 5's disclosure label was a hardcoded English string, contradicting this plan's own Global Constraints claim that it introduces no new user-facing strings — it's now a proper `Untranslated.stringsdict` plural entry via `L10n`, following the codebase's existing `screen_room_timeline_state_changes` precedent. (2) Task 4 Step 2 (mock fixture) originally left a broken draft implementation in place before presenting the corrected version two paragraphs later — consolidated into one correct sequence. (3) Task 4's Interfaces line named a mock function signature (`mockAgentTurn(toolCallsJSON:)`) that didn't match the actual implementation (`mockAgentTurn(body:originalJSON:)`) — corrected.
