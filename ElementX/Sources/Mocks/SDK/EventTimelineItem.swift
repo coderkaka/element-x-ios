@@ -115,7 +115,7 @@ nonisolated extension EventTimelineItem {
         
         return .init(configuration: .init(sender: sender, content: content, originalJSON: defaultOriginalJSON, latestEditJSON: latestEditJSON))
     }
-
+    
     static func mockCanvasSteps(sender: String = "",
                                 body: String = "Task: Refactor auth module",
                                 taskID: String = "task-1234",

@@ -14,7 +14,7 @@ import SwiftUI
 struct CanvasTaskBannerView: View {
     let title: String
     let onMainButtonTap: () -> Void
-
+    
     var body: some View {
         Button(action: onMainButtonTap) {
             HStack(spacing: 9) {

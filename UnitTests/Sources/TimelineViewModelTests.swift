@@ -463,7 +463,7 @@ final class TimelineViewModelTests {
     }
     
     // MARK: - Canvas Steps
-
+    
     @Test
     func mostRecentUnresolvedCanvasTaskDrivesActiveCanvasTask() {
         // Given a timeline with an older resolved canvas task followed by a newer unresolved one.
@@ -472,32 +472,32 @@ final class TimelineViewModelTests {
             TextRoomTimelineItem(eventID: "t1"),
             AgentCanvasStepsRoomTimelineItem(eventID: "unresolved-task", taskID: "task-2", title: "New task", isResolved: false)
         ]
-
+        
         // When showing them in a timeline.
         let timelineController = TimelineControllerMock(.init(timelineItems: items))
         let viewModel = makeViewModel(timelineController: timelineController)
-
+        
         // Then activeCanvasTask should reflect only the most recent unresolved task.
         #expect(viewModel.state.activeCanvasTask?.eventID == "unresolved-task")
         #expect(viewModel.state.activeCanvasTask?.taskID == "task-2")
         #expect(viewModel.state.activeCanvasTask?.title == "New task")
     }
-
+    
     @Test
     func noUnresolvedCanvasTaskMeansNoActiveCanvasTask() {
         // Given a timeline with only a resolved canvas task.
         let items = [
             AgentCanvasStepsRoomTimelineItem(eventID: "resolved-task", taskID: "task-1", title: "Old task", isResolved: true)
         ]
-
+        
         // When showing them in a timeline.
         let timelineController = TimelineControllerMock(.init(timelineItems: items))
         let viewModel = makeViewModel(timelineController: timelineController)
-
+        
         // Then there should be no active canvas task.
         #expect(viewModel.state.activeCanvasTask == nil)
     }
-
+    
     // MARK: - Pins
     
     @Test

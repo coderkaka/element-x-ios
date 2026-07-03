@@ -898,10 +898,10 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         
         state.timelineState.itemsDictionary = timelineItemsDictionary
         state.timelineState.recomputeReadMarkerUniqueID()
-
+        
         updateActiveCanvasTask(timelineItems: timelineItems)
     }
-
+    
     /// Finds the most recent (last-in-timeline-order) unresolved canvas-steps task, matching this
     /// plan's V1 "at most one active banner, most recent wins" decision.
     private func updateActiveCanvasTask(timelineItems: [RoomTimelineItemProtocol]) {
@@ -909,15 +909,15 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
             guard let canvasItem = item as? AgentCanvasStepsRoomTimelineItem else { return false }
             return !canvasItem.content.isResolved
         } as? AgentCanvasStepsRoomTimelineItem
-
+        
         guard let unresolvedCanvasItem, let eventID = unresolvedCanvasItem.id.eventID else {
             state.activeCanvasTask = nil
             return
         }
-
+        
         state.activeCanvasTask = (eventID: eventID, taskID: unresolvedCanvasItem.content.taskID, title: unresolvedCanvasItem.content.title)
     }
-
+    
     private func updateViewState(item: RoomTimelineItemProtocol, groupStyle: TimelineGroupStyle) -> RoomTimelineItemViewState {
         if let timelineItemViewState = state.timelineState.itemsDictionary[item.id.uniqueID] {
             timelineItemViewState.groupStyle = groupStyle

@@ -146,7 +146,7 @@ struct RoomScreen: View {
                               onMainButtonTap: { context.send(viewAction: .tappedPinnedEventsBanner) },
                               onViewAllButtonTap: { context.send(viewAction: .viewAllPins) })
     }
-
+    
     private var canvasTaskBanner: some View {
         CanvasTaskBannerView(title: timelineContext.viewState.activeCanvasTask?.title ?? "") {
             timelineContext.send(viewAction: .tappedCanvasTaskBanner)

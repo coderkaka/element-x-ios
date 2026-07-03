@@ -26,6 +26,10 @@ internal nonisolated enum UntranslatedL10n {
   internal static func screenRoomTimelineAgentTurnToolCallsCount(_ p1: Int) -> String {
     return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_agent_turn_tool_calls_count", p1)
   }
+  /// View progress
+  internal static var screenRoomTimelineCanvasTaskBannerAction: String { return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_canvas_task_banner_action") }
+  /// Task in progress
+  internal static var screenRoomTimelineCanvasTaskBannerTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_canvas_task_banner_title") }
   /// Filters
   internal static var screenRoomlistFiltersTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_roomlist_filters_title") }
   /// Search for rooms

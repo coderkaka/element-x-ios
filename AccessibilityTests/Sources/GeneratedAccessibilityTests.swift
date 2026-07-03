@@ -91,6 +91,10 @@ extension AccessibilityTests {
         try await performAccessibilityAudit(named: "CallNotificationRoomTimelineView_Previews")
     }
 
+    func testCanvasTaskBannerView() async throws {
+        try await performAccessibilityAudit(named: "CanvasTaskBannerView_Previews")
+    }
+
     func testChatsSpaceFilterCell() async throws {
         try await performAccessibilityAudit(named: "ChatsSpaceFilterCell_Previews")
     }

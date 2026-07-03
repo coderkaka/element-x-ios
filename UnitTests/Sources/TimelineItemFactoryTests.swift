@@ -65,21 +65,21 @@ struct TimelineItemFactoryTests {
     func choiceRequestWithOptions() throws {
         let ownUserID = "@alice:matrix.org"
         let senderUserID = "@agent:matrix.org"
-
+        
         let factory = RoomTimelineItemFactory(userID: ownUserID,
                                               attributedStringBuilder: AttributedStringBuilder(mentionBuilder: MentionBuilder()),
                                               stateEventStringBuilder: RoomStateEventStringBuilder(userID: ownUserID))
-
+        
         let eventTimelineItem = EventTimelineItem.mockChoiceRequest(sender: senderUserID,
                                                                     body: "Which environment?",
                                                                     question: "Which environment should I deploy to?",
                                                                     options: [("test", "Test"), ("prod", "Production")],
                                                                     multiSelect: false)
         let eventTimelineItemProxy = EventTimelineItemProxy(item: eventTimelineItem, uniqueID: .init("0"))
-
+        
         let item = try #require(factory.buildTimelineItem(for: eventTimelineItemProxy, isDM: false) as? AgentChoiceRequestRoomTimelineItem,
                                 "Incorrect item type")
-
+        
         #expect(item.content.body == "Which environment?")
         #expect(item.content.question == "Which environment should I deploy to?")
         #expect(item.content.options == [ChoiceOption(id: "test", label: "Test"), ChoiceOption(id: "prod", label: "Production")])
@@ -87,22 +87,22 @@ struct TimelineItemFactoryTests {
         #expect(item.content.resolvedSelection == nil)
         #expect(item.sender == TimelineItemSender(id: senderUserID))
     }
-
+    
     @Test
     func choiceRequestWithResolvedSelectionFromLatestEdit() throws {
         let ownUserID = "@alice:matrix.org"
         let senderUserID = "@agent:matrix.org"
-
+        
         let factory = RoomTimelineItemFactory(userID: ownUserID,
                                               attributedStringBuilder: AttributedStringBuilder(mentionBuilder: MentionBuilder()),
                                               stateEventStringBuilder: RoomStateEventStringBuilder(userID: ownUserID))
-
+        
         let latestEditJSON = """
         {"content": {"question": "Which environment should I deploy to?", \
         "options": [{"id": "test", "label": "Test"}, {"id": "prod", "label": "Production"}], \
         "multi_select": false, "resolved_selection": ["prod"]}}
         """
-
+        
         let eventTimelineItem = EventTimelineItem.mockChoiceRequest(sender: senderUserID,
                                                                     body: "Which environment?",
                                                                     question: "Which environment should I deploy to?",
@@ -110,15 +110,15 @@ struct TimelineItemFactoryTests {
                                                                     multiSelect: false,
                                                                     latestEditJSON: latestEditJSON)
         let eventTimelineItemProxy = EventTimelineItemProxy(item: eventTimelineItem, uniqueID: .init("0"))
-
+        
         let item = try #require(factory.buildTimelineItem(for: eventTimelineItemProxy, isDM: false) as? AgentChoiceRequestRoomTimelineItem,
                                 "Incorrect item type")
-
+        
         // Proves latestEditJSON is threaded all the way through the mock configuration into the built item,
         // rather than being silently dropped (it used to be hardcoded to nil in EventTimelineItemSDKMockConfiguration).
         #expect(item.content.resolvedSelection == ["prod"])
     }
-
+    
     @Test
     func unrecognisedCustomMsgtypeIsStillDropped() {
         let ownUserID = "@alice:matrix.org"

@@ -76,7 +76,7 @@ enum TimelineViewAction {
     case displayReadReceipts(itemID: TimelineItemIdentifier)
     case displayThread(itemID: TimelineItemIdentifier)
     case tappedCanvasTaskBanner
-
+    
     case handlePasteOrDrop(providers: [NSItemProvider])
     case handlePollAction(TimelineViewPollAction)
     case handleChoiceRequestAction(TimelineViewChoiceRequestAction)
@@ -136,11 +136,11 @@ struct TimelineViewState: BindableState {
     /// The `pinnedEventIDs` are used only to determine if an item is already pinned or not.
     /// It's updated from the room info, so it's faster than using the timeline
     var pinnedEventIDs: Set<String> = []
-
+    
     /// The Matrix event ID and title of the most recently active (unresolved) `io.element.agent.canvas.steps`
     /// task in this timeline, if any. Drives `CanvasTaskBannerView`'s visibility in `RoomScreen`.
     var activeCanvasTask: (eventID: String, taskID: String, title: String)?
-
+    
     /// A closure providing the associated audio player state for an item in the timeline.
     var audioPlayerStateProvider: (@MainActor (_ itemId: TimelineItemIdentifier) -> AudioPlayerState?)?
     
