@@ -38,6 +38,9 @@ struct HomeScreen: View {
                     .navigationTransition(.zoom(sourceID: NavigationTransitionSourceID.spaceFilters,
                                                 in: navigationTransitionNamespace))
             }
+            .sheet(item: $context.roomListFiltersViewModel) { vm in
+                RoomListFiltersScreen(context: vm.context)
+            }
     }
     
     // MARK: - Private
