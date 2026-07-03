@@ -16,12 +16,12 @@
 - Every new `RoomTimelineItemType`/`EventBasedMessageTimelineItemContentType` case must be added to *every* exhaustive switch over that type — Task 2 and Task 3 enumerate every call site found by grepping the whole codebase for `.location(` and `EventBasedMessageTimelineItemContentType` usages; do not assume the list is only "the obvious ones."
 - `nonisolated` on new structs/enums, matching every sibling type in `Services/Timeline/TimelineItems/` (project uses `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, so service-layer types opt out explicitly).
 
-## Assumptions to verify first (do this before Task 1)
+## Assumptions to verify first — both CONFIRMED
 
-Two facts about the Rust SDK bindings could not be confirmed from source (the xcframework is a binary dependency; no local source checkout was available). Both are addressed as literal first steps below, not left as silent guesses:
+Two facts about the Rust SDK bindings couldn't originally be confirmed (the xcframework is a binary dependency). Both are now resolved against real sources, not guesses:
 
-1. **`MessageType.other` associated value labels — CONFIRMED.** Verified by compiling `MessageType.other(msgtype: "io.element.agent.turn", body: "hello")` against the real MatrixRustSDK binary (Xcode build on 2026-07-02, `UnitTests` scheme, iOS 26.5 simulator): compiles clean with these exact labels. Safe to use as written throughout this plan.
-2. **Whether `EventTimelineItemProxy.debugInfo.originalJSON` contains the full raw event (including `content.tool_calls`) or just the event's `content`.** Strong circumstantial evidence points to "full event": `TimelineItemDebugView.swift`'s preview shows the sibling `model` field as a full event dump (`event_id`, `sender`, `timestamp`, `content: Message(...)` all nested), and this is the same "View Source" mechanism every Matrix client uses to show the complete original event, not just its content. Task 4's parser handles **both** shapes defensively (tries full-event envelope first, falls back to content-only) specifically because this could not be verified against a live event in this environment (no working simulator/package-resolution setup was available at plan-writing time). When you run Task 4's test for the first time, if it fails, print the raw `originalJSON` from the test's mock and read AGENTS.md/re-check against a real device — the fix is a one-line change to which envelope shape wins, not a redesign.
+1. **`MessageType.other` associated value labels — CONFIRMED.** Verified by compiling `MessageType.other(msgtype: "io.element.agent.turn", body: "hello")` against the real MatrixRustSDK binary (Xcode build on 2026-07-02, `UnitTests` scheme, iOS 26.5 simulator): compiles clean with these exact labels.
+2. **`EventTimelineItemProxy.debugInfo.originalJSON` contains the full raw event, not just `content` — CONFIRMED from `matrix-rust-sdk` source.** `crates/matrix-sdk-ui/src/timeline/event_item/mod.rs:135`: `pub(crate) original_json: Option<Raw<AnySyncTimelineEvent>>` — `Raw<AnySyncTimelineEvent>` (Ruma) is the complete Matrix event (`type`, `sender`, `event_id`, `content`, `origin_server_ts`, `unsigned`, ...), matching what `event_handler.rs:1039` stores it from (`raw_event.clone()`, the literal event as received). Task 1's parser is written for this one known shape — see below.
 
 ## Task 1: `AgentTurnRoomTimelineItemContent` model + JSON parsing
 
@@ -76,25 +76,6 @@ struct AgentTurnRoomTimelineItemContentTests {
         #expect(content.toolCalls == [
             ToolCallSummary(name: "read_file", status: .done, summary: "Read Foo.swift"),
             ToolCallSummary(name: "search", status: .pending, summary: "Searching...")
-        ])
-    }
-
-    @Test
-    func parsesToolCallsFromContentOnlyEnvelope() {
-        let originalJSON = """
-        {
-            "msgtype": "io.element.agent.turn",
-            "body": "Final reply",
-            "tool_calls": [
-                {"name": "read_file", "status": "failed", "summary": "Could not read Foo.swift"}
-            ]
-        }
-        """
-
-        let content = AgentTurnRoomTimelineItemContent(body: "Final reply", parsingToolCallsFrom: originalJSON)
-
-        #expect(content.toolCalls == [
-            ToolCallSummary(name: "read_file", status: .failed, summary: "Could not read Foo.swift")
         ])
     }
 
@@ -178,10 +159,9 @@ nonisolated struct AgentTurnRoomTimelineItemContent: Hashable {
 
     /// - Parameter originalJSON: the raw Matrix event JSON from `EventTimelineItemProxy.debugInfo.originalJSON`.
     ///   The Rust SDK only exposes the standard `body` field for custom msgtypes via `MessageType.other`,
-    ///   so `tool_calls` has to be recovered by hand from the raw event. Tries a full-event envelope
-    ///   (`{"content": {"tool_calls": [...]}}`) first, then a bare content object (`{"tool_calls": [...]}`),
-    ///   because which shape `originalJSON` actually is wasn't confirmed against a live event when this
-    ///   was written (see the plan's "Assumptions to verify first" section).
+    ///   so `tool_calls` has to be recovered by hand from the raw event. `originalJSON` is always the
+    ///   *full* event (confirmed against `matrix-rust-sdk` source: `original_json: Option<Raw<AnySyncTimelineEvent>>`,
+    ///   `crates/matrix-sdk-ui/src/timeline/event_item/mod.rs:135`), so `tool_calls` lives under `content`.
     init(body: String, parsingToolCallsFrom originalJSON: String?) {
         self.body = body
         toolCalls = Self.parseToolCalls(from: originalJSON)
@@ -202,17 +182,8 @@ nonisolated struct AgentTurnRoomTimelineItemContent: Hashable {
             let content: ContentEnvelope
         }
 
-        let decoder = JSONDecoder()
-
-        if let event = try? decoder.decode(EventEnvelope.self, from: data) {
-            return event.content.toolCalls
-        }
-
-        if let content = try? decoder.decode(ContentEnvelope.self, from: data) {
-            return content.toolCalls
-        }
-
-        return []
+        guard let event = try? JSONDecoder().decode(EventEnvelope.self, from: data) else { return [] }
+        return event.content.toolCalls
     }
 }
 ```
@@ -220,7 +191,7 @@ nonisolated struct AgentTurnRoomTimelineItemContent: Hashable {
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `swift test --filter AgentTurnRoomTimelineItemContentTests`
-Expected: PASS, all 5 tests green.
+Expected: PASS, all 4 tests green.
 
 - [ ] **Step 5: Commit**
 
@@ -585,11 +556,7 @@ and add a new private method next to `buildLocationTimelineItem` (same file), co
 Run: `swift test --filter TimelineItemFactoryTests`
 Expected: PASS, including the pre-existing `callInvite` test (make sure nothing regressed).
 
-- [ ] **Step 7: If `agentTurnWithToolCalls` fails on the tool-calls assertion specifically**
-
-This means the "Assumptions to verify first" guess about which JSON envelope shape is wrong in a way the defensive double-decode in Task 1 doesn't already cover — print `eventItemProxy.debugInfo.originalJSON` in the test to see the actual mock value (it's whatever you passed to `mockAgentTurn(originalJSON:)`, so this only tells you the parser bug, not the real SDK's shape). To check the *real* SDK's shape, this needs a live app + live homeserver event (see plan header) — file that as a follow-up, don't block this task on it, since the mock test only proves the parser handles the shapes it's given correctly.
-
-- [ ] **Step 8: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add ElementX/Sources/Services/Timeline/TimelineItems/RoomTimelineItemFactory.swift ElementX/Sources/Mocks/SDK/EventTimelineItem.swift UnitTests/Sources/TimelineItemFactoryTests.swift
@@ -769,6 +736,5 @@ git commit -m "Render agent-turn messages with a collapsible tool-calls section"
 ## Self-Review Notes
 
 - **Spec coverage:** the design doc's decided scenario #1 (dedicated agent-turn message type, structured `tool_calls`) is fully covered — Tasks 1-2 build the model, Task 3 registers it with the view-state layer, Task 4 wires the factory (including the fallback-to-`nil` behavior for *other* unrecognized custom msgtypes, which stays unchanged — explicitly tested in Task 4's second test so nobody "fixes" that as a drive-by), Task 5 renders it.
-- **Placeholder scan:** the two genuinely unverified facts (SDK label names, `originalJSON` shape) are called out explicitly with a concrete fallback/adjustment step each, not left as unmarked assumptions.
+- **Placeholder scan:** the two facts that were originally unverified (SDK label names, `originalJSON` shape) are now both confirmed against real sources (compiled binary, `matrix-rust-sdk` Rust source) — no open assumptions remain in the plan.
 - **Type consistency:** `AgentTurnRoomTimelineItemContent`, `ToolCallSummary`, `ToolCallSummary.Status` are named identically across all five tasks; `AgentTurnRoomTimelineItem`'s stored properties match every sibling `*RoomTimelineItem` struct's shape exactly.
-- **Known residual risk carried forward, not silently dropped:** whether `debugInfo.originalJSON` is a full-event or content-only envelope. Flagged in the plan header, in Task 1 (parser handles both), and in Task 4 Step 7 (what to do if the live shape turns out to differ). This is the single most likely thing to require a follow-up fix once run against a real agent backend.
