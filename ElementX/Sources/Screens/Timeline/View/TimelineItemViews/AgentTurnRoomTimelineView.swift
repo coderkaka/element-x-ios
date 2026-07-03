@@ -21,14 +21,16 @@ struct AgentTurnRoomTimelineView: View {
     @AccessibilityFocusState private var accessibilityFocusState: AccessibilityFocus?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if !timelineItem.content.toolCalls.isEmpty {
-                toolCallsDisclosure
-            }
+        TimelineStyler(timelineItem: timelineItem) {
+            VStack(alignment: .leading, spacing: 8) {
+                if !timelineItem.content.toolCalls.isEmpty {
+                    toolCallsDisclosure
+                }
 
-            Text(timelineItem.content.body)
-                .font(.compound.bodyMD)
-                .foregroundColor(.compound.textPrimary)
+                Text(timelineItem.content.body)
+                    .font(.compound.bodyMD)
+                    .foregroundColor(.compound.textPrimary)
+            }
         }
     }
 
@@ -101,6 +103,8 @@ struct AgentTurnRoomTimelineView: View {
 }
 
 struct AgentTurnRoomTimelineView_Previews: PreviewProvider, TestablePreview {
+    static let viewModel = TimelineViewModel.mock
+
     static var previews: some View {
         PreviewScrollView {
             VStack(spacing: 8) {
@@ -108,6 +112,7 @@ struct AgentTurnRoomTimelineView_Previews: PreviewProvider, TestablePreview {
             }
         }
         .previewLayout(.sizeThatFits)
+        .environmentObject(viewModel.context)
     }
 
     @ViewBuilder
