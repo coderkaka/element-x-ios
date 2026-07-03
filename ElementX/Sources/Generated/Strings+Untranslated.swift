@@ -12,6 +12,10 @@ import Foundation
 internal nonisolated enum UntranslatedL10n {
   /// Search
   internal static var screenHomeTabSearch: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_search") }
+  /// Plural format key: "%#@COUNT@"
+  internal static func screenRoomTimelineAgentTurnToolCallsCount(_ p1: Int) -> String {
+    return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_agent_turn_tool_calls_count", p1)
+  }
   /// Search for rooms
   internal static var screenSearchEmptyStateMessage: String { return UntranslatedL10n.tr("Untranslated", "screen_search_empty_state_message") }
   /// Start searching...
