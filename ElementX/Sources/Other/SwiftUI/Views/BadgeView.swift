@@ -49,11 +49,68 @@ struct BadgeViewModifier: ViewModifier {
     }
 }
 
+struct CountBadgeView: View {
+    let count: Int
+    let size: Double
+
+    var body: some View {
+        Circle()
+            .fill(.compound.iconCriticalPrimary)
+            .frame(width: size, height: size)
+            .overlay {
+                Text(String(count))
+                    .font(.compound.bodyXSSemibold)
+                    .foregroundStyle(.compound.textOnSolidPrimary)
+                    .dynamicTypeSize(.large)
+            }
+    }
+}
+
+struct CountBadgeViewModifier: ViewModifier {
+    let count: Int
+    let size: Double
+
+    func body(content: Content) -> some View {
+        content.mask {
+            Rectangle()
+                .fill(.white)
+                .overlay(alignment: .topTrailing) {
+                    Circle()
+                        .fill(.black)
+                        .frame(width: maskSize, height: maskSize)
+                        .offset(maskOffset)
+                }
+                .compositingGroup()
+                .luminanceToAlpha()
+        }
+        .overlay(alignment: .topTrailing) {
+            CountBadgeView(count: count, size: size)
+        }
+    }
+
+    private var maskSize: Double {
+        size * 1.25
+    }
+
+    private var maskOffset: CGSize {
+        .init(width: (maskSize - size) / 2, height: -(maskSize - size) / 2)
+    }
+}
+
 extension View {
     @ViewBuilder
     func overlayBadge(_ size: Double, isBadged: Bool = true) -> some View {
         if isBadged {
             modifier(BadgeViewModifier(size: size))
+        } else {
+            self
+        }
+    }
+
+    @ViewBuilder
+    func overlayCountBadge(_ size: Double, count: Int) -> some View {
+        if count > 0 {
+            modifier(CountBadgeViewModifier(count: count, size: size))
         } else {
             self
         }

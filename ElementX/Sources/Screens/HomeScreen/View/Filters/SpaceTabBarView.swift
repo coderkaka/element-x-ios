@@ -13,7 +13,7 @@ struct SpaceTabBarView: View {
     let filters: [SpaceServiceFilter]
     let selectedFilter: SpaceServiceFilter?
     let mediaProvider: MediaProviderProtocol!
-    let isFiltering: Bool
+    let activeFilterCount: Int
     let action: (SpaceServiceFilter?) -> Void
     let onFilterButtonTapped: () -> Void
     
@@ -41,7 +41,7 @@ struct SpaceTabBarView: View {
             }
             .scrollIndicators(.hidden)
             
-            RoomFiltersButton(isFiltering: isFiltering, action: onFilterButtonTapped)
+            RoomFiltersButton(activeFilterCount: activeFilterCount, action: onFilterButtonTapped)
                 .padding(.trailing, 16)
         }
         .padding(.leading, 16)
@@ -98,16 +98,16 @@ private struct SpaceTabChipView: View {
 }
 
 private struct RoomFiltersButton: View {
-    let isFiltering: Bool
+    let activeFilterCount: Int
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
-            CompoundIcon(\.filter, size: .small, relativeTo: .compound.bodyLG)
+            CompoundIcon(\.listBulleted, size: .small, relativeTo: .compound.bodyLG)
                 .foregroundStyle(.compound.iconPrimary)
                 .padding(7)
                 .background(.compound.bgSubtlePrimary, in: .circle)
-                .overlayBadge(8, isBadged: isFiltering)
+                .overlayCountBadge(16, count: activeFilterCount)
         }
         .accessibilityLabel(UntranslatedL10n.a11yRoomListFiltersButton)
         .accessibilityIdentifier(A11yIdentifiers.homeScreen.roomListFilters)
@@ -124,14 +124,14 @@ struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: nil,
                             mediaProvider: mediaProvider,
-                            isFiltering: false) { _ in } onFilterButtonTapped: { }
-            
+                            activeFilterCount: 0) { _ in } onFilterButtonTapped: { }
+
             Divider()
-            
+
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: mockFilters.first,
                             mediaProvider: mediaProvider,
-                            isFiltering: true) { _ in } onFilterButtonTapped: { }
+                            activeFilterCount: 2) { _ in } onFilterButtonTapped: { }
         }
         .background(Color.compound.bgCanvasDefault)
     }

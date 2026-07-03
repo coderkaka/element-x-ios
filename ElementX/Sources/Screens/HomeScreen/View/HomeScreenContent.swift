@@ -120,7 +120,7 @@ struct HomeScreenContent: View {
                     SpaceTabBarView(filters: context.viewState.topLevelSpaceFilters,
                                     selectedFilter: context.viewState.selectedSpaceFilter,
                                     mediaProvider: context.mediaProvider,
-                                    isFiltering: context.viewState.bindings.filtersState.isFiltering) { filter in
+                                    activeFilterCount: context.viewState.bindings.filtersState.activeFilters.count) { filter in
                         context.send(viewAction: .selectSpaceFilter(filter))
                     } onFilterButtonTapped: {
                         context.send(viewAction: .roomListFilters)
