@@ -66,6 +66,9 @@ struct RoomTimelineItemView: View {
             LocationRoomTimelineView(timelineItem: item)
         case .agentTurn(let item):
             AgentTurnRoomTimelineView(timelineItem: item)
+        case .choiceRequest:
+            // Real view (`AgentChoiceRequestRoomTimelineView`) wired in a later task; this only keeps the switch exhaustive.
+            EmptyView()
         case .poll(let item):
             PollRoomTimelineView(timelineItem: item)
         case .voice(let item):
