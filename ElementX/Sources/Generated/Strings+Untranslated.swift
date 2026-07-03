@@ -10,6 +10,10 @@ import Foundation
 // swiftlint:disable explicit_type_interface function_parameter_count identifier_name line_length
 // swiftlint:disable nesting type_body_length type_name vertical_whitespace_opening_braces
 internal nonisolated enum UntranslatedL10n {
+  /// Collapse tool calls
+  internal static var a11yCollapseToolCalls: String { return UntranslatedL10n.tr("Untranslated", "a11y_collapse_tool_calls") }
+  /// Expand tool calls
+  internal static var a11yExpandToolCalls: String { return UntranslatedL10n.tr("Untranslated", "a11y_expand_tool_calls") }
   /// Search
   internal static var screenHomeTabSearch: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_search") }
   /// Plural format key: "%#@COUNT@"
