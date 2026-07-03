@@ -14,12 +14,16 @@ internal nonisolated enum UntranslatedL10n {
   internal static var a11yCollapseToolCalls: String { return UntranslatedL10n.tr("Untranslated", "a11y_collapse_tool_calls") }
   /// Expand tool calls
   internal static var a11yExpandToolCalls: String { return UntranslatedL10n.tr("Untranslated", "a11y_expand_tool_calls") }
+  /// Show filters
+  internal static var a11yRoomListFiltersButton: String { return UntranslatedL10n.tr("Untranslated", "a11y_room_list_filters_button") }
   /// Search
   internal static var screenHomeTabSearch: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_search") }
   /// Plural format key: "%#@COUNT@"
   internal static func screenRoomTimelineAgentTurnToolCallsCount(_ p1: Int) -> String {
     return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_agent_turn_tool_calls_count", p1)
   }
+  /// Filters
+  internal static var screenRoomlistFiltersTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_roomlist_filters_title") }
   /// Search for rooms
   internal static var screenSearchEmptyStateMessage: String { return UntranslatedL10n.tr("Untranslated", "screen_search_empty_state_message") }
   /// Start searching...
