@@ -462,6 +462,42 @@ final class TimelineViewModelTests {
         #expect(viewModel.context.manageMemberViewModel?.id == RoomMemberProxyMock.mockBanned[0].userID)
     }
     
+    // MARK: - Canvas Steps
+
+    @Test
+    func mostRecentUnresolvedCanvasTaskDrivesActiveCanvasTask() {
+        // Given a timeline with an older resolved canvas task followed by a newer unresolved one.
+        let items = [
+            AgentCanvasStepsRoomTimelineItem(eventID: "resolved-task", taskID: "task-1", title: "Old task", isResolved: true),
+            TextRoomTimelineItem(eventID: "t1"),
+            AgentCanvasStepsRoomTimelineItem(eventID: "unresolved-task", taskID: "task-2", title: "New task", isResolved: false)
+        ]
+
+        // When showing them in a timeline.
+        let timelineController = TimelineControllerMock(.init(timelineItems: items))
+        let viewModel = makeViewModel(timelineController: timelineController)
+
+        // Then activeCanvasTask should reflect only the most recent unresolved task.
+        #expect(viewModel.state.activeCanvasTask?.eventID == "unresolved-task")
+        #expect(viewModel.state.activeCanvasTask?.taskID == "task-2")
+        #expect(viewModel.state.activeCanvasTask?.title == "New task")
+    }
+
+    @Test
+    func noUnresolvedCanvasTaskMeansNoActiveCanvasTask() {
+        // Given a timeline with only a resolved canvas task.
+        let items = [
+            AgentCanvasStepsRoomTimelineItem(eventID: "resolved-task", taskID: "task-1", title: "Old task", isResolved: true)
+        ]
+
+        // When showing them in a timeline.
+        let timelineController = TimelineControllerMock(.init(timelineItems: items))
+        let viewModel = makeViewModel(timelineController: timelineController)
+
+        // Then there should be no active canvas task.
+        #expect(viewModel.state.activeCanvasTask == nil)
+    }
+
     // MARK: - Pins
     
     @Test
@@ -644,6 +680,18 @@ private extension TextRoomTimelineItem {
                   sender: .init(id: ""),
                   content: .init(body: "Hello, World!"),
                   properties: RoomTimelineItemProperties(encryptionAuthenticity: encryptionAuthenticity))
+    }
+}
+
+private extension AgentCanvasStepsRoomTimelineItem {
+    init(eventID: String, taskID: String, title: String, isResolved: Bool) {
+        self.init(id: .event(uniqueID: .init(UUID().uuidString), eventOrTransactionID: .eventID(eventID)),
+                  timestamp: .mock,
+                  isOutgoing: false,
+                  isEditable: false,
+                  canBeRepliedTo: true,
+                  sender: .init(id: "@agent:server.com"),
+                  content: .init(body: title, taskID: taskID, title: title, isResolved: isResolved))
     }
 }
 

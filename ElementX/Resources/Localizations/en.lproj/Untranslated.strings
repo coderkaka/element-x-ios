@@ -2,6 +2,8 @@
 "a11y_expand_tool_calls" = "Expand tool calls";
 "screen_room_timeline_agent_choice_confirm_button" = "Confirm";
 "screen_room_timeline_agent_choice_selected_prefix" = "Selected";
+"screen_room_timeline_canvas_task_banner_title" = "Task in progress";
+"screen_room_timeline_canvas_task_banner_action" = "View progress";
 "screen_home_tab_search" = "Search";
 "screen_search_empty_state_message" = "Search for rooms";
 "screen_search_empty_state_title" = "Start searching...";
