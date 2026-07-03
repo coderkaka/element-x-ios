@@ -88,6 +88,10 @@ struct TimelineReplyView: View {
                         ReplyView(sender: sender,
                                   plainBody: content.body,
                                   formattedBody: nil)
+                    case .choiceRequest(let content):
+                        ReplyView(sender: sender,
+                                  plainBody: content.question.isEmpty ? content.body : content.question,
+                                  formattedBody: nil)
                     }
                 case .poll(let question):
                     ReplyView(sender: sender,
