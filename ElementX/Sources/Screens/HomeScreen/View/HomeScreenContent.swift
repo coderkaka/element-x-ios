@@ -127,7 +127,7 @@ struct HomeScreenContent: View {
                     }
                     Divider()
                 }
-
+                
                 if case let .show(state) = context.viewState.securityBannerMode {
                     HomeScreenRecoveryKeyConfirmationBanner(state: state, context: context)
                 } else if context.viewState.shouldShowNewSoundBanner {

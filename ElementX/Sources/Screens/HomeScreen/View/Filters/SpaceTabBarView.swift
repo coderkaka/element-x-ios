@@ -16,7 +16,7 @@ struct SpaceTabBarView: View {
     let isFiltering: Bool
     let action: (SpaceServiceFilter?) -> Void
     let onFilterButtonTapped: () -> Void
-
+    
     var body: some View {
         HStack(spacing: 8) {
             ScrollView(.horizontal) {
@@ -27,7 +27,7 @@ struct SpaceTabBarView: View {
                                      mediaProvider: mediaProvider) {
                         action(nil)
                     }
-
+                    
                     ForEach(filters) { filter in
                         SpaceTabChipView(name: filter.room.name,
                                          avatar: filter.room.avatar,
@@ -40,7 +40,7 @@ struct SpaceTabBarView: View {
                 .padding(.vertical, 12)
             }
             .scrollIndicators(.hidden)
-
+            
             RoomFiltersButton(isFiltering: isFiltering, action: onFilterButtonTapped)
                 .padding(.trailing, 16)
         }
@@ -54,19 +54,19 @@ private struct SpaceTabChipView: View {
     let isSelected: Bool
     let mediaProvider: MediaProviderProtocol!
     let action: () -> Void
-
+    
     private var strokeColor: Color {
         isSelected ? .compound.bgActionPrimaryRest : .compound.borderInteractiveSecondary
     }
-
+    
     private var backgroundColor: Color {
         isSelected ? .compound.bgActionPrimaryRest : .compound.bgCanvasDefault
     }
-
+    
     private var foregroundColor: Color {
         isSelected ? .compound.textOnSolidPrimary : .compound.textPrimary
     }
-
+    
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 20)
         Button(action: action) {
@@ -100,7 +100,7 @@ private struct SpaceTabChipView: View {
 private struct RoomFiltersButton: View {
     let isFiltering: Bool
     let action: () -> Void
-
+    
     var body: some View {
         Button(action: action) {
             CompoundIcon(\.filter, size: .small, relativeTo: .compound.bodyLG)
@@ -118,24 +118,24 @@ private struct RoomFiltersButton: View {
 
 struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
     static let mediaProvider = MediaProviderMock(.init())
-
+    
     static var previews: some View {
         VStack(spacing: 0) {
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: nil,
                             mediaProvider: mediaProvider,
-                            isFiltering: false) { _ in } onFilterButtonTapped: {}
-
+                            isFiltering: false) { _ in } onFilterButtonTapped: { }
+            
             Divider()
-
+            
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: mockFilters.first,
                             mediaProvider: mediaProvider,
-                            isFiltering: true) { _ in } onFilterButtonTapped: {}
+                            isFiltering: true) { _ in } onFilterButtonTapped: { }
         }
         .background(Color.compound.bgCanvasDefault)
     }
-
+    
     static var mockFilters: [SpaceServiceFilter] {
         [SpaceServiceRoom].mockJoinedSpaces.prefix(4).map {
             SpaceServiceFilter(room: $0, level: 0, descendants: [])
