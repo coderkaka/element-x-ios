@@ -534,12 +534,27 @@ Add to the `timestamp` switch, right after `case .choiceRequest(let item): retur
             return item.timestamp
 ```
 
-- [ ] **Step 2: Build the whole scheme**
+- [ ] **Step 2: Add a placeholder case to `RoomTimelineItemView.swift` (a plan correction, discovered while executing the immediately-prior `io.element.agent.choice_request` plan's own Task 3)**
+
+`RoomTimelineItemView.swift`'s view-dispatch `switch` has no `default:` case, so it must exhaustively handle every `RoomTimelineItemType` case at compile time — including `.canvasSteps`, the moment Step 1 above adds it, regardless of whether the real `AgentCanvasStepsRoomTimelineView` exists yet (that's Task 5's job). Without this step, the whole-scheme build in Step 3 below will fail with "switch must be exhaustive." Find the existing `case .choiceRequest(let item): AgentChoiceRequestRoomTimelineView(timelineItem: item)` case and add a temporary placeholder right after it:
+
+```swift
+        case .choiceRequest(let item):
+            AgentChoiceRequestRoomTimelineView(timelineItem: item)
+        case .canvasSteps:
+            EmptyView() // TODO(Task 5): replace with AgentCanvasStepsRoomTimelineView(timelineItem:) once that view exists
+        case .poll(let item):
+            PollRoomTimelineView(timelineItem: item)
+```
+
+Task 5 must **replace** this placeholder case with the real view dispatch, not add a second `.canvasSteps` case alongside it (which would itself be a compile error — duplicate case).
+
+- [ ] **Step 3: Build the whole scheme**
 
 Run over SSH on the Mac: `xcodebuild build -project ElementX.xcodeproj -scheme ElementX -destination 'platform=iOS Simulator,id=<current simulator id>'`
 Expected: `** BUILD SUCCEEDED **`.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add ElementX/Sources/Services/Timeline/TimelineItems/RoomTimelineItemViewState.swift
