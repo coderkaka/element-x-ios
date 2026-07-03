@@ -33,9 +33,9 @@ struct AgentTurnRoomTimelineItemContentTests {
             }
         }
         """
-    
+        
         let content = AgentTurnRoomTimelineItemContent(body: "Final reply", parsingToolCallsFrom: originalJSON)
-    
+        
         #expect(content.toolCalls == [
             ToolCallSummary(name: "read_file", status: .done, summary: "Read Foo.swift"),
             ToolCallSummary(name: "search", status: .pending, summary: "Searching...")
@@ -47,9 +47,9 @@ struct AgentTurnRoomTimelineItemContentTests {
         let originalJSON = """
         {"content": {"tool_calls": [{"name": "read_file", "status": "queued", "summary": "..."}]}}
         """
-    
+        
         let content = AgentTurnRoomTimelineItemContent(body: "x", parsingToolCallsFrom: originalJSON)
-    
+        
         #expect(content.toolCalls == [ToolCallSummary(name: "read_file", status: .other("queued"), summary: "...")])
     }
     
@@ -68,7 +68,7 @@ struct AgentTurnRoomTimelineItemContentTests {
                                              canBeRepliedTo: true,
                                              sender: .init(id: "@agent:example.com"),
                                              content: .init(body: "Final reply", toolCalls: []))
-    
+        
         #expect(item.body == "Final reply")
         #expect(item.contentType == .agentTurn(.init(body: "Final reply", toolCalls: [])))
     }
