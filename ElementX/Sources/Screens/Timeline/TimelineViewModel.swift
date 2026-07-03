@@ -210,6 +210,8 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
             timelineInteractionHandler.handlePasteOrDrop(providers)
         case .handlePollAction(let pollAction):
             handlePollAction(pollAction)
+        case .handleChoiceRequestAction(let choiceRequestAction):
+            handleChoiceRequestAction(choiceRequestAction)
         case .handleAudioPlayerAction(let audioPlayerAction):
             handleAudioPlayerAction(audioPlayerAction)
         case .stopLiveLocationSharing(let id):
@@ -384,7 +386,14 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
             actionsSubject.send(.displayEditPollForm(eventID: eventID, poll: poll))
         }
     }
-    
+
+    private func handleChoiceRequestAction(_ action: TimelineViewChoiceRequestAction) {
+        switch action {
+        case let .sendResponse(requestEventID, body):
+            timelineInteractionHandler.sendChoiceRequestResponse(requestEventID: requestEventID, body: body)
+        }
+    }
+
     private func handleAudioPlayerAction(_ action: TimelineAudioPlayerAction) {
         switch action {
         case .playPause(let itemID):

@@ -66,9 +66,8 @@ struct RoomTimelineItemView: View {
             LocationRoomTimelineView(timelineItem: item)
         case .agentTurn(let item):
             AgentTurnRoomTimelineView(timelineItem: item)
-        case .choiceRequest:
-            // Real view (`AgentChoiceRequestRoomTimelineView`) wired in a later task; this only keeps the switch exhaustive.
-            EmptyView()
+        case .choiceRequest(let item):
+            AgentChoiceRequestRoomTimelineView(timelineItem: item)
         case .canvasSteps:
             EmptyView() // TODO(Task 5): replace with AgentCanvasStepsRoomTimelineView(timelineItem:) once that view exists
         case .poll(let item):

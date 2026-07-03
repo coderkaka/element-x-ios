@@ -41,6 +41,10 @@ enum TimelineViewPollAction {
     case edit(pollStartID: String, poll: Poll)
 }
 
+enum TimelineViewChoiceRequestAction {
+    case sendResponse(requestEventID: String, body: String)
+}
+
 enum TimelineAudioPlayerAction {
     case playPause(itemID: TimelineItemIdentifier)
     case seek(itemID: TimelineItemIdentifier, progress: Double)
@@ -73,6 +77,7 @@ enum TimelineViewAction {
     
     case handlePasteOrDrop(providers: [NSItemProvider])
     case handlePollAction(TimelineViewPollAction)
+    case handleChoiceRequestAction(TimelineViewChoiceRequestAction)
     case handleAudioPlayerAction(TimelineAudioPlayerAction)
     
     case stopLiveLocationSharing(TimelineItemIdentifier)

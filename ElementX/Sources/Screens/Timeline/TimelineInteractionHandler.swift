@@ -251,7 +251,7 @@ class TimelineInteractionHandler {
     func sendPollResponse(pollStartID: String, answerIDs: [String]) {
         Task {
             let sendPollResponseResult = await pollInteractionHandler.sendPollResponse(pollStartID: pollStartID, answerIDs: answerIDs)
-            
+
             switch sendPollResponseResult {
             case .success:
                 break
@@ -260,7 +260,16 @@ class TimelineInteractionHandler {
             }
         }
     }
-    
+
+    func sendChoiceRequestResponse(requestEventID: String, body: String) {
+        Task {
+            await timelineController.sendMessage(body,
+                                                 html: nil,
+                                                 inReplyToEventID: requestEventID,
+                                                 intentionalMentions: .empty)
+        }
+    }
+
     func endPoll(pollStartID: String) {
         Task {
             let endPollResult = await pollInteractionHandler.endPoll(pollStartID: pollStartID)
