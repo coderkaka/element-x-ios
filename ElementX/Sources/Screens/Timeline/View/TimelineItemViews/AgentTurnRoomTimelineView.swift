@@ -6,6 +6,7 @@
 // Please see LICENSE files in the repository root for full details.
 //
 
+import Compound
 import SwiftUI
 
 struct AgentTurnRoomTimelineView: View {
@@ -33,7 +34,7 @@ struct AgentTurnRoomTimelineView: View {
                 }
             } label: {
                 HStack(spacing: 4) {
-                    Text(L10n.screenRoomTimelineAgentTurnToolCallsCount(timelineItem.content.toolCalls.count))
+                    Text(UntranslatedL10n.screenRoomTimelineAgentTurnToolCallsCount(timelineItem.content.toolCalls.count))
                         .font(.compound.bodySM)
                     CompoundIcon(\.chevronRight, size: .small, relativeTo: .compound.bodySM)
                         .rotationEffect(.degrees(isToolCallsExpanded ? 90 : 0))
