@@ -58,4 +58,18 @@ struct AgentTurnRoomTimelineItemContentTests {
         let content = AgentTurnRoomTimelineItemContent(body: "x", parsingToolCallsFrom: "not json")
         #expect(content.toolCalls == [])
     }
+
+    @Test
+    func itemExposesBodyAndContentType() {
+        let item = AgentTurnRoomTimelineItem(id: .randomEvent,
+                                             timestamp: .mock,
+                                             isOutgoing: false,
+                                             isEditable: false,
+                                             canBeRepliedTo: true,
+                                             sender: .init(id: "@agent:example.com"),
+                                             content: .init(body: "Final reply", toolCalls: []))
+
+        #expect(item.body == "Final reply")
+        #expect(item.contentType == .agentTurn(.init(body: "Final reply", toolCalls: [])))
+    }
 }
