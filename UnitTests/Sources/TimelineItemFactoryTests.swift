@@ -36,4 +36,51 @@ struct TimelineItemFactoryTests {
         #expect(item.properties.reactions == [])
         #expect(item.properties.deliveryStatus == nil)
     }
+
+    @Test
+    func agentTurnWithToolCalls() throws {
+        let ownUserID = "@alice:matrix.org"
+        let senderUserID = "@agent:matrix.org"
+
+        let factory = RoomTimelineItemFactory(userID: ownUserID,
+                                              attributedStringBuilder: AttributedStringBuilder(mentionBuilder: MentionBuilder()),
+                                              stateEventStringBuilder: RoomStateEventStringBuilder(userID: ownUserID))
+
+        let originalJSON = """
+        {"content": {"tool_calls": [{"name": "read_file", "status": "done", "summary": "Read Foo.swift"}]}}
+        """
+
+        let eventTimelineItem = EventTimelineItem.mockAgentTurn(sender: senderUserID, body: "Done reading.", originalJSON: originalJSON)
+        let eventTimelineItemProxy = EventTimelineItemProxy(item: eventTimelineItem, uniqueID: .init("0"))
+
+        let item = try #require(factory.buildTimelineItem(for: eventTimelineItemProxy, isDM: false) as? AgentTurnRoomTimelineItem,
+                                "Incorrect item type")
+
+        #expect(item.content.body == "Done reading.")
+        #expect(item.content.toolCalls == [ToolCallSummary(name: "read_file", status: .done, summary: "Read Foo.swift")])
+        #expect(item.sender == TimelineItemSender(id: senderUserID))
+    }
+
+    @Test
+    func unrecognisedCustomMsgtypeIsStillDropped() throws {
+        let ownUserID = "@alice:matrix.org"
+
+        let factory = RoomTimelineItemFactory(userID: ownUserID,
+                                              attributedStringBuilder: AttributedStringBuilder(mentionBuilder: MentionBuilder()),
+                                              stateEventStringBuilder: RoomStateEventStringBuilder(userID: ownUserID))
+
+        let messageType = MessageType.other(msgtype: "some.other.custom.type", body: "unhandled")
+        let content = TimelineItemContent.msgLike(content: .init(kind: .message(content: .init(msgType: messageType,
+                                                                                               body: "unhandled",
+                                                                                               isEdited: false,
+                                                                                               mentions: nil)),
+                                                                 reactions: [],
+                                                                 inReplyTo: nil,
+                                                                 threadRoot: nil,
+                                                                 threadSummary: nil))
+        let eventTimelineItem = EventTimelineItem(configuration: .init(content: content))
+        let eventTimelineItemProxy = EventTimelineItemProxy(item: eventTimelineItem, uniqueID: .init("0"))
+
+        #expect(factory.buildTimelineItem(for: eventTimelineItemProxy, isDM: false) == nil)
+    }
 }

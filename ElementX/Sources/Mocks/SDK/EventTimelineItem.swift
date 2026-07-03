@@ -25,6 +25,7 @@ nonisolated struct EventTimelineItemSDKMockConfiguration {
                                                                inReplyTo: nil,
                                                                threadRoot: nil,
                                                                threadSummary: nil))
+    var originalJSON: String?
 }
 
 nonisolated extension EventTimelineItem {
@@ -32,7 +33,7 @@ nonisolated extension EventTimelineItem {
         let lazyProvider = LazyTimelineItemProviderSDKMock()
         lazyProvider.containsOnlyEmojisReturnValue = false
         lazyProvider.getShieldsStrictReturnValue = ShieldState.none
-        lazyProvider.debugInfoReturnValue = .init(model: "", originalJson: nil, latestEditJson: nil)
+        lazyProvider.debugInfoReturnValue = .init(model: "", originalJson: configuration.originalJSON, latestEditJson: nil)
         self.init(isRemote: true,
                   eventOrTransactionId: .eventId(eventId: configuration.eventID),
                   sender: configuration.sender,
@@ -70,5 +71,20 @@ nonisolated extension EventTimelineItem {
     
     static func mockCallInvite(sender: String) -> EventTimelineItem {
         .init(configuration: .init(sender: sender, content: .callInvite))
+    }
+
+    static func mockAgentTurn(sender: String = "", body: String = "Final reply", originalJSON: String? = nil) -> EventTimelineItem {
+        let messageType = MessageType.other(msgtype: AgentTurnRoomTimelineItemContent.msgType, body: body)
+
+        let content = TimelineItemContent.msgLike(content: .init(kind: .message(content: .init(msgType: messageType,
+                                                                                               body: body,
+                                                                                               isEdited: false,
+                                                                                               mentions: nil)),
+                                                                 reactions: [],
+                                                                 inReplyTo: nil,
+                                                                 threadRoot: nil,
+                                                                 threadSummary: nil))
+
+        return .init(configuration: .init(sender: sender, content: content, originalJSON: originalJSON))
     }
 }
