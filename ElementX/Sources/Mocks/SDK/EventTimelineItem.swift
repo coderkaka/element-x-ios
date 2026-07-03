@@ -26,6 +26,7 @@ nonisolated struct EventTimelineItemSDKMockConfiguration {
                                                                threadRoot: nil,
                                                                threadSummary: nil))
     var originalJSON: String?
+    var latestEditJSON: String?
 }
 
 nonisolated extension EventTimelineItem {
@@ -33,7 +34,7 @@ nonisolated extension EventTimelineItem {
         let lazyProvider = LazyTimelineItemProviderSDKMock()
         lazyProvider.containsOnlyEmojisReturnValue = false
         lazyProvider.getShieldsStrictReturnValue = ShieldState.none
-        lazyProvider.debugInfoReturnValue = .init(model: "", originalJson: configuration.originalJSON, latestEditJson: nil)
+        lazyProvider.debugInfoReturnValue = .init(model: "", originalJson: configuration.originalJSON, latestEditJson: configuration.latestEditJSON)
         self.init(isRemote: true,
                   eventOrTransactionId: .eventId(eventId: configuration.eventID),
                   sender: configuration.sender,
@@ -112,9 +113,9 @@ nonisolated extension EventTimelineItem {
         "options":[\(optionsJSONArray)],"multi_select":\(multiSelect)}}
         """
         
-        return .init(configuration: .init(sender: sender, content: content, originalJSON: defaultOriginalJSON))
+        return .init(configuration: .init(sender: sender, content: content, originalJSON: defaultOriginalJSON, latestEditJSON: latestEditJSON))
     }
-    
+
     static func mockCanvasSteps(sender: String = "",
                                 body: String = "Task: Refactor auth module",
                                 taskID: String = "task-1234",
