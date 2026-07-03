@@ -50,7 +50,7 @@ enum HomeScreenViewAction {
     
     case acceptInvite(roomIdentifier: String)
     case declineInvite(roomIdentifier: String)
-
+    
     case selectSpaceFilter(SpaceServiceFilter?)
 }
 
@@ -117,11 +117,11 @@ struct HomeScreenViewState: BindableState {
     var shouldShowSpaceFilters = false
     var availableSpaceFilters: [SpaceServiceFilter] = []
     var selectedSpaceFilter: SpaceServiceFilter?
-
+    
     var topLevelSpaceFilters: [SpaceServiceFilter] {
         availableSpaceFilters.filter { $0.level == 0 }
     }
-
+    
     var shouldShowSpaceTabBar: Bool {
         !topLevelSpaceFilters.isEmpty && shouldShowFilters
     }

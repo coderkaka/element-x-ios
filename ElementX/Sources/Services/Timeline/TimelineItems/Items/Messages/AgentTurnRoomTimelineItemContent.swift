@@ -17,13 +17,13 @@ nonisolated struct ToolCallSummary: Hashable {
         /// agent backend can introduce new statuses without this client silently losing data.
         case other(String)
     }
-
+    
     let name: String
     let status: Status
     let summary: String
 }
 
-extension ToolCallSummary: Decodable {}
+extension ToolCallSummary: Decodable { }
 
 extension ToolCallSummary.Status: Decodable {
     init(from decoder: Decoder) throws {
@@ -40,15 +40,15 @@ extension ToolCallSummary.Status: Decodable {
 nonisolated struct AgentTurnRoomTimelineItemContent: Hashable {
     /// The custom `m.room.message` msgtype this content type is built from.
     static let msgType = "io.element.agent.turn"
-
+    
     let body: String
     let toolCalls: [ToolCallSummary]
-
+    
     init(body: String, toolCalls: [ToolCallSummary] = []) {
         self.body = body
         self.toolCalls = toolCalls
     }
-
+    
     /// - Parameter originalJSON: the raw Matrix event JSON from `EventTimelineItemProxy.debugInfo.originalJSON`.
     ///   The Rust SDK only exposes the standard `body` field for custom msgtypes via `MessageType.other`,
     ///   so `tool_calls` has to be recovered by hand from the raw event. `originalJSON` is always the
@@ -58,22 +58,22 @@ nonisolated struct AgentTurnRoomTimelineItemContent: Hashable {
         self.body = body
         toolCalls = Self.parseToolCalls(from: originalJSON)
     }
-
+    
     private static func parseToolCalls(from originalJSON: String?) -> [ToolCallSummary] {
         guard let data = originalJSON?.data(using: .utf8) else { return [] }
-
+        
         struct ContentEnvelope: Decodable {
             let toolCalls: [ToolCallSummary]
-
+            
             enum CodingKeys: String, CodingKey {
                 case toolCalls = "tool_calls"
             }
         }
-
+        
         struct EventEnvelope: Decodable {
             let content: ContentEnvelope
         }
-
+        
         guard let event = try? JSONDecoder().decode(EventEnvelope.self, from: data) else { return [] }
         return event.content.toolCalls
     }

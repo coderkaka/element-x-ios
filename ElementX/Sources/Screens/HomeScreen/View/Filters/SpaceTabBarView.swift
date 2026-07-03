@@ -14,7 +14,7 @@ struct SpaceTabBarView: View {
     let selectedFilter: SpaceServiceFilter?
     let mediaProvider: MediaProviderProtocol!
     let action: (SpaceServiceFilter?) -> Void
-
+    
     var body: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 8) {
@@ -24,7 +24,7 @@ struct SpaceTabBarView: View {
                                  mediaProvider: mediaProvider) {
                     action(nil)
                 }
-
+                
                 ForEach(filters) { filter in
                     SpaceTabChipView(name: filter.room.name,
                                      avatar: filter.room.avatar,
@@ -47,19 +47,19 @@ private struct SpaceTabChipView: View {
     let isSelected: Bool
     let mediaProvider: MediaProviderProtocol!
     let action: () -> Void
-
+    
     private var strokeColor: Color {
         isSelected ? .compound.bgActionPrimaryRest : .compound.borderInteractiveSecondary
     }
-
+    
     private var backgroundColor: Color {
         isSelected ? .compound.bgActionPrimaryRest : .compound.bgCanvasDefault
     }
-
+    
     private var foregroundColor: Color {
         isSelected ? .compound.textOnSolidPrimary : .compound.textPrimary
     }
-
+    
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 20)
         Button(action: action) {
@@ -94,22 +94,22 @@ private struct SpaceTabChipView: View {
 
 struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
     static let mediaProvider = MediaProviderMock(.init())
-
+    
     static var previews: some View {
         VStack(spacing: 0) {
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: nil,
                             mediaProvider: mediaProvider) { _ in }
-
+            
             Divider()
-
+            
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: mockFilters.first,
                             mediaProvider: mediaProvider) { _ in }
         }
         .background(Color.compound.bgCanvasDefault)
     }
-
+    
     static var mockFilters: [SpaceServiceFilter] {
         [SpaceServiceRoom].mockJoinedSpaces.prefix(4).map {
             SpaceServiceFilter(room: $0, level: 0, descendants: [])

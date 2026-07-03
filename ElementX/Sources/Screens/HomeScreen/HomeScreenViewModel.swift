@@ -106,7 +106,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 
                 state.shouldShowSpaceFilters = !filters.isEmpty
                 state.availableSpaceFilters = filters
-
+                
                 if let selectedSpaceFilter = spaceFilterSubject.value,
                    !filters.contains(selectedSpaceFilter) {
                     // Clear the spaces filter if the space has been left.

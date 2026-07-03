@@ -124,7 +124,7 @@ struct HomeScreenContent: View {
                     }
                     Divider()
                 }
-
+                
                 if context.viewState.shouldShowFilters {
                     RoomListFiltersView(state: $context.filtersState)
                 }
