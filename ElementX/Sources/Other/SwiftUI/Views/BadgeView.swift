@@ -52,7 +52,7 @@ struct BadgeViewModifier: ViewModifier {
 struct CountBadgeView: View {
     let count: Int
     let size: Double
-
+    
     var body: some View {
         Circle()
             .fill(.compound.iconCriticalPrimary)
@@ -69,7 +69,7 @@ struct CountBadgeView: View {
 struct CountBadgeViewModifier: ViewModifier {
     let count: Int
     let size: Double
-
+    
     func body(content: Content) -> some View {
         content.mask {
             Rectangle()
@@ -87,11 +87,11 @@ struct CountBadgeViewModifier: ViewModifier {
             CountBadgeView(count: count, size: size)
         }
     }
-
+    
     private var maskSize: Double {
         size * 1.25
     }
-
+    
     private var maskOffset: CGSize {
         .init(width: (maskSize - size) / 2, height: -(maskSize - size) / 2)
     }
@@ -106,7 +106,7 @@ extension View {
             self
         }
     }
-
+    
     @ViewBuilder
     func overlayCountBadge(_ size: Double, count: Int) -> some View {
         if count > 0 {

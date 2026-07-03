@@ -100,7 +100,7 @@ private struct SpaceTabChipView: View {
 private struct RoomFiltersButton: View {
     let activeFilterCount: Int
     let action: () -> Void
-
+    
     var body: some View {
         Button(action: action) {
             CompoundIcon(\.listBulleted, size: .small, relativeTo: .compound.bodyLG)
@@ -125,9 +125,9 @@ struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
                             selectedFilter: nil,
                             mediaProvider: mediaProvider,
                             activeFilterCount: 0) { _ in } onFilterButtonTapped: { }
-
+            
             Divider()
-
+            
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: mockFilters.first,
                             mediaProvider: mediaProvider,
