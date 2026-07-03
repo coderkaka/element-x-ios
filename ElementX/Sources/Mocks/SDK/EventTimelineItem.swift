@@ -72,10 +72,10 @@ nonisolated extension EventTimelineItem {
     static func mockCallInvite(sender: String) -> EventTimelineItem {
         .init(configuration: .init(sender: sender, content: .callInvite))
     }
-
+    
     static func mockAgentTurn(sender: String = "", body: String = "Final reply", originalJSON: String? = nil) -> EventTimelineItem {
         let messageType = MessageType.other(msgtype: AgentTurnRoomTimelineItemContent.msgType, body: body)
-
+        
         let content = TimelineItemContent.msgLike(content: .init(kind: .message(content: .init(msgType: messageType,
                                                                                                body: body,
                                                                                                isEdited: false,
@@ -84,7 +84,7 @@ nonisolated extension EventTimelineItem {
                                                                  inReplyTo: nil,
                                                                  threadRoot: nil,
                                                                  threadSummary: nil))
-
+        
         return .init(configuration: .init(sender: sender, content: content, originalJSON: originalJSON))
     }
 }
