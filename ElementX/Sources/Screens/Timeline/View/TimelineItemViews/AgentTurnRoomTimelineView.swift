@@ -14,26 +14,26 @@ struct AgentTurnRoomTimelineView: View {
         case disclosure
         case toolCalls
     }
-
+    
     let timelineItem: AgentTurnRoomTimelineItem
-
+    
     @State private var isToolCallsExpanded = false
     @AccessibilityFocusState private var accessibilityFocusState: AccessibilityFocus?
-
+    
     var body: some View {
         TimelineStyler(timelineItem: timelineItem) {
             VStack(alignment: .leading, spacing: 8) {
                 if !timelineItem.content.toolCalls.isEmpty {
                     toolCallsDisclosure
                 }
-
+                
                 Text(timelineItem.content.body)
                     .font(.compound.bodyMD)
                     .foregroundColor(.compound.textPrimary)
             }
         }
     }
-
+    
     private var toolCallsDisclosure: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button {
@@ -53,7 +53,7 @@ struct AgentTurnRoomTimelineView: View {
             }
             .buttonStyle(.plain)
             .accessibilityFocused($accessibilityFocusState, equals: .disclosure)
-
+            
             if isToolCallsExpanded {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(Array(timelineItem.content.toolCalls.enumerated()), id: \.offset) { _, toolCall in
@@ -69,7 +69,7 @@ struct AgentTurnRoomTimelineView: View {
             accessibilityFocusState = newValue ? .toolCalls : .disclosure
         }
     }
-
+    
     private func toolCallRow(_ toolCall: ToolCallSummary) -> some View {
         HStack(spacing: 8) {
             statusIcon(for: toolCall.status)
@@ -82,7 +82,7 @@ struct AgentTurnRoomTimelineView: View {
             }
         }
     }
-
+    
     @ViewBuilder
     private func statusIcon(for status: ToolCallSummary.Status) -> some View {
         switch status {
@@ -104,7 +104,7 @@ struct AgentTurnRoomTimelineView: View {
 
 struct AgentTurnRoomTimelineView_Previews: PreviewProvider, TestablePreview {
     static let viewModel = TimelineViewModel.mock
-
+    
     static var previews: some View {
         PreviewScrollView {
             VStack(spacing: 8) {
@@ -114,27 +114,27 @@ struct AgentTurnRoomTimelineView_Previews: PreviewProvider, TestablePreview {
         .previewLayout(.sizeThatFits)
         .environmentObject(viewModel.context)
     }
-
+    
     @ViewBuilder
     static var states: some View {
         AgentTurnRoomTimelineView(timelineItem: .init(id: .randomEvent,
-                                                       timestamp: .mock,
-                                                       isOutgoing: false,
-                                                       isEditable: false,
-                                                       canBeRepliedTo: true,
-                                                       sender: .init(id: "@agent:example.com"),
-                                                       content: .init(body: "Final reply, no tool calls.")))
-
+                                                      timestamp: .mock,
+                                                      isOutgoing: false,
+                                                      isEditable: false,
+                                                      canBeRepliedTo: true,
+                                                      sender: .init(id: "@agent:example.com"),
+                                                      content: .init(body: "Final reply, no tool calls.")))
+        
         AgentTurnRoomTimelineView(timelineItem: .init(id: .randomEvent,
-                                                       timestamp: .mock,
-                                                       isOutgoing: false,
-                                                       isEditable: false,
-                                                       canBeRepliedTo: true,
-                                                       sender: .init(id: "@agent:example.com"),
-                                                       content: .init(body: "Done reading and searching.",
-                                                                      toolCalls: [
-                                                                          ToolCallSummary(name: "read_file", status: .done, summary: "Read Foo.swift"),
-                                                                          ToolCallSummary(name: "search", status: .pending, summary: "Searching for usages...")
-                                                                      ])))
+                                                      timestamp: .mock,
+                                                      isOutgoing: false,
+                                                      isEditable: false,
+                                                      canBeRepliedTo: true,
+                                                      sender: .init(id: "@agent:example.com"),
+                                                      content: .init(body: "Done reading and searching.",
+                                                                     toolCalls: [
+                                                                         ToolCallSummary(name: "read_file", status: .done, summary: "Read Foo.swift"),
+                                                                         ToolCallSummary(name: "search", status: .pending, summary: "Searching for usages...")
+                                                                     ])))
     }
 }
