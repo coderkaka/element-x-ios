@@ -65,6 +65,7 @@ enum RoomTimelineItemType: Equatable {
     case state(StateRoomTimelineItem)
     case group(CollapsibleTimelineItem)
     case location(LocationRoomTimelineItem)
+    case agentTurn(AgentTurnRoomTimelineItem)
     case poll(PollRoomTimelineItem)
     case voice(VoiceMessageRoomTimelineItem)
     case callInvite(CallInviteRoomTimelineItem)
@@ -109,6 +110,8 @@ enum RoomTimelineItemType: Equatable {
             self = .group(item)
         case let item as LocationRoomTimelineItem:
             self = .location(item)
+        case let item as AgentTurnRoomTimelineItem:
+            self = .agentTurn(item)
         case let item as PollRoomTimelineItem:
             self = .poll(item)
         case let item as VoiceMessageRoomTimelineItem:
@@ -144,6 +147,7 @@ enum RoomTimelineItemType: Equatable {
              .state(let item as RoomTimelineItemProtocol),
              .group(let item as RoomTimelineItemProtocol),
              .location(let item as RoomTimelineItemProtocol),
+             .agentTurn(let item as RoomTimelineItemProtocol),
              .poll(let item as RoomTimelineItemProtocol),
              .voice(let item as RoomTimelineItemProtocol),
              .callInvite(let item as RoomTimelineItemProtocol),
@@ -186,6 +190,8 @@ enum RoomTimelineItemType: Equatable {
         case .state(let item):
             return item.timestamp
         case .location(let item):
+            return item.timestamp
+        case .agentTurn(let item):
             return item.timestamp
         case .poll(let item):
             return item.timestamp
