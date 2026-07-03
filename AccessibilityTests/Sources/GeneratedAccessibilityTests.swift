@@ -11,6 +11,14 @@ extension AccessibilityTests {
         try await performAccessibilityAudit(named: "AdvancedSettingsScreen_Previews")
     }
 
+    func testAgentCanvasStepsRoomTimelineView() async throws {
+        try await performAccessibilityAudit(named: "AgentCanvasStepsRoomTimelineView_Previews")
+    }
+
+    func testAgentChoiceRequestRoomTimelineView() async throws {
+        try await performAccessibilityAudit(named: "AgentChoiceRequestRoomTimelineView_Previews")
+    }
+
     func testAgentTurnRoomTimelineView() async throws {
         try await performAccessibilityAudit(named: "AgentTurnRoomTimelineView_Previews")
     }

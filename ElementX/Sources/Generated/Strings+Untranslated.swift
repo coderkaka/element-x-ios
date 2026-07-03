@@ -18,6 +18,10 @@ internal nonisolated enum UntranslatedL10n {
   internal static var a11yRoomListFiltersButton: String { return UntranslatedL10n.tr("Untranslated", "a11y_room_list_filters_button") }
   /// Search
   internal static var screenHomeTabSearch: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_search") }
+  /// Confirm
+  internal static var screenRoomTimelineAgentChoiceConfirmButton: String { return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_agent_choice_confirm_button") }
+  /// Selected
+  internal static var screenRoomTimelineAgentChoiceSelectedPrefix: String { return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_agent_choice_selected_prefix") }
   /// Plural format key: "%#@COUNT@"
   internal static func screenRoomTimelineAgentTurnToolCallsCount(_ p1: Int) -> String {
     return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_agent_turn_tool_calls_count", p1)

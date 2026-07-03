@@ -386,14 +386,14 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
             actionsSubject.send(.displayEditPollForm(eventID: eventID, poll: poll))
         }
     }
-
+    
     private func handleChoiceRequestAction(_ action: TimelineViewChoiceRequestAction) {
         switch action {
         case let .sendResponse(requestEventID, body):
             timelineInteractionHandler.sendChoiceRequestResponse(requestEventID: requestEventID, body: body)
         }
     }
-
+    
     private func handleAudioPlayerAction(_ action: TimelineAudioPlayerAction) {
         switch action {
         case .playPause(let itemID):

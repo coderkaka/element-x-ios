@@ -11,25 +11,25 @@ import SwiftUI
 
 struct AgentChoiceRequestRoomTimelineView: View {
     let timelineItem: AgentChoiceRequestRoomTimelineItem
-
+    
     @EnvironmentObject private var context: TimelineViewModel.Context
     @State private var pendingSelection: Set<String> = []
-
+    
     private var content: AgentChoiceRequestRoomTimelineItemContent {
         timelineItem.content
     }
-
+    
     private var eventID: String? {
         timelineItem.id.eventID
     }
-
+    
     var body: some View {
         TimelineStyler(timelineItem: timelineItem) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(content.question.isEmpty ? content.body : content.question)
                     .font(.compound.bodyMD)
                     .foregroundColor(.compound.textPrimary)
-
+                
                 if let resolvedSelection = content.resolvedSelection {
                     resolvedView(selectedIDs: resolvedSelection)
                 } else if content.multiSelect {
@@ -40,7 +40,7 @@ struct AgentChoiceRequestRoomTimelineView: View {
             }
         }
     }
-
+    
     private var singleSelectView: some View {
         VStack(alignment: .leading, spacing: 4) {
             ForEach(content.options, id: \.id) { option in
@@ -51,7 +51,7 @@ struct AgentChoiceRequestRoomTimelineView: View {
             }
         }
     }
-
+    
     private var multiSelectView: some View {
         VStack(alignment: .leading, spacing: 4) {
             ForEach(content.options, id: \.id) { option in
@@ -69,7 +69,7 @@ struct AgentChoiceRequestRoomTimelineView: View {
                 }
                 .buttonStyle(.compound(.secondary, size: .medium))
             }
-
+            
             Button(UntranslatedL10n.screenRoomTimelineAgentChoiceConfirmButton) {
                 send(selectedIDs: pendingSelection)
             }
@@ -77,14 +77,14 @@ struct AgentChoiceRequestRoomTimelineView: View {
             .disabled(pendingSelection.isEmpty)
         }
     }
-
+    
     private func resolvedView(selectedIDs: [String]) -> some View {
         let labels = selectedIDs.compactMap { id in content.options.first { $0.id == id }?.label }
         return Text("\(UntranslatedL10n.screenRoomTimelineAgentChoiceSelectedPrefix): \(labels.joined(separator: ", "))")
             .font(.compound.bodySM)
             .foregroundColor(.compound.textSecondary)
     }
-
+    
     private func toggle(_ optionID: String) {
         if pendingSelection.contains(optionID) {
             pendingSelection.remove(optionID)
@@ -92,7 +92,7 @@ struct AgentChoiceRequestRoomTimelineView: View {
             pendingSelection.insert(optionID)
         }
     }
-
+    
     private func send(selectedIDs: Set<String>) {
         guard let eventID else { return }
         let labels = content.options.filter { selectedIDs.contains($0.id) }.map(\.label)
@@ -103,7 +103,7 @@ struct AgentChoiceRequestRoomTimelineView: View {
 
 struct AgentChoiceRequestRoomTimelineView_Previews: PreviewProvider, TestablePreview {
     static let viewModel = TimelineViewModel.mock
-
+    
     static var previews: some View {
         PreviewScrollView {
             VStack(spacing: 8) {
@@ -113,7 +113,7 @@ struct AgentChoiceRequestRoomTimelineView_Previews: PreviewProvider, TestablePre
         .previewLayout(.sizeThatFits)
         .environmentObject(viewModel.context)
     }
-
+    
     @ViewBuilder
     static var states: some View {
         AgentChoiceRequestRoomTimelineView(timelineItem: .init(id: .randomEvent,
@@ -125,10 +125,10 @@ struct AgentChoiceRequestRoomTimelineView_Previews: PreviewProvider, TestablePre
                                                                content: .init(body: "Which environment?",
                                                                               question: "Which environment should this deploy to?",
                                                                               options: [ChoiceOption(id: "test", label: "Test"),
-                                                                                       ChoiceOption(id: "staging", label: "Staging"),
-                                                                                       ChoiceOption(id: "prod", label: "Production")],
+                                                                                        ChoiceOption(id: "staging", label: "Staging"),
+                                                                                        ChoiceOption(id: "prod", label: "Production")],
                                                                               multiSelect: false)))
-
+        
         AgentChoiceRequestRoomTimelineView(timelineItem: .init(id: .randomEvent,
                                                                timestamp: .mock,
                                                                isOutgoing: false,
@@ -138,9 +138,9 @@ struct AgentChoiceRequestRoomTimelineView_Previews: PreviewProvider, TestablePre
                                                                content: .init(body: "Which reviewers?",
                                                                               question: "Which reviewers should be added?",
                                                                               options: [ChoiceOption(id: "a", label: "Alice"),
-                                                                                       ChoiceOption(id: "b", label: "Bob")],
+                                                                                        ChoiceOption(id: "b", label: "Bob")],
                                                                               multiSelect: true)))
-
+        
         AgentChoiceRequestRoomTimelineView(timelineItem: .init(id: .randomEvent,
                                                                timestamp: .mock,
                                                                isOutgoing: false,
@@ -150,8 +150,8 @@ struct AgentChoiceRequestRoomTimelineView_Previews: PreviewProvider, TestablePre
                                                                content: .init(body: "Which environment?",
                                                                               question: "Which environment should this deploy to?",
                                                                               options: [ChoiceOption(id: "test", label: "Test"),
-                                                                                       ChoiceOption(id: "staging", label: "Staging"),
-                                                                                       ChoiceOption(id: "prod", label: "Production")],
+                                                                                        ChoiceOption(id: "staging", label: "Staging"),
+                                                                                        ChoiceOption(id: "prod", label: "Production")],
                                                                               multiSelect: false,
                                                                               resolvedSelection: ["staging"])))
     }

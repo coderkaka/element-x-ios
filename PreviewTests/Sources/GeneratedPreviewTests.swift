@@ -19,6 +19,20 @@ extension PreviewTests {
     }
 
     @Test
+    func agentCanvasStepsRoomTimelineView() async throws {
+        for (index, preview) in AgentCanvasStepsRoomTimelineView_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
+    func agentChoiceRequestRoomTimelineView() async throws {
+        for (index, preview) in AgentChoiceRequestRoomTimelineView_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func agentTurnRoomTimelineView() async throws {
         for (index, preview) in AgentTurnRoomTimelineView_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)
