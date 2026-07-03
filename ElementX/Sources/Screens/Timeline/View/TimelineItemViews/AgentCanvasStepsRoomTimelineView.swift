@@ -11,11 +11,11 @@ import SwiftUI
 
 struct AgentCanvasStepsRoomTimelineView: View {
     let timelineItem: AgentCanvasStepsRoomTimelineItem
-
+    
     private var content: AgentCanvasStepsRoomTimelineItemContent {
         timelineItem.content
     }
-
+    
     var body: some View {
         TimelineStyler(timelineItem: timelineItem) {
             HStack(spacing: 4) {
@@ -31,7 +31,7 @@ struct AgentCanvasStepsRoomTimelineView: View {
 
 struct AgentCanvasStepsRoomTimelineView_Previews: PreviewProvider, TestablePreview {
     static let viewModel = TimelineViewModel.mock
-
+    
     static var previews: some View {
         PreviewScrollView {
             VStack(spacing: 8) {
@@ -41,7 +41,7 @@ struct AgentCanvasStepsRoomTimelineView_Previews: PreviewProvider, TestablePrevi
         .previewLayout(.sizeThatFits)
         .environmentObject(viewModel.context)
     }
-
+    
     @ViewBuilder
     static var states: some View {
         AgentCanvasStepsRoomTimelineView(timelineItem: .init(id: .randomEvent,
@@ -55,8 +55,8 @@ struct AgentCanvasStepsRoomTimelineView_Previews: PreviewProvider, TestablePrevi
                                                                             title: "Refactor auth module",
                                                                             isResolved: false,
                                                                             steps: [CanvasStep(id: "s1", label: "Read existing code", status: .done),
-                                                                                   CanvasStep(id: "s2", label: "Wait for approval", status: .inProgress)])))
-
+                                                                                    CanvasStep(id: "s2", label: "Wait for approval", status: .inProgress)])))
+        
         AgentCanvasStepsRoomTimelineView(timelineItem: .init(id: .randomEvent,
                                                              timestamp: .mock,
                                                              isOutgoing: false,
@@ -68,6 +68,6 @@ struct AgentCanvasStepsRoomTimelineView_Previews: PreviewProvider, TestablePrevi
                                                                             title: "Refactor auth module",
                                                                             isResolved: true,
                                                                             steps: [CanvasStep(id: "s1", label: "Read existing code", status: .done),
-                                                                                   CanvasStep(id: "s2", label: "Run tests", status: .done)])))
+                                                                                    CanvasStep(id: "s2", label: "Run tests", status: .done)])))
     }
 }
