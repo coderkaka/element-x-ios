@@ -67,6 +67,7 @@ enum RoomTimelineItemType: Equatable {
     case location(LocationRoomTimelineItem)
     case agentTurn(AgentTurnRoomTimelineItem)
     case choiceRequest(AgentChoiceRequestRoomTimelineItem)
+    case canvasSteps(AgentCanvasStepsRoomTimelineItem)
     case poll(PollRoomTimelineItem)
     case voice(VoiceMessageRoomTimelineItem)
     case callInvite(CallInviteRoomTimelineItem)
@@ -115,6 +116,8 @@ enum RoomTimelineItemType: Equatable {
             self = .agentTurn(item)
         case let item as AgentChoiceRequestRoomTimelineItem:
             self = .choiceRequest(item)
+        case let item as AgentCanvasStepsRoomTimelineItem:
+            self = .canvasSteps(item)
         case let item as PollRoomTimelineItem:
             self = .poll(item)
         case let item as VoiceMessageRoomTimelineItem:
@@ -152,6 +155,7 @@ enum RoomTimelineItemType: Equatable {
              .location(let item as RoomTimelineItemProtocol),
              .agentTurn(let item as RoomTimelineItemProtocol),
              .choiceRequest(let item as RoomTimelineItemProtocol),
+             .canvasSteps(let item as RoomTimelineItemProtocol),
              .poll(let item as RoomTimelineItemProtocol),
              .voice(let item as RoomTimelineItemProtocol),
              .callInvite(let item as RoomTimelineItemProtocol),
@@ -198,6 +202,8 @@ enum RoomTimelineItemType: Equatable {
         case .agentTurn(let item):
             return item.timestamp
         case .choiceRequest(let item):
+            return item.timestamp
+        case .canvasSteps(let item):
             return item.timestamp
         case .poll(let item):
             return item.timestamp

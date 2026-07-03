@@ -69,6 +69,8 @@ struct RoomTimelineItemView: View {
         case .choiceRequest:
             // Real view (`AgentChoiceRequestRoomTimelineView`) wired in a later task; this only keeps the switch exhaustive.
             EmptyView()
+        case .canvasSteps:
+            EmptyView() // TODO(Task 5): replace with AgentCanvasStepsRoomTimelineView(timelineItem:) once that view exists
         case .poll(let item):
             PollRoomTimelineView(timelineItem: item)
         case .voice(let item):
