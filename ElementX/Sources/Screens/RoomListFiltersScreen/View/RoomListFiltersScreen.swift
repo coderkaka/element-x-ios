@@ -17,7 +17,7 @@ struct RoomListFiltersScreen: View {
             Form {
                 Section {
                     ForEach(visibleFilters) { filter in
-                        ListRow(label: .default(title: filter.localizedName),
+                        ListRow(label: .plain(title: filter.localizedName),
                                 kind: .toggle(binding(for: filter)))
                     }
                 }
