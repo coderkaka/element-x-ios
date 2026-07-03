@@ -68,8 +68,8 @@ struct RoomTimelineItemView: View {
             AgentTurnRoomTimelineView(timelineItem: item)
         case .choiceRequest(let item):
             AgentChoiceRequestRoomTimelineView(timelineItem: item)
-        case .canvasSteps:
-            EmptyView() // TODO(Task 5): replace with AgentCanvasStepsRoomTimelineView(timelineItem:) once that view exists
+        case .canvasSteps(let item):
+            AgentCanvasStepsRoomTimelineView(timelineItem: item)
         case .poll(let item):
             PollRoomTimelineView(timelineItem: item)
         case .voice(let item):
