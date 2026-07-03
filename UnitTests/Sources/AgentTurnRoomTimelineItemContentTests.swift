@@ -16,7 +16,7 @@ struct AgentTurnRoomTimelineItemContentTests {
         #expect(content.body == "Final reply")
         #expect(content.toolCalls == [])
     }
-
+    
     @Test
     func parsesToolCallsFromFullEventEnvelope() {
         let originalJSON = """
@@ -33,32 +33,32 @@ struct AgentTurnRoomTimelineItemContentTests {
             }
         }
         """
-
+    
         let content = AgentTurnRoomTimelineItemContent(body: "Final reply", parsingToolCallsFrom: originalJSON)
-
+    
         #expect(content.toolCalls == [
             ToolCallSummary(name: "read_file", status: .done, summary: "Read Foo.swift"),
             ToolCallSummary(name: "search", status: .pending, summary: "Searching...")
         ])
     }
-
+    
     @Test
     func unrecognisedStatusFallsBackToOther() {
         let originalJSON = """
         {"content": {"tool_calls": [{"name": "read_file", "status": "queued", "summary": "..."}]}}
         """
-
+    
         let content = AgentTurnRoomTimelineItemContent(body: "x", parsingToolCallsFrom: originalJSON)
-
+    
         #expect(content.toolCalls == [ToolCallSummary(name: "read_file", status: .other("queued"), summary: "...")])
     }
-
+    
     @Test
     func malformedJSONFallsBackToNoToolCalls() {
         let content = AgentTurnRoomTimelineItemContent(body: "x", parsingToolCallsFrom: "not json")
         #expect(content.toolCalls == [])
     }
-
+    
     @Test
     func itemExposesBodyAndContentType() {
         let item = AgentTurnRoomTimelineItem(id: .randomEvent,
@@ -68,7 +68,7 @@ struct AgentTurnRoomTimelineItemContentTests {
                                              canBeRepliedTo: true,
                                              sender: .init(id: "@agent:example.com"),
                                              content: .init(body: "Final reply", toolCalls: []))
-
+    
         #expect(item.body == "Final reply")
         #expect(item.contentType == .agentTurn(.init(body: "Final reply", toolCalls: [])))
     }

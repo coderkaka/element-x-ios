@@ -14,17 +14,17 @@ nonisolated struct AgentTurnRoomTimelineItem: EventBasedMessageTimelineItemProto
     let isOutgoing: Bool
     let isEditable: Bool
     let canBeRepliedTo: Bool
-
+    
     let sender: TimelineItemSender
-
+    
     let content: AgentTurnRoomTimelineItemContent
-
+    
     var properties = RoomTimelineItemProperties()
-
+    
     var body: String {
         content.body
     }
-
+    
     var contentType: EventBasedMessageTimelineItemContentType {
         .agentTurn(content)
     }
