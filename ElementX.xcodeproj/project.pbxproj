@@ -37,6 +37,7 @@
 		02A92F8F4538CECDFB4F2607 /* RoomDirectorySearchScreenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1562EAF6231151A675BED7A9 /* RoomDirectorySearchScreenCoordinator.swift */; };
 		02D8DF8EB7537EB4E9019DDB /* EventBasedTimelineItemProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 218AB05B4E3889731959C5F1 /* EventBasedTimelineItemProtocol.swift */; };
 		0307469D99B5FE6C7043AE39 /* KnockRequestsListScreenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9E8A8EC299E12490588B07C /* KnockRequestsListScreenCoordinator.swift */; };
+		0313FB05B6CAC36A4031423B /* AgentCanvasStepsRoomTimelineItemContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D6D15F3F2545E0E0FA299CD /* AgentCanvasStepsRoomTimelineItemContentTests.swift */; };
 		03364DE2568860586A713472 /* LiveLocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D17F49E39CC38DAB7B305701 /* LiveLocationManager.swift */; };
 		03631FC946FF0BBAD37E22BF /* preview_avatar_user.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 87FC42213E86E8182CFD3A49 /* preview_avatar_user.jpg */; };
 		037006FB6DF1374F94E4058D /* Dictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFDCAC6CAAD65A2C24EA9C4B /* Dictionary.swift */; };
@@ -1348,6 +1349,7 @@
 		DDFBDEE1DC32BDD5488F898C /* ClientProxyMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F96CCBEAAA7F2185BFA354 /* ClientProxyMock.swift */; };
 		DE3BF0ED68E56BF625591D49 /* LinkNewDeviceScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C4A2D279386A811BDC6DAE /* LinkNewDeviceScreen.swift */; };
 		DE4F8C4E0F1DB4832F09DE97 /* HomeScreenViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31D6764D6976D235926FE5FC /* HomeScreenViewModel.swift */; };
+		DE8660690CC46893E3C06B75 /* AgentCanvasStepsRoomTimelineItemContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16F1D2B392603CF644E4AC71 /* AgentCanvasStepsRoomTimelineItemContent.swift */; };
 		DEDBD3E9CFCC9F20CAC79881 /* JoinRoomScreenModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 136F80A613B55BDD071DCEA5 /* JoinRoomScreenModels.swift */; };
 		DF004A5B2EABBD0574D06A04 /* SplashScreenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 854BCEAF2A832176FAACD2CB /* SplashScreenCoordinator.swift */; };
 		DF05F9C9D3D977EB77E13692 /* Macros in Frameworks */ = {isa = PBXBuildFile; productRef = E9170427ACFD3E9F67EB7116 /* Macros */; };
@@ -1792,6 +1794,7 @@
 		166D45E1861A73B232109843 /* RoomDetailsScreenViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomDetailsScreenViewModelTests.swift; sourceTree = "<group>"; };
 		16D09C79746BDCD9173EB3A7 /* RoomDetailsEditScreenModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomDetailsEditScreenModels.swift; sourceTree = "<group>"; };
 		16D353E10A64172D863769BF /* TombstonedAvatarImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TombstonedAvatarImage.swift; sourceTree = "<group>"; };
+		16F1D2B392603CF644E4AC71 /* AgentCanvasStepsRoomTimelineItemContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentCanvasStepsRoomTimelineItemContent.swift; sourceTree = "<group>"; };
 		1715E3D7F53C0748AA50C91C /* PostHogAnalyticsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostHogAnalyticsClient.swift; sourceTree = "<group>"; };
 		174E4AEF3DED300AA81046EC /* compound-ios */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "compound-ios"; path = "compound-ios"; sourceTree = SOURCE_ROOT; };
 		17A8AA0DFA06012A9DAB951E /* TimelineProxyMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineProxyMock.swift; sourceTree = "<group>"; };
@@ -2111,6 +2114,7 @@
 		4D3A7375AB22721C436EB056 /* ComposerToolbarModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerToolbarModels.swift; sourceTree = "<group>"; };
 		4D57D1C26306256332BA070F /* ClassicAppMediaLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassicAppMediaLoader.swift; sourceTree = "<group>"; };
 		4D635709C1D6D37C225AD40E /* RoomPowerLevelProxyProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPowerLevelProxyProtocol.swift; sourceTree = "<group>"; };
+		4D6D15F3F2545E0E0FA299CD /* AgentCanvasStepsRoomTimelineItemContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentCanvasStepsRoomTimelineItemContentTests.swift; sourceTree = "<group>"; };
 		4E2245243369B99216C7D84E /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
 		4E600B315B920B9687F8EE1B /* ComposerDraftServiceMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerDraftServiceMock.swift; sourceTree = "<group>"; };
 		4E625B0EB2F86B37C14EF7E6 /* SettingsScreenViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsScreenViewModel.swift; sourceTree = "<group>"; };
@@ -4986,6 +4990,7 @@
 		73CD9796729EB702B4DFA88C /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				4D6D15F3F2545E0E0FA299CD /* AgentCanvasStepsRoomTimelineItemContentTests.swift */,
 				64150601631926F4B35825B0 /* AgentChoiceRequestRoomTimelineItemContentTests.swift */,
 				91A936C577E5324DBB1F4884 /* AgentTurnRoomTimelineItemContentTests.swift */,
 				58C2527813FDAE23E72A9063 /* AnalyticsSettingsScreenViewModelTests.swift */,
@@ -5462,6 +5467,7 @@
 		8428BD1821586CEE0B9C9ECA /* Messages */ = {
 			isa = PBXGroup;
 			children = (
+				16F1D2B392603CF644E4AC71 /* AgentCanvasStepsRoomTimelineItemContent.swift */,
 				E6892994E9DD3BB60097FC84 /* AgentChoiceRequestRoomTimelineItem.swift */,
 				BA7DC39635EA624911C81A3A /* AgentChoiceRequestRoomTimelineItemContent.swift */,
 				ABC6896FC002231B3CB8D987 /* AgentTurnRoomTimelineItem.swift */,
@@ -7480,34 +7486,34 @@
 				ORGANIZATIONNAME = Element;
 				TargetAttributes = {
 					0E28CD62691FDBC63147D5E3 = {
-						DevelopmentTeam = 8T6SHSGBYW;
+						DevelopmentTeam = 7J4U792NQT;
 						TestTargetID = C0FAEB81CFD9776CD78CE489;
 					};
 					19F0C845D67E9BEA4BE7133E = {
 						DevelopmentTeam = "$(DEVELOPMENT_TEAM)";
 					};
 					32C23C8D224D46EFE62AFAD0 = {
-						DevelopmentTeam = 8T6SHSGBYW;
+						DevelopmentTeam = 7J4U792NQT;
 					};
 					676A87694F0F247B2AF1A142 = {
-						DevelopmentTeam = 8T6SHSGBYW;
+						DevelopmentTeam = 7J4U792NQT;
 					};
 					7A17BE29BAC81ADBAC6349D9 = {
-						DevelopmentTeam = 8T6SHSGBYW;
+						DevelopmentTeam = 7J4U792NQT;
 					};
 					C0C687DE1D270F9895FEE186 = {
-						DevelopmentTeam = 8T6SHSGBYW;
+						DevelopmentTeam = 7J4U792NQT;
 						TestTargetID = C0FAEB81CFD9776CD78CE489;
 					};
 					C0FAEB81CFD9776CD78CE489 = {
 						DevelopmentTeam = "$(DEVELOPMENT_TEAM)";
 					};
 					D3DB351B7FBE0F49649171FC = {
-						DevelopmentTeam = 8T6SHSGBYW;
+						DevelopmentTeam = 7J4U792NQT;
 						TestTargetID = C0FAEB81CFD9776CD78CE489;
 					};
 					F8E276FD6DC43EADB85241BC = {
-						DevelopmentTeam = 8T6SHSGBYW;
+						DevelopmentTeam = 7J4U792NQT;
 					};
 					FEB53A5BC378C913769656D8 = {
 						DevelopmentTeam = "$(DEVELOPMENT_TEAM)";
@@ -7975,6 +7981,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C915347779B3C7FDD073A87A /* AVMetadataMachineReadableCodeObjectExtensionsTest.swift in Sources */,
+				0313FB05B6CAC36A4031423B /* AgentCanvasStepsRoomTimelineItemContentTests.swift in Sources */,
 				B184A7DE2F9D9FE2285B5861 /* AgentChoiceRequestRoomTimelineItemContentTests.swift in Sources */,
 				218F325374900C321388BF25 /* AgentTurnRoomTimelineItemContentTests.swift in Sources */,
 				A9A5801D5EE3D4D91F6DDADB /* AnalyticsSettingsScreenViewModelTests.swift in Sources */,
@@ -8216,6 +8223,7 @@
 				2BEDEA4851E1DF901779362C /* AdvancedSettingsScreenModels.swift in Sources */,
 				E1A0752244567A25E376A2F4 /* AdvancedSettingsScreenViewModel.swift in Sources */,
 				FCF95603F1D056B1B106A415 /* AdvancedSettingsScreenViewModelProtocol.swift in Sources */,
+				DE8660690CC46893E3C06B75 /* AgentCanvasStepsRoomTimelineItemContent.swift in Sources */,
 				2739CB24D20E99B11687D46A /* AgentChoiceRequestRoomTimelineItem.swift in Sources */,
 				432C84EC3369C3B09B562F92 /* AgentChoiceRequestRoomTimelineItemContent.swift in Sources */,
 				091545819C8D3E60B89C1AC5 /* AgentTurnRoomTimelineItem.swift in Sources */,
@@ -9834,10 +9842,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				APP_DISPLAY_NAME = "Element X";
-				APP_GROUP_IDENTIFIER = group.com.zhangqiongtest.elementx;
+				APP_GROUP_IDENTIFIER = group.io.element;
 				APP_NAME = ElementX;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "colors/accent-color";
-				BASE_BUNDLE_IDENTIFIER = com.zhangqiongtest.elementx;
+				BASE_BUNDLE_IDENTIFIER = io.element.elementx;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -9869,13 +9877,13 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CLASSIC_APP_DEEP_LINK_URL = "element://open";
-				CLASSIC_APP_GROUP_IDENTIFIER = group.com.zhangqiongtest.vector;
+				CLASSIC_APP_GROUP_IDENTIFIER = group.im.vector;
 				CLASSIC_APP_KEYCHAIN_ACCESS_GROUP_IDENTIFIER = "$(DEVELOPMENT_TEAM).im.vector.app.keychain.shared";
 				CLASSIC_APP_KEYCHAIN_SERVICE_IDENTIFIER = "im.vector.app.encryption-manager-service";
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 8T6SHSGBYW;
+				DEVELOPMENT_TEAM = 7J4U792NQT;
 				ENABLE_BITCODE = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -9908,10 +9916,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				APP_DISPLAY_NAME = "Element X";
-				APP_GROUP_IDENTIFIER = group.com.zhangqiongtest.elementx;
+				APP_GROUP_IDENTIFIER = group.io.element;
 				APP_NAME = ElementX;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "colors/accent-color";
-				BASE_BUNDLE_IDENTIFIER = com.zhangqiongtest.elementx;
+				BASE_BUNDLE_IDENTIFIER = io.element.elementx;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -9943,13 +9951,13 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CLASSIC_APP_DEEP_LINK_URL = "element://open";
-				CLASSIC_APP_GROUP_IDENTIFIER = group.com.zhangqiongtest.vector;
+				CLASSIC_APP_GROUP_IDENTIFIER = group.im.vector;
 				CLASSIC_APP_KEYCHAIN_ACCESS_GROUP_IDENTIFIER = "$(DEVELOPMENT_TEAM).im.vector.app.keychain.shared";
 				CLASSIC_APP_KEYCHAIN_SERVICE_IDENTIFIER = "im.vector.app.encryption-manager-service";
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 8T6SHSGBYW;
+				DEVELOPMENT_TEAM = 7J4U792NQT;
 				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
