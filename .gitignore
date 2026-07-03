@@ -52,3 +52,6 @@ Secrets/vendor/*
 
 # Local personal signing override (see override.yml.example)
 /override.yml
+
+# superpowers scratch/session state (progress ledgers, brainstorm mockups)
+/.superpowers/
