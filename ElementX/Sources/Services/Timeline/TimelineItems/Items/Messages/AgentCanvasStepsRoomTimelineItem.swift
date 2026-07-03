@@ -14,17 +14,17 @@ nonisolated struct AgentCanvasStepsRoomTimelineItem: EventBasedMessageTimelineIt
     let isOutgoing: Bool
     let isEditable: Bool
     let canBeRepliedTo: Bool
-
+    
     let sender: TimelineItemSender
-
+    
     let content: AgentCanvasStepsRoomTimelineItemContent
-
+    
     var properties = RoomTimelineItemProperties()
-
+    
     var body: String {
         content.body
     }
-
+    
     var contentType: EventBasedMessageTimelineItemContentType {
         .canvasSteps(content)
     }

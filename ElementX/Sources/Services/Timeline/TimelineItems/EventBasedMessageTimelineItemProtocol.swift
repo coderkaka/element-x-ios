@@ -36,7 +36,7 @@ nonisolated extension EventBasedMessageTimelineItemProtocol {
             false
         }
     }
-
+    
     var hasMediaCaption: Bool {
         mediaCaption != nil
     }
@@ -55,7 +55,7 @@ nonisolated extension EventBasedMessageTimelineItemProtocol {
             nil
         }
     }
-
+    
     var formattedMediaCaption: AttributedString? {
         switch contentType {
         case .audio(let content):
