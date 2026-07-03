@@ -484,6 +484,25 @@ final class TimelineViewModelTests {
     }
     
     @Test
+    func twoUnresolvedCanvasTasksMeansTheLaterOneWins() {
+        // Given a timeline with two unresolved canvas tasks, an earlier one and a later one.
+        let items: [RoomTimelineItemProtocol] = [
+            AgentCanvasStepsRoomTimelineItem(eventID: "earlier-unresolved-task", taskID: "task-1", title: "Earlier task", isResolved: false),
+            TextRoomTimelineItem(eventID: "t1"),
+            AgentCanvasStepsRoomTimelineItem(eventID: "later-unresolved-task", taskID: "task-2", title: "Later task", isResolved: false)
+        ]
+
+        // When showing them in a timeline.
+        let timelineController = TimelineControllerMock(.init(timelineItems: items))
+        let viewModel = makeViewModel(timelineController: timelineController)
+
+        // Then activeCanvasTask should reflect the later unresolved task, not the earlier one.
+        #expect(viewModel.state.activeCanvasTask?.eventID == "later-unresolved-task")
+        #expect(viewModel.state.activeCanvasTask?.taskID == "task-2")
+        #expect(viewModel.state.activeCanvasTask?.title == "Later task")
+    }
+
+    @Test
     func noUnresolvedCanvasTaskMeansNoActiveCanvasTask() {
         // Given a timeline with only a resolved canvas task.
         let items = [
