@@ -65,10 +65,7 @@ struct RoomTimelineItemView: View {
         case .location(let item):
             LocationRoomTimelineView(timelineItem: item)
         case .agentTurn(let item):
-            // Plain-text rendering only; the dedicated collapsible tool-calls view lands separately.
-            TimelineStyler(timelineItem: item) {
-                FormattedBodyText(text: item.body)
-            }
+            AgentTurnRoomTimelineView(timelineItem: item)
         case .poll(let item):
             PollRoomTimelineView(timelineItem: item)
         case .voice(let item):
