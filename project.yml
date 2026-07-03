@@ -69,6 +69,7 @@ include:
 - path: IntegrationTests/SupportingFiles/target.yml
 - path: AccessibilityTests/SupportingFiles/target.yml
 # - path: MyAppVariant/override.yml
+- path: override.yml # local personal signing override (see override.yml.example)
 
 packages:
   # Element/Matrix dependencies
