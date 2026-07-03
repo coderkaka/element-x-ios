@@ -412,6 +412,7 @@
 		42A5A42ACF063EEE6B1980D2 /* ReportContentScreenViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81B17B1F29448D1B9049B11C /* ReportContentScreenViewModel.swift */; };
 		42B084FDE621FBEE433AF444 /* LegalInformationScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4176C3E20C772DE8D182863C /* LegalInformationScreen.swift */; };
 		42F1C8731166633E35A6D7E6 /* RoomEventStringBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A307A44F952CD73E63AE31 /* RoomEventStringBuilder.swift */; };
+		432C84EC3369C3B09B562F92 /* AgentChoiceRequestRoomTimelineItemContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA7DC39635EA624911C81A3A /* AgentChoiceRequestRoomTimelineItemContent.swift */; };
 		432EA37BDC97CEDBAB7B23A6 /* RoomInfoProxyProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14517E5597594956FCE1950D /* RoomInfoProxyProtocol.swift */; };
 		43F35A7E5703D64DB0519C59 /* ServerSelectionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD469F7513574341181F7EAA /* ServerSelectionScreen.swift */; };
 		440123E29E2F9B001A775BBE /* TimelineItemProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D505843AB66822EB91F0DF0 /* TimelineItemProxy.swift */; };
@@ -1089,6 +1090,7 @@
 		B13774779EA19FDD7A35A4A8 /* RoomRolesAndPermissionsScreenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C28B70BEFD3676F11D5D51F /* RoomRolesAndPermissionsScreenCoordinator.swift */; };
 		B1387648C6F71F1B98244803 /* SecureBackupRecoveryKeyScreenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 596AA8843AC1A234F3387767 /* SecureBackupRecoveryKeyScreenCoordinator.swift */; };
 		B14BC354E56616B6B7D9A3D7 /* NotificationServiceExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27A1AD6389A4659AF0CEAE62 /* NotificationServiceExtension.swift */; };
+		B184A7DE2F9D9FE2285B5861 /* AgentChoiceRequestRoomTimelineItemContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64150601631926F4B35825B0 /* AgentChoiceRequestRoomTimelineItemContentTests.swift */; };
 		B188D0907A4D38AAAF6FEFA8 /* AppLockSetupFlowCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DBB08A95EFA668F2CF27211 /* AppLockSetupFlowCoordinator.swift */; };
 		B1B255CE0E4306DD6E09D936 /* EncryptionResetPasswordScreenModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54A5E6F398C269AD52C9AE21 /* EncryptionResetPasswordScreenModels.swift */; };
 		B20484642B41C2D76238BAAA /* test_animated_image.gif in Resources */ = {isa = PBXBuildFile; fileRef = 53FD6D3D38F556CEAA280C58 /* test_animated_image.gif */; };
@@ -2221,6 +2223,7 @@
 		638790D3F915F0909315C47A /* PollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PollView.swift; sourceTree = "<group>"; };
 		638A81B97D51591D0FCFA598 /* InteractiveQuickLook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractiveQuickLook.swift; sourceTree = "<group>"; };
 		63E8A1E8EE094F570573B6E8 /* RoomDetailsScreenViewModelProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomDetailsScreenViewModelProtocol.swift; sourceTree = "<group>"; };
+		64150601631926F4B35825B0 /* AgentChoiceRequestRoomTimelineItemContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentChoiceRequestRoomTimelineItemContentTests.swift; sourceTree = "<group>"; };
 		645E027C112740573D27765C /* SecureBackupRecoveryKeyScreenModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureBackupRecoveryKeyScreenModels.swift; sourceTree = "<group>"; };
 		646B50583A2CE6DA67F7739A /* SpaceScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceScreen.swift; sourceTree = "<group>"; };
 		648DD1C10E4957CB791FE0B8 /* OverridableAvatarImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverridableAvatarImage.swift; sourceTree = "<group>"; };
@@ -2728,6 +2731,7 @@
 		BA241DEEF7C8A7181C0AEDC9 /* UserPreferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPreferenceTests.swift; sourceTree = "<group>"; };
 		BA257D747DD7E6FFA5C2BE2D /* LinkNewDeviceServiceMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkNewDeviceServiceMock.swift; sourceTree = "<group>"; };
 		BA40B98B098B6F0371B750B3 /* TemplateScreenModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateScreenModels.swift; sourceTree = "<group>"; };
+		BA7DC39635EA624911C81A3A /* AgentChoiceRequestRoomTimelineItemContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentChoiceRequestRoomTimelineItemContent.swift; sourceTree = "<group>"; };
 		BA919F521E9F0EE3638AFC85 /* BugReportScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportScreen.swift; sourceTree = "<group>"; };
 		BB284643AF7AB131E307DCE0 /* AudioSessionProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionProtocol.swift; sourceTree = "<group>"; };
 		BB576F4118C35E6B5124FA22 /* test_apple_image.heic */ = {isa = PBXFileReference; path = test_apple_image.heic; sourceTree = "<group>"; };
@@ -4980,6 +4984,7 @@
 		73CD9796729EB702B4DFA88C /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				64150601631926F4B35825B0 /* AgentChoiceRequestRoomTimelineItemContentTests.swift */,
 				91A936C577E5324DBB1F4884 /* AgentTurnRoomTimelineItemContentTests.swift */,
 				58C2527813FDAE23E72A9063 /* AnalyticsSettingsScreenViewModelTests.swift */,
 				C687844F60BFF532D49A994C /* AnalyticsTests.swift */,
@@ -5455,6 +5460,7 @@
 		8428BD1821586CEE0B9C9ECA /* Messages */ = {
 			isa = PBXGroup;
 			children = (
+				BA7DC39635EA624911C81A3A /* AgentChoiceRequestRoomTimelineItemContent.swift */,
 				ABC6896FC002231B3CB8D987 /* AgentTurnRoomTimelineItem.swift */,
 				0A635EFEFA35261A454913AA /* AgentTurnRoomTimelineItemContent.swift */,
 				57EAAF82432B0B53881CF826 /* AudioRoomTimelineItem.swift */,
@@ -7966,6 +7972,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C915347779B3C7FDD073A87A /* AVMetadataMachineReadableCodeObjectExtensionsTest.swift in Sources */,
+				B184A7DE2F9D9FE2285B5861 /* AgentChoiceRequestRoomTimelineItemContentTests.swift in Sources */,
 				218F325374900C321388BF25 /* AgentTurnRoomTimelineItemContentTests.swift in Sources */,
 				A9A5801D5EE3D4D91F6DDADB /* AnalyticsSettingsScreenViewModelTests.swift in Sources */,
 				890F0D453FE388756479AC97 /* AnalyticsTests.swift in Sources */,
@@ -8206,6 +8213,7 @@
 				2BEDEA4851E1DF901779362C /* AdvancedSettingsScreenModels.swift in Sources */,
 				E1A0752244567A25E376A2F4 /* AdvancedSettingsScreenViewModel.swift in Sources */,
 				FCF95603F1D056B1B106A415 /* AdvancedSettingsScreenViewModelProtocol.swift in Sources */,
+				432C84EC3369C3B09B562F92 /* AgentChoiceRequestRoomTimelineItemContent.swift in Sources */,
 				091545819C8D3E60B89C1AC5 /* AgentTurnRoomTimelineItem.swift in Sources */,
 				A053533303F3AD05C91774D3 /* AgentTurnRoomTimelineItemContent.swift in Sources */,
 				C35FA4484F4BA0291885B798 /* AgentTurnRoomTimelineView.swift in Sources */,
