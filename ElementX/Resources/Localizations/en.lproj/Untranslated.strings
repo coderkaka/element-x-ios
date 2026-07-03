@@ -1,3 +1,5 @@
+"a11y_collapse_tool_calls" = "Collapse tool calls";
+"a11y_expand_tool_calls" = "Expand tool calls";
 "screen_home_tab_search" = "Search";
 "screen_search_empty_state_message" = "Search for rooms";
 "screen_search_empty_state_title" = "Start searching...";

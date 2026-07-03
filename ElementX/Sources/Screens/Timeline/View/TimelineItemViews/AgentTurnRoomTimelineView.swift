@@ -10,9 +10,15 @@ import Compound
 import SwiftUI
 
 struct AgentTurnRoomTimelineView: View {
+    enum AccessibilityFocus {
+        case disclosure
+        case toolCalls
+    }
+
     let timelineItem: AgentTurnRoomTimelineItem
 
     @State private var isToolCallsExpanded = false
+    @AccessibilityFocusState private var accessibilityFocusState: AccessibilityFocus?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -37,12 +43,14 @@ struct AgentTurnRoomTimelineView: View {
                     Text(UntranslatedL10n.screenRoomTimelineAgentTurnToolCallsCount(timelineItem.content.toolCalls.count))
                         .font(.compound.bodySM)
                     CompoundIcon(\.chevronRight, size: .small, relativeTo: .compound.bodySM)
+                        .accessibilityLabel(isToolCallsExpanded ? UntranslatedL10n.a11yCollapseToolCalls : UntranslatedL10n.a11yExpandToolCalls)
                         .rotationEffect(.degrees(isToolCallsExpanded ? 90 : 0))
                         .animation(.elementDefault, value: isToolCallsExpanded)
                 }
                 .foregroundColor(.compound.textSecondary)
             }
             .buttonStyle(.plain)
+            .accessibilityFocused($accessibilityFocusState, equals: .disclosure)
 
             if isToolCallsExpanded {
                 VStack(alignment: .leading, spacing: 4) {
@@ -51,7 +59,12 @@ struct AgentTurnRoomTimelineView: View {
                     }
                 }
                 .padding(.top, 4)
+                .accessibilityElement(children: .contain)
+                .accessibilityFocused($accessibilityFocusState, equals: .toolCalls)
             }
+        }
+        .onChange(of: isToolCallsExpanded) { _, newValue in
+            accessibilityFocusState = newValue ? .toolCalls : .disclosure
         }
     }
 
