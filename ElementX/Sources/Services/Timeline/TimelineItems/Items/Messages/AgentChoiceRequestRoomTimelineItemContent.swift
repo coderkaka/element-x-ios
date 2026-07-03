@@ -16,13 +16,13 @@ nonisolated struct ChoiceOption: Hashable, Decodable {
 nonisolated struct AgentChoiceRequestRoomTimelineItemContent: Hashable {
     /// The custom `m.room.message` msgtype this content type is built from.
     static let msgType = "io.element.agent.choice_request"
-
+    
     let body: String
     let question: String
     let options: [ChoiceOption]
     let multiSelect: Bool
     let resolvedSelection: [String]?
-
+    
     init(body: String, question: String = "", options: [ChoiceOption] = [], multiSelect: Bool = false, resolvedSelection: [String]? = nil) {
         self.body = body
         self.question = question
@@ -30,7 +30,7 @@ nonisolated struct AgentChoiceRequestRoomTimelineItemContent: Hashable {
         self.multiSelect = multiSelect
         self.resolvedSelection = resolvedSelection
     }
-
+    
     /// - Parameters:
     ///   - originalJSON: the raw Matrix event JSON from `EventTimelineItemProxy.debugInfo.originalJSON`.
     ///     The Rust SDK only exposes the standard `body` field for custom msgtypes via `MessageType.other`,
@@ -48,22 +48,22 @@ nonisolated struct AgentChoiceRequestRoomTimelineItemContent: Hashable {
         multiSelect = fields?.multiSelect ?? false
         resolvedSelection = fields?.resolvedSelection
     }
-
+    
     private struct Fields: Decodable {
         let question: String
         let options: [ChoiceOption]
         let multiSelect: Bool
         let resolvedSelection: [String]?
-
+        
         enum CodingKeys: String, CodingKey {
             case question
             case options
             case multiSelect = "multi_select"
             case resolvedSelection = "resolved_selection"
         }
-
-        // Custom init so a missing `options` key falls back to `[]` instead of failing the whole
-        // decode (the synthesized Decodable would throw keyNotFound, discarding `question` too).
+        
+        /// Custom init so a missing `options` key falls back to `[]` instead of failing the whole
+        /// decode (the synthesized Decodable would throw keyNotFound, discarding `question` too).
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             question = try container.decode(String.self, forKey: .question)
@@ -72,18 +72,18 @@ nonisolated struct AgentChoiceRequestRoomTimelineItemContent: Hashable {
             resolvedSelection = try container.decodeIfPresent([String].self, forKey: .resolvedSelection)
         }
     }
-
+    
     /// Matrix message edits (`m.replace`) nest their replacement content under `m.new_content`, while an
     /// unedited event's fields live directly under `content`. Whether `latestEditJSON` is the raw edit event
     /// (needing this unwrap) or already-flattened replacement content (not needing it) wasn't discoverable
     /// from the vendored SDK bindings — this handles both shapes without needing to know which is real.
     private struct ContentEnvelope: Decodable {
         let fields: Fields
-
+        
         enum CodingKeys: String, CodingKey {
             case newContent = "m.new_content"
         }
-
+        
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             if let newContent = try container.decodeIfPresent(Fields.self, forKey: .newContent) {
@@ -93,11 +93,11 @@ nonisolated struct AgentChoiceRequestRoomTimelineItemContent: Hashable {
             }
         }
     }
-
+    
     private struct EventEnvelope: Decodable {
         let content: ContentEnvelope
     }
-
+    
     private static func parseFields(from json: String?) -> Fields? {
         guard let data = json?.data(using: .utf8) else { return nil }
         guard let event = try? JSONDecoder().decode(EventEnvelope.self, from: data) else { return nil }

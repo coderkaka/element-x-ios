@@ -6,9 +6,8 @@
 // Please see LICENSE files in the repository root for full details.
 //
 
-import Testing
-
 @testable import ElementX
+import Testing
 
 struct AgentChoiceRequestRoomTimelineItemContentTests {
     @Test
@@ -24,7 +23,7 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
         #expect(content.multiSelect == false)
         #expect(content.resolvedSelection == nil)
     }
-
+    
     @Test
     func parsesWellFormedMultiSelectRequest() {
         let json = """
@@ -35,7 +34,7 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
         let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
         #expect(content.multiSelect == true)
     }
-
+    
     @Test
     func missingOptionsFieldFallsBackToEmpty() {
         let json = """
@@ -45,7 +44,7 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
         #expect(content.options.isEmpty)
         #expect(content.question == "Q?")
     }
-
+    
     @Test
     func malformedOptionsEntryFallsBackToEmpty() {
         let json = """
@@ -55,7 +54,7 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
         let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
         #expect(content.options.isEmpty)
     }
-
+    
     @Test
     func nilOriginalJSONFallsBackToEmptyDefaults() {
         let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: nil, latestEditJSON: nil)
@@ -64,7 +63,7 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
         #expect(content.multiSelect == false)
         #expect(content.resolvedSelection == nil)
     }
-
+    
     @Test
     func uneditedMessageHasNoResolvedSelection() {
         let json = """
@@ -74,7 +73,7 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
         let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
         #expect(content.resolvedSelection == nil)
     }
-
+    
     @Test
     func editedMessageWithNestedNewContentShapeExposesResolvedSelection() {
         // Hypothesis A: latestEditJSON is the raw m.replace edit event, replacement fields nested under `m.new_content`.
@@ -91,7 +90,7 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
         let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: original, latestEditJSON: edit)
         #expect(content.resolvedSelection == ["a"])
     }
-
+    
     @Test
     func editedMessageWithFlatShapeExposesResolvedSelection() {
         // Hypothesis B: latestEditJSON is already the pre-flattened replacement content, same shape as originalJSON.
@@ -106,7 +105,7 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
         let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: original, latestEditJSON: edit)
         #expect(content.resolvedSelection == ["a"])
     }
-
+    
     @Test
     func editedMessageMultiSelectResolvedSelectionHasMultipleIDs() {
         let edit = """
