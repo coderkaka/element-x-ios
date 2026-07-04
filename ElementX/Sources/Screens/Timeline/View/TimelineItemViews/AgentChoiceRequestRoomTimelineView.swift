@@ -23,6 +23,20 @@ struct AgentChoiceRequestRoomTimelineView: View {
         timelineItem.id.eventID
     }
     
+    /// The resolved selection, read from the `io.element.agent.choice_request` room state event keyed
+    /// by this message's event ID (state is the only source of truth for this — see
+    /// `AgentChoiceRequestRoomTimelineItemContent`). `nil` while unfetched or genuinely unresolved.
+    private var resolvedSelection: [String]? {
+        guard let eventID, let rawStateEvent = context.viewState.fetchedStateEvents[stateEventKey(for: eventID)] else {
+            return nil
+        }
+        return AgentChoiceRequestStateContent(parsingFrom: rawStateEvent)?.resolvedSelection
+    }
+    
+    private func stateEventKey(for eventID: String) -> StateEventKey {
+        StateEventKey(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey: eventID)
+    }
+    
     var body: some View {
         TimelineStyler(timelineItem: timelineItem) {
             VStack(alignment: .leading, spacing: 8) {
@@ -30,7 +44,7 @@ struct AgentChoiceRequestRoomTimelineView: View {
                     .font(.compound.bodyMD)
                     .foregroundColor(.compound.textPrimary)
                 
-                if let resolvedSelection = content.resolvedSelection {
+                if let resolvedSelection {
                     resolvedView(selectedIDs: resolvedSelection)
                 } else if content.multiSelect {
                     multiSelectView
@@ -38,6 +52,10 @@ struct AgentChoiceRequestRoomTimelineView: View {
                     singleSelectView
                 }
             }
+        }
+        .task(id: eventID) {
+            guard let eventID else { return }
+            context.send(viewAction: .fetchStateEvent(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey: eventID))
         }
     }
     

@@ -19,7 +19,7 @@ struct AgentCanvasStepsRoomTimelineItemContentTests {
         {"id":"step2","label":"Wait for approval","status":"in_progress"},
         {"id":"step3","label":"Run tests","status":"pending"}]}}
         """
-        let content = AgentCanvasStepsRoomTimelineItemContent(body: "Task: Refactor auth module", parsingFrom: json, latestEditJSON: nil)
+        let content = AgentCanvasStepsRoomTimelineItemContent(body: "Task: Refactor auth module", parsingFrom: json)
         #expect(content.taskID == "task-1234")
         #expect(content.title == "Refactor auth module")
         #expect(content.isResolved == false)
@@ -34,7 +34,7 @@ struct AgentCanvasStepsRoomTimelineItemContentTests {
         {"content":{"msgtype":"io.element.agent.canvas.steps","body":"fallback","task_id":"t","title":"T","status":"in_progress",
         "steps":[{"id":"s1","label":"L","status":"blocked"}]}}
         """
-        let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
+        let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: json)
         #expect(content.steps == [CanvasStep(id: "s1", label: "L", status: .other("blocked"))])
     }
     
@@ -43,7 +43,7 @@ struct AgentCanvasStepsRoomTimelineItemContentTests {
         let json = """
         {"content":{"msgtype":"io.element.agent.canvas.steps","body":"fallback","task_id":"t","title":"T","status":"in_progress"}}
         """
-        let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
+        let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: json)
         #expect(content.steps.isEmpty)
         #expect(content.title == "T")
     }
@@ -54,14 +54,14 @@ struct AgentCanvasStepsRoomTimelineItemContentTests {
         {"content":{"msgtype":"io.element.agent.canvas.steps","body":"fallback","task_id":"t","title":"T","status":"in_progress",
         "steps":[{"id":"s1"}]}}
         """
-        let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
+        let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: json)
         #expect(content.steps.isEmpty)
         #expect(content.title == "T")
     }
     
     @Test
     func nilOriginalJSONFallsBackToEmptyDefaults() {
-        let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: nil, latestEditJSON: nil)
+        let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: nil)
         #expect(content.taskID.isEmpty)
         #expect(content.title.isEmpty)
         #expect(content.isResolved == false)
@@ -74,26 +74,57 @@ struct AgentCanvasStepsRoomTimelineItemContentTests {
         {"content":{"msgtype":"io.element.agent.canvas.steps","body":"fallback","task_id":"t","title":"T","status":"in_progress",
         "steps":[]}}
         """
-        let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
+        let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: json)
         #expect(content.isResolved == false)
     }
     
     @Test
-    func editedTaskWithDoneStatusIsResolved() {
-        // latestEditJSON's shape is confirmed this session: raw m.replace edit event, replacement fields
-        // nested under m.new_content (see AgentChoiceRequestRoomTimelineItemContent's own confirmed parsing).
-        let original = """
-        {"content":{"msgtype":"io.element.agent.canvas.steps","body":"fallback","task_id":"t","title":"T","status":"in_progress",
-        "steps":[{"id":"s1","label":"L","status":"in_progress"}]}}
+    func messageStatusDoneIsResolvedEvenBeforeAnyStateUpdate() {
+        // A task that's already `"done"` in its very first message (no progress updates needed) must
+        // still be recognised as resolved from the message alone — resolution only moves to the state
+        // event for updates *after* the initial message.
+        let json = """
+        {"content":{"msgtype":"io.element.agent.canvas.steps","body":"fallback","task_id":"t","title":"T","status":"done",
+        "steps":[{"id":"s1","label":"L","status":"done"}]}}
         """
-        let edit = """
-        {"content":{"msgtype":"io.element.agent.canvas.steps","body":"* Done",
-        "m.new_content":{"msgtype":"io.element.agent.canvas.steps","body":"Done","task_id":"t","title":"T","status":"done",
-        "steps":[{"id":"s1","label":"L","status":"done"}]},
-        "m.relates_to":{"rel_type":"m.replace","event_id":"$original"}}}
-        """
-        let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: original, latestEditJSON: edit)
+        let content = AgentCanvasStepsRoomTimelineItemContent(body: "fallback", parsingFrom: json)
         #expect(content.isResolved == true)
-        #expect(content.steps == [CanvasStep(id: "s1", label: "L", status: .done)])
+    }
+}
+
+struct AgentCanvasStepsStateContentTests {
+    @Test
+    func parsesWellFormedDoneStateEvent() {
+        let json = """
+        {"type":"io.element.agent.canvas.steps","state_key":"t",
+        "content":{"status":"done","steps":[{"id":"s1","label":"L","status":"done"}]}}
+        """
+        let content = AgentCanvasStepsStateContent(parsingFrom: json)
+        #expect(content?.isResolved == true)
+        #expect(content?.steps == [CanvasStep(id: "s1", label: "L", status: .done)])
+    }
+    
+    @Test
+    func parsesInProgressStateEvent() {
+        let json = """
+        {"type":"io.element.agent.canvas.steps","state_key":"t",
+        "content":{"status":"in_progress","steps":[{"id":"s1","label":"L","status":"in_progress"}]}}
+        """
+        let content = AgentCanvasStepsStateContent(parsingFrom: json)
+        #expect(content?.isResolved == false)
+    }
+    
+    @Test
+    func missingStepsFieldFallsBackToEmpty() {
+        let json = """
+        {"type":"io.element.agent.canvas.steps","state_key":"t","content":{"status":"in_progress"}}
+        """
+        let content = AgentCanvasStepsStateContent(parsingFrom: json)
+        #expect(content?.steps.isEmpty == true)
+    }
+    
+    @Test
+    func nilRawJSONReturnsNil() {
+        #expect(AgentCanvasStepsStateContent(parsingFrom: nil) == nil)
     }
 }

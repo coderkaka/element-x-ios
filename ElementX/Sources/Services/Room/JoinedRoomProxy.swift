@@ -217,6 +217,16 @@ class JoinedRoomProxy: JoinedRoomProxyProtocol {
         }
     }
     
+    func getStateEventRaw(eventType: String, stateKey: String) async -> Result<String?, RoomProxyError> {
+        do {
+            let raw = try await room.getStateEventRaw(eventType: eventType, stateKey: stateKey)
+            return .success(raw)
+        } catch {
+            MXLog.error("Failed fetching state event eventType: \(eventType) stateKey: \(stateKey) with error: \(error)")
+            return .failure(.sdkError(error))
+        }
+    }
+    
     func messageFilteredTimeline(focus: TimelineFocus,
                                  allowedMessageTypes: [TimelineAllowedMessageType],
                                  presentation: TimelineKind.MediaPresentation) async -> Result<any TimelineProxyProtocol, RoomProxyError> {

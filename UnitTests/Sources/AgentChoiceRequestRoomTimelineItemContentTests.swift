@@ -17,7 +17,7 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
         "question":"Which environment?","options":[{"id":"test","label":"Test"},{"id":"prod","label":"Production"}],
         "multi_select":false}}
         """
-        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
+        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json)
         #expect(content.question == "Which environment?")
         #expect(content.options == [ChoiceOption(id: "test", label: "Test"), ChoiceOption(id: "prod", label: "Production")])
         #expect(content.multiSelect == false)
@@ -31,7 +31,7 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
         "question":"Which reviewers?","options":[{"id":"a","label":"Alice"},{"id":"b","label":"Bob"}],
         "multi_select":true}}
         """
-        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
+        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json)
         #expect(content.multiSelect == true)
     }
     
@@ -40,7 +40,7 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
         let json = """
         {"content":{"msgtype":"io.element.agent.choice_request","body":"fallback","question":"Q?","multi_select":false}}
         """
-        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
+        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json)
         #expect(content.options.isEmpty)
         #expect(content.question == "Q?")
     }
@@ -51,13 +51,13 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
         {"content":{"msgtype":"io.element.agent.choice_request","body":"fallback","question":"Q?",
         "options":[{"id":"a"}],"multi_select":false}}
         """
-        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
+        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json)
         #expect(content.options.isEmpty)
     }
     
     @Test
     func nilOriginalJSONFallsBackToEmptyDefaults() {
-        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: nil, latestEditJSON: nil)
+        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: nil)
         #expect(content.question.isEmpty)
         #expect(content.options.isEmpty)
         #expect(content.multiSelect == false)
@@ -65,54 +65,50 @@ struct AgentChoiceRequestRoomTimelineItemContentTests {
     }
     
     @Test
-    func uneditedMessageHasNoResolvedSelection() {
+    func messageContentNeverExposesResolvedSelection() {
+        // `resolvedSelection` now only ever comes from a room state event (`AgentChoiceRequestStateContent`),
+        // never from the message itself — even if a (no longer supported) `resolved_selection` key were
+        // present on the message, it must not leak through.
         let json = """
         {"content":{"msgtype":"io.element.agent.choice_request","body":"fallback","question":"Q?",
-        "options":[{"id":"a","label":"A"}],"multi_select":false}}
-        """
-        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json, latestEditJSON: nil)
-        #expect(content.resolvedSelection == nil)
-    }
-    
-    @Test
-    func editedMessageWithNestedNewContentShapeExposesResolvedSelection() {
-        // Hypothesis A: latestEditJSON is the raw m.replace edit event, replacement fields nested under `m.new_content`.
-        let original = """
-        {"content":{"msgtype":"io.element.agent.choice_request","body":"fallback","question":"Q?",
-        "options":[{"id":"a","label":"A"}],"multi_select":false}}
-        """
-        let edit = """
-        {"content":{"msgtype":"io.element.agent.choice_request","body":"* Selected: A",
-        "m.new_content":{"msgtype":"io.element.agent.choice_request","body":"Selected: A","question":"Q?",
-        "options":[{"id":"a","label":"A"}],"multi_select":false,"resolved_selection":["a"]},
-        "m.relates_to":{"rel_type":"m.replace","event_id":"$original"}}}
-        """
-        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: original, latestEditJSON: edit)
-        #expect(content.resolvedSelection == ["a"])
-    }
-    
-    @Test
-    func editedMessageWithFlatShapeExposesResolvedSelection() {
-        // Hypothesis B: latestEditJSON is already the pre-flattened replacement content, same shape as originalJSON.
-        let original = """
-        {"content":{"msgtype":"io.element.agent.choice_request","body":"fallback","question":"Q?",
-        "options":[{"id":"a","label":"A"}],"multi_select":false}}
-        """
-        let edit = """
-        {"content":{"msgtype":"io.element.agent.choice_request","body":"Selected: A","question":"Q?",
         "options":[{"id":"a","label":"A"}],"multi_select":false,"resolved_selection":["a"]}}
         """
-        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: original, latestEditJSON: edit)
-        #expect(content.resolvedSelection == ["a"])
+        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: json)
+        #expect(content.resolvedSelection == nil)
+    }
+}
+
+struct AgentChoiceRequestStateContentTests {
+    @Test
+    func parsesWellFormedStateEvent() {
+        let json = """
+        {"type":"io.element.agent.choice_request","state_key":"$original",
+        "content":{"resolved_selection":["a"]}}
+        """
+        let content = AgentChoiceRequestStateContent(parsingFrom: json)
+        #expect(content?.resolvedSelection == ["a"])
     }
     
     @Test
-    func editedMessageMultiSelectResolvedSelectionHasMultipleIDs() {
-        let edit = """
-        {"content":{"msgtype":"io.element.agent.choice_request","body":"Selected: A, B","question":"Q?",
-        "options":[{"id":"a","label":"A"},{"id":"b","label":"B"}],"multi_select":true,"resolved_selection":["a","b"]}}
+    func parsesMultipleResolvedIDs() {
+        let json = """
+        {"type":"io.element.agent.choice_request","state_key":"$original",
+        "content":{"resolved_selection":["a","b"]}}
         """
-        let content = AgentChoiceRequestRoomTimelineItemContent(body: "fallback", parsingFrom: nil, latestEditJSON: edit)
-        #expect(content.resolvedSelection == ["a", "b"])
+        let content = AgentChoiceRequestStateContent(parsingFrom: json)
+        #expect(content?.resolvedSelection == ["a", "b"])
+    }
+    
+    @Test
+    func nilRawJSONReturnsNil() {
+        #expect(AgentChoiceRequestStateContent(parsingFrom: nil) == nil)
+    }
+    
+    @Test
+    func missingResolvedSelectionKeyReturnsNil() {
+        let json = """
+        {"type":"io.element.agent.choice_request","state_key":"$original","content":{}}
+        """
+        #expect(AgentChoiceRequestStateContent(parsingFrom: json) == nil)
     }
 }

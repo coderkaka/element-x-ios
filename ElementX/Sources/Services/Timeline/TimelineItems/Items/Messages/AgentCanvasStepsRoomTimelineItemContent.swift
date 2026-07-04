@@ -53,19 +53,17 @@ nonisolated struct AgentCanvasStepsRoomTimelineItemContent: Hashable {
         self.steps = steps
     }
     
-    /// - Parameters:
-    ///   - originalJSON: the raw Matrix event JSON from `EventTimelineItemProxy.debugInfo.originalJSON`.
-    ///     The Rust SDK only exposes `body` for custom msgtypes via `MessageType.other`, so
-    ///     `task_id`/`title`/`status`/`steps` have to be recovered by hand, same reasoning
-    ///     `AgentTurnRoomTimelineItemContent` documents for `tool_calls`.
-    ///   - latestEditJSON: `EventTimelineItemProxy.debugInfo.latestEditJSON`, non-nil once the agent
-    ///     has edited this message to update progress. Confirmed this session (via
-    ///     `io.element.agent.choice_request`'s Task 1, independently re-verified against live
-    ///     `matrix-rust-sdk` source) to be the raw `m.replace` edit event, replacement fields nested
-    ///     under `m.new_content` — this parser unwraps that directly, no dual-shape handling needed.
-    init(body: String, parsingFrom originalJSON: String?, latestEditJSON: String?) {
+    /// - Parameter originalJSON: the raw Matrix event JSON from `EventTimelineItemProxy.debugInfo.originalJSON`.
+    ///   The Rust SDK only exposes `body` for custom msgtypes via `MessageType.other`, so
+    ///   `task_id`/`title`/`status`/`steps` have to be recovered by hand, same reasoning
+    ///   `AgentTurnRoomTimelineItemContent` documents for `tool_calls`.
+    ///
+    ///   This is the *initial* progress only. Later updates live in a `io.element.agent.canvas.steps`
+    ///   room state event (state key = `task_id`), read separately via `getStateEventRaw` — see
+    ///   `AgentCanvasStepsRoomTimelineView`.
+    init(body: String, parsingFrom originalJSON: String?) {
         self.body = body
-        let fields = Self.parseFields(from: latestEditJSON) ?? Self.parseFields(from: originalJSON)
+        let fields = Self.parseFields(from: originalJSON)
         taskID = fields?.taskID ?? ""
         title = fields?.title ?? ""
         isResolved = fields?.status == "done"
@@ -94,30 +92,44 @@ nonisolated struct AgentCanvasStepsRoomTimelineItemContent: Hashable {
         }
     }
     
-    private struct ContentEnvelope: Decodable {
-        let fields: Fields
-        
-        enum CodingKeys: String, CodingKey {
-            case newContent = "m.new_content"
-        }
-        
-        init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            if let newContent = try container.decodeIfPresent(Fields.self, forKey: .newContent) {
-                fields = newContent
-            } else {
-                fields = try Fields(from: decoder)
-            }
-        }
-    }
-    
     private struct EventEnvelope: Decodable {
-        let content: ContentEnvelope
+        let content: Fields
     }
     
     private static func parseFields(from json: String?) -> Fields? {
         guard let data = json?.data(using: .utf8) else { return nil }
         guard let event = try? JSONDecoder().decode(EventEnvelope.self, from: data) else { return nil }
-        return event.content.fields
+        return event.content
+    }
+}
+
+/// The `io.element.agent.canvas.steps` room state event content, keyed by `task_id`. Its `status`/
+/// `steps` are how the client learns progress updates, without depending on message edits.
+nonisolated struct AgentCanvasStepsStateContent: Decodable {
+    let isResolved: Bool
+    let steps: [CanvasStep]
+    
+    private enum CodingKeys: String, CodingKey {
+        case status
+        case steps
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        isResolved = try container.decode(String.self, forKey: .status) == "done"
+        steps = try container.decodeIfPresent([CanvasStep].self, forKey: .steps) ?? []
+    }
+    
+    /// - Parameter rawStateEventJSON: the full raw state event JSON string returned by
+    ///   `getStateEventRaw`, i.e. `{"type": ..., "state_key": ..., "content": {"status": ..., "steps": [...]}, ...}`.
+    init?(parsingFrom rawStateEventJSON: String?) {
+        guard let data = rawStateEventJSON?.data(using: .utf8) else { return nil }
+        
+        struct EventEnvelope: Decodable {
+            let content: AgentCanvasStepsStateContent
+        }
+        
+        guard let event = try? JSONDecoder().decode(EventEnvelope.self, from: data) else { return nil }
+        self = event.content
     }
 }

@@ -77,6 +77,10 @@ enum TimelineViewAction {
     case displayThread(itemID: TimelineItemIdentifier)
     case tappedCanvasTaskBanner
     
+    /// Reads a room state event and stores its raw JSON in `TimelineViewState.fetchedStateEvents`,
+    /// keyed by `StateEventKey(eventType:stateKey:)`, for a view to read back once fetched.
+    case fetchStateEvent(eventType: String, stateKey: String)
+    
     case handlePasteOrDrop(providers: [NSItemProvider])
     case handlePollAction(TimelineViewPollAction)
     case handleChoiceRequestAction(TimelineViewChoiceRequestAction)
@@ -161,7 +165,17 @@ struct TimelineViewState: BindableState {
     
     var stoppedLiveLocationIDs: Set<TimelineItemIdentifier> = []
     
+    /// Raw JSON of state events fetched via `.fetchStateEvent`, keyed by `(eventType, stateKey)`.
+    /// Absence means "not fetched yet"; a fetched-but-unset state event is present with a `nil` value.
+    var fetchedStateEvents: [StateEventKey: String?] = [:]
+    
     var bindings: TimelineViewStateBindings
+}
+
+/// Identifies a room state event by its event type and state key, for use as a dictionary key.
+struct StateEventKey: Hashable {
+    let eventType: String
+    let stateKey: String
 }
 
 struct TimelineViewStateBindings {

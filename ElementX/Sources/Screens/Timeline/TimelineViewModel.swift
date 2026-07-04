@@ -209,6 +209,8 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         case .tappedCanvasTaskBanner:
             guard let activeCanvasTask = state.activeCanvasTask else { return }
             actionsSubject.send(.presentCanvasSteps(eventID: activeCanvasTask.eventID, taskID: activeCanvasTask.taskID))
+        case .fetchStateEvent(let eventType, let stateKey):
+            fetchStateEvent(eventType: eventType, stateKey: stateKey)
         case .handlePasteOrDrop(let providers):
             timelineInteractionHandler.handlePasteOrDrop(providers)
         case .handlePollAction(let pollAction):
@@ -904,11 +906,18 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
     
     /// Finds the most recent (last-in-timeline-order) unresolved canvas-steps task, matching this
     /// plan's V1 "at most one active banner, most recent wins" decision.
+    ///
+    /// Progress updates after the initial message live in a `io.element.agent.canvas.steps` room state
+    /// event (state key = `task_id`), not in the message itself — so resolution here is checked against
+    /// whichever is more current: the fetched state event if one has arrived, else the message's own
+    /// initial `isResolved`. Fetches are kicked off for every candidate so state eventually arrives.
     private func updateActiveCanvasTask(timelineItems: [RoomTimelineItemProtocol]) {
-        let unresolvedCanvasItem = timelineItems.reversed().first { item in
-            guard let canvasItem = item as? AgentCanvasStepsRoomTimelineItem else { return false }
-            return !canvasItem.content.isResolved
-        } as? AgentCanvasStepsRoomTimelineItem
+        let canvasItems = timelineItems.compactMap { $0 as? AgentCanvasStepsRoomTimelineItem }
+        for canvasItem in canvasItems {
+            fetchStateEvent(eventType: AgentCanvasStepsRoomTimelineItemContent.msgType, stateKey: canvasItem.content.taskID)
+        }
+        
+        let unresolvedCanvasItem = canvasItems.reversed().first { !isCanvasTaskResolved($0) }
         
         guard let unresolvedCanvasItem, let eventID = unresolvedCanvasItem.id.eventID else {
             state.activeCanvasTask = nil
@@ -916,6 +925,14 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         }
         
         state.activeCanvasTask = (eventID: eventID, taskID: unresolvedCanvasItem.content.taskID, title: unresolvedCanvasItem.content.title)
+    }
+    
+    private func isCanvasTaskResolved(_ canvasItem: AgentCanvasStepsRoomTimelineItem) -> Bool {
+        let key = StateEventKey(eventType: AgentCanvasStepsRoomTimelineItemContent.msgType, stateKey: canvasItem.content.taskID)
+        guard let rawStateEvent = state.fetchedStateEvents[key] else {
+            return canvasItem.content.isResolved
+        }
+        return AgentCanvasStepsStateContent(parsingFrom: rawStateEvent)?.isResolved ?? canvasItem.content.isResolved
     }
     
     private func updateViewState(item: RoomTimelineItemProtocol, groupStyle: TimelineGroupStyle) -> RoomTimelineItemViewState {
@@ -1023,6 +1040,26 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         }
         
         state.bindings.readReceiptsSummaryInfo = .init(orderedReceipts: eventTimelineItem.properties.orderedReadReceipts, id: eventTimelineItem.id)
+    }
+    
+    private func fetchStateEvent(eventType: String, stateKey: String) {
+        let key = StateEventKey(eventType: eventType, stateKey: stateKey)
+        guard state.fetchedStateEvents[key] == nil else { return }
+        
+        Task {
+            switch await roomProxy.getStateEventRaw(eventType: eventType, stateKey: stateKey) {
+            case .success(let raw):
+                // `updateValue` (not the `[key] = raw` subscript) because `raw` may be `nil` and the
+                // dictionary's value type is itself `String?` — the subscript setter treats an outer
+                // `nil` as "remove this key", which would erase the "already fetched" marker.
+                state.fetchedStateEvents.updateValue(raw, forKey: key)
+                // A freshly-fetched state event can flip whether a canvas task counts as resolved,
+                // so the active-task banner needs recomputing against the now-current state.
+                updateActiveCanvasTask(timelineItems: timelineController.timelineItems)
+            case .failure(let error):
+                MXLog.error("Failed fetching state event eventType: \(eventType) stateKey: \(stateKey) with error: \(error)")
+            }
+        }
     }
     
     // MARK: - Message forwarding

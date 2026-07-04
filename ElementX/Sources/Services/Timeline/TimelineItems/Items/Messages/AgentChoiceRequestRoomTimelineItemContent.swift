@@ -31,35 +31,32 @@ nonisolated struct AgentChoiceRequestRoomTimelineItemContent: Hashable {
         self.resolvedSelection = resolvedSelection
     }
     
-    /// - Parameters:
-    ///   - originalJSON: the raw Matrix event JSON from `EventTimelineItemProxy.debugInfo.originalJSON`.
-    ///     The Rust SDK only exposes the standard `body` field for custom msgtypes via `MessageType.other`,
-    ///     so `question`/`options`/`multi_select`/`resolved_selection` have to be recovered by hand from
-    ///     the raw event — the same reasoning `AgentTurnRoomTimelineItemContent` documents for `tool_calls`.
-    ///   - latestEditJSON: `EventTimelineItemProxy.debugInfo.latestEditJSON`, non-nil once the agent has
-    ///     edited this message to resolve it. Whichever of the two is non-nil and parses successfully wins,
-    ///     preferring the edit — this is how the client learns `resolved_selection` without any cross-event
-    ///     reply-scanning, per this plan's design doc.
-    init(body: String, parsingFrom originalJSON: String?, latestEditJSON: String?) {
+    /// - Parameter originalJSON: the raw Matrix event JSON from `EventTimelineItemProxy.debugInfo.originalJSON`.
+    ///   The Rust SDK only exposes the standard `body` field for custom msgtypes via `MessageType.other`,
+    ///   so `question`/`options`/`multi_select` have to be recovered by hand from the raw event — the same
+    ///   reasoning `AgentTurnRoomTimelineItemContent` documents for `tool_calls`.
+    ///
+    ///   `resolved_selection` is intentionally not read here: it's mutable state that lives in a
+    ///   `io.element.agent.choice_request` room state event (state key = this message's event ID),
+    ///   read separately via `getStateEventRaw` — see `AgentChoiceRequestRoomTimelineView`.
+    init(body: String, parsingFrom originalJSON: String?) {
         self.body = body
-        let fields = Self.parseFields(from: latestEditJSON) ?? Self.parseFields(from: originalJSON)
+        let fields = Self.parseFields(from: originalJSON)
         question = fields?.question ?? ""
         options = fields?.options ?? []
         multiSelect = fields?.multiSelect ?? false
-        resolvedSelection = fields?.resolvedSelection
+        resolvedSelection = nil
     }
     
     private struct Fields: Decodable {
         let question: String
         let options: [ChoiceOption]
         let multiSelect: Bool
-        let resolvedSelection: [String]?
         
         enum CodingKeys: String, CodingKey {
             case question
             case options
             case multiSelect = "multi_select"
-            case resolvedSelection = "resolved_selection"
         }
         
         /// Custom init so a missing `options` key falls back to `[]` instead of failing the whole
@@ -69,38 +66,40 @@ nonisolated struct AgentChoiceRequestRoomTimelineItemContent: Hashable {
             question = try container.decode(String.self, forKey: .question)
             options = try container.decodeIfPresent([ChoiceOption].self, forKey: .options) ?? []
             multiSelect = try container.decode(Bool.self, forKey: .multiSelect)
-            resolvedSelection = try container.decodeIfPresent([String].self, forKey: .resolvedSelection)
-        }
-    }
-    
-    /// Matrix message edits (`m.replace`) nest their replacement content under `m.new_content`, while an
-    /// unedited event's fields live directly under `content`. Whether `latestEditJSON` is the raw edit event
-    /// (needing this unwrap) or already-flattened replacement content (not needing it) wasn't discoverable
-    /// from the vendored SDK bindings — this handles both shapes without needing to know which is real.
-    private struct ContentEnvelope: Decodable {
-        let fields: Fields
-        
-        enum CodingKeys: String, CodingKey {
-            case newContent = "m.new_content"
-        }
-        
-        init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            if let newContent = try container.decodeIfPresent(Fields.self, forKey: .newContent) {
-                fields = newContent
-            } else {
-                fields = try Fields(from: decoder)
-            }
         }
     }
     
     private struct EventEnvelope: Decodable {
-        let content: ContentEnvelope
+        let content: Fields
     }
     
     private static func parseFields(from json: String?) -> Fields? {
         guard let data = json?.data(using: .utf8) else { return nil }
         guard let event = try? JSONDecoder().decode(EventEnvelope.self, from: data) else { return nil }
-        return event.content.fields
+        return event.content
+    }
+}
+
+/// The `io.element.agent.choice_request` room state event content, keyed by the choice request
+/// message's event ID. Its presence/`resolvedSelection` is how the client learns a choice was made,
+/// without depending on message edits.
+nonisolated struct AgentChoiceRequestStateContent: Decodable {
+    let resolvedSelection: [String]
+    
+    enum CodingKeys: String, CodingKey {
+        case resolvedSelection = "resolved_selection"
+    }
+    
+    /// - Parameter rawStateEventJSON: the full raw state event JSON string returned by
+    ///   `getStateEventRaw`, i.e. `{"type": ..., "state_key": ..., "content": {"resolved_selection": [...]}, ...}`.
+    init?(parsingFrom rawStateEventJSON: String?) {
+        guard let data = rawStateEventJSON?.data(using: .utf8) else { return nil }
+        
+        struct EventEnvelope: Decodable {
+            let content: AgentChoiceRequestStateContent
+        }
+        
+        guard let event = try? JSONDecoder().decode(EventEnvelope.self, from: data) else { return nil }
+        self = event.content
     }
 }

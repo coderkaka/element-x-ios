@@ -89,7 +89,7 @@ struct TimelineItemFactoryTests {
     }
     
     @Test
-    func choiceRequestWithResolvedSelectionFromLatestEdit() throws {
+    func choiceRequestIgnoresLatestEditJSON() throws {
         let ownUserID = "@alice:matrix.org"
         let senderUserID = "@agent:matrix.org"
         
@@ -97,6 +97,9 @@ struct TimelineItemFactoryTests {
                                               attributedStringBuilder: AttributedStringBuilder(mentionBuilder: MentionBuilder()),
                                               stateEventStringBuilder: RoomStateEventStringBuilder(userID: ownUserID))
         
+        // `resolved_selection` now only ever comes from a room state event, read separately via
+        // `getStateEventRaw` (see `AgentChoiceRequestRoomTimelineView`) — the factory must ignore
+        // `latestEditJSON` entirely for this content type, even if one is present.
         let latestEditJSON = """
         {"content": {"question": "Which environment should I deploy to?", \
         "options": [{"id": "test", "label": "Test"}, {"id": "prod", "label": "Production"}], \
@@ -114,9 +117,7 @@ struct TimelineItemFactoryTests {
         let item = try #require(factory.buildTimelineItem(for: eventTimelineItemProxy, isDM: false) as? AgentChoiceRequestRoomTimelineItem,
                                 "Incorrect item type")
         
-        // Proves latestEditJSON is threaded all the way through the mock configuration into the built item,
-        // rather than being silently dropped (it used to be hardcoded to nil in EventTimelineItemSDKMockConfiguration).
-        #expect(item.content.resolvedSelection == ["prod"])
+        #expect(item.content.resolvedSelection == nil)
     }
     
     @Test
