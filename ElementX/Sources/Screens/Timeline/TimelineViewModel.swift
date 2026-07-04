@@ -499,6 +499,15 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
             }
             .store(in: &cancellables)
         
+        // Custom state event types aren't delivered by sliding sync, so agent task state changes
+        // can't be observed directly — instead, any room activity re-checks the tracked state events.
+        roomProxy.infoPublisher
+            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.refreshFetchedStateEvents()
+            }
+            .store(in: &cancellables)
+        
         setupAppSettingsSubscriptions()
         
         roomProxy.membersPublisher
@@ -1045,9 +1054,21 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
     private func fetchStateEvent(eventType: String, stateKey: String) {
         let key = StateEventKey(eventType: eventType, stateKey: stateKey)
         guard state.fetchedStateEvents[key] == nil else { return }
-        
+        fetchStateEvent(key: key)
+    }
+    
+    /// Re-fetches every state event the timeline has already asked for, picking up any changes
+    /// the agent has made since. Called (debounced) on room updates because custom state event
+    /// types aren't delivered by sliding sync, so there's no push signal to react to directly.
+    private func refreshFetchedStateEvents() {
+        for key in state.fetchedStateEvents.keys {
+            fetchStateEvent(key: key)
+        }
+    }
+    
+    private func fetchStateEvent(key: StateEventKey) {
         Task {
-            switch await roomProxy.getStateEventRaw(eventType: eventType, stateKey: stateKey) {
+            switch await roomProxy.getStateEventRaw(eventType: key.eventType, stateKey: key.stateKey) {
             case .success(let raw):
                 // `updateValue` (not the `[key] = raw` subscript) because `raw` may be `nil` and the
                 // dictionary's value type is itself `String?` — the subscript setter treats an outer
@@ -1057,7 +1078,7 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
                 // so the active-task banner needs recomputing against the now-current state.
                 updateActiveCanvasTask(timelineItems: timelineController.timelineItems)
             case .failure(let error):
-                MXLog.error("Failed fetching state event eventType: \(eventType) stateKey: \(stateKey) with error: \(error)")
+                MXLog.error("Failed fetching state event eventType: \(key.eventType) stateKey: \(key.stateKey) with error: \(error)")
             }
         }
     }
