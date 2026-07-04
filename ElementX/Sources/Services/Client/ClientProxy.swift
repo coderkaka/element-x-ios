@@ -677,6 +677,18 @@ class ClientProxy: ClientProxyProtocol {
         }
     }
     
+    func getRoomStateEventsRaw(roomID: String, eventType: String) async -> Result<[String], ClientProxyError> {
+        do {
+            guard let room = try client.getRoom(roomId: roomID) else {
+                return .success([])
+            }
+            return try await .success(room.getStateEventsRaw(eventType: eventType))
+        } catch {
+            MXLog.error("Failed reading state events eventType: \(eventType) roomID: \(roomID) with error: \(error)")
+            return .failure(.sdkError(error))
+        }
+    }
+
     func loadUserDisplayName() async -> Result<Void, ClientProxyError> {
         do {
             let displayName = try await client.displayName()

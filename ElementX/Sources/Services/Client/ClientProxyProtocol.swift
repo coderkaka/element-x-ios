@@ -212,6 +212,11 @@ protocol ClientProxyProtocol: AnyObject {
     /// Will only work for rooms that are in our room list/local store
     func reportRoomForIdentifier(_ identifier: String, reason: String) async -> Result<Void, ClientProxyError>
     
+    /// Reads all state events of a given type in a room (one raw event JSON string per state
+    /// key), from the local store. Deliberately not on `JoinedRoomProxy`: building one spins up
+    /// a live timeline, far too heavy for iterating every joined room.
+    func getRoomStateEventsRaw(roomID: String, eventType: String) async -> Result<[String], ClientProxyError>
+    
     @discardableResult func loadUserDisplayName() async -> Result<Void, ClientProxyError>
     
     func setUserDisplayName(_ name: String) async -> Result<Void, ClientProxyError>
