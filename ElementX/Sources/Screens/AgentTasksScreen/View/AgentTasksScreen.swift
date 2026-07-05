@@ -12,11 +12,14 @@ struct AgentTasksScreen: View {
     @Bindable var context: AgentTasksScreenViewModel.Context
     
     var body: some View {
-        if context.viewState.isEmpty {
-            emptyState
-        } else {
-            taskList
+        Group {
+            if context.viewState.isEmpty {
+                emptyState
+            } else {
+                taskList
+            }
         }
+        .navigationTitle(UntranslatedL10n.screenHomeTabTasks)
     }
     
     private var taskList: some View {
