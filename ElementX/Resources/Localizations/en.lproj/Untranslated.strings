@@ -5,6 +5,7 @@
 "screen_room_timeline_canvas_task_banner_title" = "Task in progress";
 "screen_room_timeline_canvas_task_banner_action" = "View progress";
 "screen_room_task_chip_multi" = "%1$@ 件差事在办";
+"screen_room_task_chip_pending_only" = "%1$@ 件请旨待批";
 "screen_room_task_chip_pending_suffix" = " · %1$@ 件请旨待批";
 "screen_task_panel_title" = "案卷";
 "screen_task_panel_section_pending" = "待批";
