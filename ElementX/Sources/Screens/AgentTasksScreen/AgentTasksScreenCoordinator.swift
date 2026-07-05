@@ -19,19 +19,19 @@ enum AgentTasksScreenCoordinatorAction {
 final class AgentTasksScreenCoordinator: CoordinatorProtocol {
     private let parameters: AgentTasksScreenCoordinatorParameters
     private let viewModel: AgentTasksScreenViewModelProtocol
-
+    
     private var cancellables = Set<AnyCancellable>()
-
+    
     private let actionsSubject: PassthroughSubject<AgentTasksScreenCoordinatorAction, Never> = .init()
     var actionsPublisher: AnyPublisher<AgentTasksScreenCoordinatorAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-
+    
     init(parameters: AgentTasksScreenCoordinatorParameters) {
         self.parameters = parameters
         viewModel = AgentTasksScreenViewModel(agentTaskIndexService: parameters.agentTaskIndexService)
     }
-
+    
     func start() {
         viewModel.actionsPublisher.sink { [weak self] action in
             guard let self else { return }
@@ -42,7 +42,7 @@ final class AgentTasksScreenCoordinator: CoordinatorProtocol {
         }
         .store(in: &cancellables)
     }
-
+    
     func toPresentable() -> AnyView {
         AnyView(AgentTasksScreen(context: viewModel.context))
     }

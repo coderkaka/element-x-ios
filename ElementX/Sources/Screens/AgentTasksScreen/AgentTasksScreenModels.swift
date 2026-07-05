@@ -10,7 +10,7 @@ import Foundation
 struct AgentTasksScreenViewState: BindableState {
     var unresolvedTasks: [AgentTaskSummary] = []
     var resolvedTasks: [AgentTaskSummary] = []
-
+    
     var isEmpty: Bool {
         unresolvedTasks.isEmpty && resolvedTasks.isEmpty
     }

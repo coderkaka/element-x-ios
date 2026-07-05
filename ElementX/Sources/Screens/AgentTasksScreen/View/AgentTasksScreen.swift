@@ -10,7 +10,7 @@ import SwiftUI
 
 struct AgentTasksScreen: View {
     @Bindable var context: AgentTasksScreenViewModel.Context
-
+    
     var body: some View {
         if context.viewState.isEmpty {
             emptyState
@@ -18,7 +18,7 @@ struct AgentTasksScreen: View {
             taskList
         }
     }
-
+    
     private var taskList: some View {
         Form {
             if !context.viewState.unresolvedTasks.isEmpty {
@@ -31,7 +31,7 @@ struct AgentTasksScreen: View {
                         .compoundListSectionHeader()
                 }
             }
-
+            
             if !context.viewState.resolvedTasks.isEmpty {
                 Section {
                     ForEach(context.viewState.resolvedTasks) { task in
@@ -45,7 +45,7 @@ struct AgentTasksScreen: View {
         }
         .compoundList()
     }
-
+    
     private func taskRow(_ task: AgentTaskSummary) -> some View {
         ListRow(label: .plain(title: task.title ?? task.taskID,
                               description: task.roomName),
@@ -54,7 +54,7 @@ struct AgentTasksScreen: View {
                     context.send(viewAction: .taskTapped(task))
                 })
     }
-
+    
     private var emptyState: some View {
         VStack(spacing: 8) {
             CompoundIcon(\.polls, size: .medium, relativeTo: .compound.bodyLG)
@@ -106,24 +106,24 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
               doneStepCount: 3,
               totalStepCount: 3)
     ])
-
+    
     static var previews: some View {
         ElementNavigationStack {
             AgentTasksScreen(context: emptyViewModel.context)
         }
         .previewDisplayName("Empty")
-
+        
         ElementNavigationStack {
             AgentTasksScreen(context: mixedViewModel.context)
         }
         .previewDisplayName("Mixed")
-
+        
         ElementNavigationStack {
             AgentTasksScreen(context: allDoneViewModel.context)
         }
         .previewDisplayName("All done")
     }
-
+    
     static func makeViewModel(tasks: [AgentTaskSummary]) -> AgentTasksScreenViewModel {
         let indexService = AgentTaskIndexServiceMock()
         indexService.underlyingTasksPublisher = .init(tasks)

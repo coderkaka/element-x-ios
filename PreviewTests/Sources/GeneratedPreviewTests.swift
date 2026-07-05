@@ -33,6 +33,13 @@ extension PreviewTests {
     }
 
     @Test
+    func agentTasksScreen() async throws {
+        for (index, preview) in AgentTasksScreen_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func agentTurnRoomTimelineView() async throws {
         for (index, preview) in AgentTurnRoomTimelineView_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)

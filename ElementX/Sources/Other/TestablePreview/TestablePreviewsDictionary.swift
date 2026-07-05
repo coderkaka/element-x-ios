@@ -13,6 +13,7 @@ enum TestablePreviewsDictionary {
             "AdvancedSettingsScreen_Previews" : AdvancedSettingsScreen_Previews.self,
             "AgentCanvasStepsRoomTimelineView_Previews" : AgentCanvasStepsRoomTimelineView_Previews.self,
             "AgentChoiceRequestRoomTimelineView_Previews" : AgentChoiceRequestRoomTimelineView_Previews.self,
+            "AgentTasksScreen_Previews" : AgentTasksScreen_Previews.self,
             "AgentTurnRoomTimelineView_Previews" : AgentTurnRoomTimelineView_Previews.self,
             "AnalyticsPromptScreen_Previews" : AnalyticsPromptScreen_Previews.self,
             "AnalyticsSettingsScreen_Previews" : AnalyticsSettingsScreen_Previews.self,

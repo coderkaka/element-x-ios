@@ -15,10 +15,10 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
     var actionsPublisher: AnyPublisher<AgentTasksScreenViewModelAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-
+    
     init(agentTaskIndexService: AgentTaskIndexServiceProtocol) {
         super.init(initialViewState: AgentTasksScreenViewState())
-
+        
         // No queue hop: the service publishes on the main actor and the synchronous
         // initial emission populates state before the first render (previews rely on this).
         agentTaskIndexService.tasksPublisher
@@ -29,12 +29,12 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
             }
             .store(in: &cancellables)
     }
-
+    
     // MARK: - Public
-
+    
     override func process(viewAction: AgentTasksScreenViewAction) {
         MXLog.info("View model: received view action: \(viewAction)")
-
+        
         switch viewAction {
         case .taskTapped(let task):
             actionsSubject.send(.presentRoom(roomID: task.roomID))
