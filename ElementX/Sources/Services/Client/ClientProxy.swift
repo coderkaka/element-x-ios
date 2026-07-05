@@ -1498,14 +1498,14 @@ private struct ClientProxyServices {
                                                            notificationSettings: notificationSettings,
                                                            appSettings: appSettings)
         try await alternateRoomSummaryProvider.setRoomList(roomListService.allRooms())
-
+        
         messagesRoomSummaryProvider = RoomSummaryProvider(roomListService: roomListService,
                                                           eventStringBuilder: eventStringBuilder,
                                                           name: "MessagesRooms",
                                                           notificationSettings: notificationSettings,
                                                           appSettings: appSettings)
         try await messagesRoomSummaryProvider.setRoomList(roomListService.allRooms())
-
+        
         staticRoomSummaryProvider = RoomSummaryProvider(roomListService: roomListService,
                                                         eventStringBuilder: eventStringBuilder,
                                                         name: "StaticAllRooms",

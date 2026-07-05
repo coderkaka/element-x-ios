@@ -21,21 +21,21 @@ enum MessagesScreenCoordinatorAction {
 final class MessagesScreenCoordinator: CoordinatorProtocol {
     private let parameters: MessagesScreenCoordinatorParameters
     private let viewModel: MessagesScreenViewModelProtocol
-
+    
     private var cancellables = Set<AnyCancellable>()
-
+    
     private let actionsSubject: PassthroughSubject<MessagesScreenCoordinatorAction, Never> = .init()
     var actionsPublisher: AnyPublisher<MessagesScreenCoordinatorAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-
+    
     init(parameters: MessagesScreenCoordinatorParameters) {
         self.parameters = parameters
         viewModel = MessagesScreenViewModel(roomSummaryProvider: parameters.roomSummaryProvider,
                                             appSettings: parameters.appSettings,
                                             mediaProvider: parameters.mediaProvider)
     }
-
+    
     func start() {
         viewModel.actionsPublisher.sink { [weak self] action in
             guard let self else { return }
@@ -46,7 +46,7 @@ final class MessagesScreenCoordinator: CoordinatorProtocol {
         }
         .store(in: &cancellables)
     }
-
+    
     func toPresentable() -> AnyView {
         AnyView(MessagesScreen(context: viewModel.context))
     }

@@ -698,6 +698,13 @@ extension PreviewTests {
     }
 
     @Test
+    func messagesScreen() async throws {
+        for (index, preview) in MessagesScreen_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func noticeRoomTimelineView() async throws {
         for (index, preview) in NoticeRoomTimelineView_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)

@@ -104,7 +104,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         tasksSplitCoordinator.setSidebarCoordinator(agentTasksScreenCoordinator)
         tasksTabDetails = .init(tag: HomeTab.tasks, title: UntranslatedL10n.screenHomeTabTasks, icon: \.listBulleted, selectedIcon: \.listBulleted)
         tasksTabDetails.navigationSplitCoordinator = tasksSplitCoordinator
-
+        
         let messagesSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
         messagesScreenCoordinator = MessagesScreenCoordinator(parameters: .init(roomSummaryProvider: flowParameters.userSession.clientProxy.messagesRoomSummaryProvider,
                                                                                 appSettings: flowParameters.appSettings,
@@ -112,7 +112,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         messagesSplitCoordinator.setSidebarCoordinator(messagesScreenCoordinator)
         messagesTabDetails = .init(tag: HomeTab.messages, title: UntranslatedL10n.screenHomeTabMessages, icon: \.userProfile, selectedIcon: \.userProfileSolid)
         messagesTabDetails.navigationSplitCoordinator = messagesSplitCoordinator
-
+        
         spacesSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
         spacesTabFlowCoordinator = SpacesTabFlowCoordinator(navigationSplitCoordinator: spacesSplitCoordinator,
                                                             flowParameters: flowParameters)
@@ -266,7 +266,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                 }
             }
             .store(in: &cancellables)
-
+        
         messagesScreenCoordinator.actionsPublisher
             .sink { [weak self] action in
                 guard let self else { return }
@@ -276,7 +276,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                 }
             }
             .store(in: &cancellables)
-
+        
         chatsTabFlowCoordinator.actionsPublisher
             .sink { [weak self] action in
                 guard let self else { return }

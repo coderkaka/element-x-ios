@@ -399,6 +399,10 @@ extension AccessibilityTests {
         try await performAccessibilityAudit(named: "MessageText_Previews")
     }
 
+    func testMessagesScreen() async throws {
+        try await performAccessibilityAudit(named: "MessagesScreen_Previews")
+    }
+
     func testNoticeRoomTimelineView() async throws {
         try await performAccessibilityAudit(named: "NoticeRoomTimelineView_Previews")
     }

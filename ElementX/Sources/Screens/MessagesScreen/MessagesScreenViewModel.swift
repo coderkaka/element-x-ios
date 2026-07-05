@@ -13,18 +13,18 @@ typealias MessagesScreenViewModelType = StateStoreViewModelV2<MessagesScreenView
 class MessagesScreenViewModel: MessagesScreenViewModelType, MessagesScreenViewModelProtocol {
     private let roomSummaryProvider: RoomSummaryProviderProtocol
     private let appSettings: AppSettings
-
+    
     private let actionsSubject: PassthroughSubject<MessagesScreenViewModelAction, Never> = .init()
     var actionsPublisher: AnyPublisher<MessagesScreenViewModelAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-
+    
     init(roomSummaryProvider: RoomSummaryProviderProtocol, appSettings: AppSettings, mediaProvider: MediaProviderProtocol) {
         self.roomSummaryProvider = roomSummaryProvider
         self.appSettings = appSettings
-
+        
         super.init(initialViewState: MessagesScreenViewState(), mediaProvider: mediaProvider)
-
+        
         roomSummaryProvider.roomListPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] summaries in
@@ -32,23 +32,23 @@ class MessagesScreenViewModel: MessagesScreenViewModelType, MessagesScreenViewMo
             }
             .store(in: &cancellables)
     }
-
+    
     // MARK: - Public
-
+    
     override func process(viewAction: MessagesScreenViewAction) {
         MXLog.info("View model: received view action: \(viewAction)")
-
+        
         switch viewAction {
         case .selectRoom(let roomIdentifier):
             actionsSubject.send(.presentRoom(roomID: roomIdentifier))
         }
     }
-
+    
     // MARK: - Private
-
+    
     private func updateRooms(with summaries: [RoomSummary]) {
         let seenInvites = appSettings.seenInvites
-
+        
         state.rooms = summaries.map { summary in
             HomeScreenRoom(summary: summary,
                            roomListActivityVisibility: appSettings.roomListActivityVisibility,

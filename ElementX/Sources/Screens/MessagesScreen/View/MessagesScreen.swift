@@ -10,7 +10,7 @@ import SwiftUI
 
 struct MessagesScreen: View {
     @Bindable var context: MessagesScreenViewModel.Context
-
+    
     var body: some View {
         Group {
             if context.viewState.rooms.isEmpty {
@@ -21,7 +21,7 @@ struct MessagesScreen: View {
         }
         .navigationTitle(UntranslatedL10n.screenHomeTabMessages)
     }
-
+    
     private var roomList: some View {
         List {
             ForEach(context.viewState.rooms) { room in
@@ -36,7 +36,7 @@ struct MessagesScreen: View {
         }
         .listStyle(.plain)
     }
-
+    
     private var emptyState: some View {
         VStack(spacing: 8) {
             CompoundIcon(\.chat, size: .medium, relativeTo: .compound.bodyLG)
@@ -58,19 +58,19 @@ struct MessagesScreen: View {
 struct MessagesScreen_Previews: PreviewProvider, TestablePreview {
     static let emptyViewModel = makeViewModel(rooms: [])
     static let populatedViewModel = makeViewModel(rooms: .mockRooms)
-
+    
     static var previews: some View {
         ElementNavigationStack {
             MessagesScreen(context: emptyViewModel.context)
         }
         .previewDisplayName("Empty")
-
+        
         ElementNavigationStack {
             MessagesScreen(context: populatedViewModel.context)
         }
         .previewDisplayName("Populated")
     }
-
+    
     static func makeViewModel(rooms: [RoomSummary]) -> MessagesScreenViewModel {
         let roomSummaryProvider = RoomSummaryProviderMock(.init(state: .loaded(rooms)))
         return MessagesScreenViewModel(roomSummaryProvider: roomSummaryProvider,
