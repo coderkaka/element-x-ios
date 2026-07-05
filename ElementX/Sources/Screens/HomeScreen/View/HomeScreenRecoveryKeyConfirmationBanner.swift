@@ -125,6 +125,8 @@ struct HomeScreenRecoveryKeyConfirmationBanner_Previews: PreviewProvider, Testab
                                    appSettings: .volatile(),
                                    analyticsService: AnalyticsServiceMock(.init()),
                                    notificationManager: NotificationManagerMock(),
-                                   userIndicatorController: UserIndicatorControllerMock())
+                                   userIndicatorController: UserIndicatorControllerMock(),
+                                   agentTaskIndexService: AgentTaskIndexServiceMock(.init()),
+                                   agentProjectIndexService: AgentProjectIndexServiceMock(.init()))
     }
 }

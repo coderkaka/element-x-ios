@@ -224,12 +224,14 @@ struct HomeScreen_Previews: PreviewProvider, TestablePreview {
                                                 roomSummaryProvider: RoomSummaryProviderMock(.init(state: roomSummaryProviderState))))
         
         let userSession = UserSessionMock(.init(clientProxy: clientProxy))
-        
+
         return HomeScreenViewModel(userSession: userSession,
                                    selectedRoomPublisher: CurrentValueSubject<String?, Never>(nil).asCurrentValuePublisher(),
                                    appSettings: .volatile(),
                                    analyticsService: AnalyticsServiceMock(.init()),
                                    notificationManager: NotificationManagerMock(),
-                                   userIndicatorController: UserIndicatorControllerMock())
+                                   userIndicatorController: UserIndicatorControllerMock(),
+                                   agentTaskIndexService: AgentTaskIndexServiceMock(.init()),
+                                   agentProjectIndexService: AgentProjectIndexServiceMock(.init()))
     }
 }

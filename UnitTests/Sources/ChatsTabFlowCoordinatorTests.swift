@@ -55,6 +55,8 @@ struct ChatsTabFlowCoordinatorTests {
                                                   stateMachineFactory: stateMachineFactory)
         chatsTabFlowCoordinator = ChatsTabFlowCoordinator(isNewLogin: false,
                                                           navigationSplitCoordinator: splitCoordinator,
+                                                          agentTaskIndexService: AgentTaskIndexServiceMock(.init()),
+                                                          agentProjectIndexService: AgentProjectIndexServiceMock(.init()),
                                                           flowParameters: flowParameters)
         
         let deferred = deferFulfillment(stateMachineFactory.chatsTabFlowStatePublisher) { $0 == .roomList(detailState: nil) }

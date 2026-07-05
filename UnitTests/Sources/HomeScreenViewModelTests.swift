@@ -20,6 +20,8 @@ final class HomeScreenViewModelTests {
     var clientProxy: ClientProxyMock!
     var roomSummaryProvider: RoomSummaryProviderMock!
     var notificationManager: NotificationManagerMock!
+    var agentTaskIndexService: AgentTaskIndexServiceMock!
+    var agentProjectIndexService: AgentProjectIndexServiceMock!
     private let appSettings: AppSettings
     
     var cancellables = Set<AnyCancellable>()
@@ -382,6 +384,70 @@ final class HomeScreenViewModelTests {
     }
     
     @Test
+    func agentTaskAndPendingChoiceCountsJoinRooms() async throws {
+        let tasks = [
+            AgentTaskSummary(roomID: "2", roomName: "Foundation and Empire", taskID: "t1", title: "A", isResolved: false, doneStepCount: 0, totalStepCount: 1),
+            AgentTaskSummary(roomID: "2", roomName: "Foundation and Empire", taskID: "t2", title: "B", isResolved: false, doneStepCount: 0, totalStepCount: 1),
+            AgentTaskSummary(roomID: "2", roomName: "Foundation and Empire", taskID: "t3", title: "C", isResolved: true, doneStepCount: 1, totalStepCount: 1)
+        ]
+        let projects = [AgentProjectSummary(roomID: "3", name: "Second Foundation Plan", description: nil, status: .active)]
+        let pendingChoices = [AgentPendingChoiceSummary(roomID: "4", eventID: "$choice1", question: "Proceed?")]
+
+        setupViewModel(tasks: tasks, projects: projects, pendingChoices: pendingChoices)
+
+        let deferred = deferFulfillment(context.$viewState) { state in
+            state.rooms.first { $0.roomID == "2" }?.activeTaskCount == 2
+        }
+        try await deferred.fulfill()
+
+        let room2 = try #require(context.viewState.rooms.first { $0.roomID == "2" })
+        #expect(room2.activeTaskCount == 2)
+        #expect(room2.doneTaskCount == 1)
+        #expect(room2.totalTaskCount == 3)
+        #expect(!room2.isProject)
+        #expect(room2.pendingChoiceCount == 0)
+
+        let room3 = try #require(context.viewState.rooms.first { $0.roomID == "3" })
+        #expect(room3.isProject)
+        #expect(room3.activeTaskCount == 0)
+        #expect(room3.totalTaskCount == 0)
+
+        let room4 = try #require(context.viewState.rooms.first { $0.roomID == "4" })
+        #expect(room4.pendingChoiceCount == 1)
+        #expect(!room4.isProject)
+
+        // A room untouched by any of the three publishers keeps every count at its zero default.
+        let room1 = try #require(context.viewState.rooms.first { $0.roomID == "1" })
+        #expect(room1.activeTaskCount == 0)
+        #expect(room1.doneTaskCount == 0)
+        #expect(room1.pendingChoiceCount == 0)
+        #expect(!room1.isProject)
+    }
+
+    @Test
+    func agentPrioritySortingPutsPendingFirstThenActiveThenRestPreservingProviderOrder() async throws {
+        // Provider order for group rooms (DMs "5"/"6" excluded by the .rooms filter) is: 1, 2, 3, 4, 7, 0.
+        // Room "4" is last in that order but carries a pending choice, so it must sort first.
+        // Rooms "2" and "3" carry active tasks and must both come next, keeping their relative
+        // provider order (2 before 3) since the re-sort is a stable, filter-based grouping.
+        let tasks = [
+            AgentTaskSummary(roomID: "2", roomName: "Foundation and Empire", taskID: "t1", title: nil, isResolved: false, doneStepCount: 0, totalStepCount: 1),
+            AgentTaskSummary(roomID: "3", roomName: "Second Foundation", taskID: "t2", title: nil, isResolved: false, doneStepCount: 0, totalStepCount: 1)
+        ]
+        let pendingChoices = [AgentPendingChoiceSummary(roomID: "4", eventID: "$choice1", question: nil)]
+
+        setupViewModel(tasks: tasks, pendingChoices: pendingChoices)
+
+        let deferred = deferFulfillment(context.$viewState) { state in
+            state.rooms.first?.roomID == "4"
+        }
+        try await deferred.fulfill()
+
+        let orderedRoomIDs = context.viewState.rooms.compactMap(\.roomID)
+        #expect(orderedRoomIDs == ["4", "2", "3", "1", "7", "0"])
+    }
+
+    @Test
     func newSoundBanner() {
         appSettings.hasSeenNewSoundBanner = false
         
@@ -399,7 +465,11 @@ final class HomeScreenViewModelTests {
     
     enum InviteType { case rooms, spaces }
     
-    private func setupViewModel(securityStatePublisher: CurrentValuePublisher<SessionSecurityState, Never>? = nil, invites: InviteType? = nil) {
+    private func setupViewModel(securityStatePublisher: CurrentValuePublisher<SessionSecurityState, Never>? = nil,
+                                 invites: InviteType? = nil,
+                                 tasks: [AgentTaskSummary] = [],
+                                 projects: [AgentProjectSummary] = [],
+                                 pendingChoices: [AgentPendingChoiceSummary] = []) {
         cancellables.removeAll()
         
         var rooms: [RoomSummary] = .mockRooms
@@ -442,13 +512,18 @@ final class HomeScreenViewModelTests {
         }
         
         notificationManager = NotificationManagerMock()
-        
+
+        agentTaskIndexService = AgentTaskIndexServiceMock(.init(tasks: tasks))
+        agentProjectIndexService = AgentProjectIndexServiceMock(.init(projects: projects, pendingChoices: pendingChoices))
+
         viewModel = HomeScreenViewModel(userSession: userSession,
                                         selectedRoomPublisher: CurrentValueSubject<String?, Never>(nil).asCurrentValuePublisher(),
                                         appSettings: appSettings,
                                         analyticsService: AnalyticsServiceMock(.init()),
                                         notificationManager: notificationManager,
-                                        userIndicatorController: UserIndicatorControllerMock())
+                                        userIndicatorController: UserIndicatorControllerMock(),
+                                        agentTaskIndexService: agentTaskIndexService,
+                                        agentProjectIndexService: agentProjectIndexService)
     }
 }
 

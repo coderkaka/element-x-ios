@@ -17,6 +17,7 @@
 "screen_agent_tasks_section_active" = "在办";
 "screen_agent_tasks_section_done" = "已结";
 "screen_agent_tasks_empty" = "暂无差事";
+"screen_home_room_task_progress" = "差事 %1$@/%2$@";
 "screen_home_tab_messages" = "书信";
 "screen_home_tab_projects" = "政事";
 "screen_home_tab_search" = "检索";

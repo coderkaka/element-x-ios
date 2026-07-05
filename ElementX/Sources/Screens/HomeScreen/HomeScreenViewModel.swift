@@ -22,27 +22,37 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     private let userIndicatorController: UserIndicatorControllerProtocol
     
     private let roomSummaryProvider: RoomSummaryProviderProtocol?
-    
+
+    private let agentTaskIndexService: AgentTaskIndexServiceProtocol
+    private let agentProjectIndexService: AgentProjectIndexServiceProtocol
+    private var latestTaskSummaries: [AgentTaskSummary] = []
+    private var latestProjects: [AgentProjectSummary] = []
+    private var latestPendingChoices: [AgentPendingChoiceSummary] = []
+
     private var actionsSubject: PassthroughSubject<HomeScreenViewModelAction, Never> = .init()
     var actions: AnyPublisher<HomeScreenViewModelAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-    
+
     // swiftlint:disable:next function_body_length
     init(userSession: UserSessionProtocol,
          selectedRoomPublisher: CurrentValuePublisher<String?, Never>,
          appSettings: AppSettings,
          analyticsService: AnalyticsServiceProtocol,
          notificationManager: NotificationManagerProtocol,
-         userIndicatorController: UserIndicatorControllerProtocol) {
+         userIndicatorController: UserIndicatorControllerProtocol,
+         agentTaskIndexService: AgentTaskIndexServiceProtocol,
+         agentProjectIndexService: AgentProjectIndexServiceProtocol) {
         self.userSession = userSession
         self.analyticsService = analyticsService
         self.appSettings = appSettings
         self.notificationManager = notificationManager
         self.userIndicatorController = userIndicatorController
-        
+        self.agentTaskIndexService = agentTaskIndexService
+        self.agentProjectIndexService = agentProjectIndexService
+
         spaceFilterSubject = CurrentValueSubject<SpaceServiceFilter?, Never>(nil)
-        
+
         roomSummaryProvider = userSession.clientProxy.roomSummaryProvider
         
         super.init(initialViewState: .init(userID: userSession.clientProxy.userID,
@@ -170,8 +180,35 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
             .store(in: &cancellables)
         
+        agentTaskIndexService.tasksPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] tasks in
+                guard let self else { return }
+                latestTaskSummaries = tasks
+                updateRooms()
+            }
+            .store(in: &cancellables)
+
+        agentProjectIndexService.projectsPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] projects in
+                guard let self else { return }
+                latestProjects = projects
+                updateRooms()
+            }
+            .store(in: &cancellables)
+
+        agentProjectIndexService.pendingChoicesPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] pendingChoices in
+                guard let self else { return }
+                latestPendingChoices = pendingChoices
+                updateRooms()
+            }
+            .store(in: &cancellables)
+
         setupRoomListSubscriptions()
-        
+
         updateRooms()
     }
     
@@ -393,15 +430,30 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         
         var rooms = [HomeScreenRoom]()
         let seenInvites = appSettings.seenInvites
-        
+        let tasksByRoom = Dictionary(grouping: latestTaskSummaries, by: \.roomID)
+        let projectRoomIDs = Set(latestProjects.map(\.roomID))
+        let pendingByRoom = Dictionary(grouping: latestPendingChoices, by: \.roomID)
+
         for summary in roomSummaryProvider.roomListPublisher.value {
-            let room = HomeScreenRoom(summary: summary,
+            var room = HomeScreenRoom(summary: summary,
                                       roomListActivityVisibility: appSettings.roomListActivityVisibility,
                                       seenInvites: seenInvites)
+            if let roomID = room.roomID {
+                room.isProject = projectRoomIDs.contains(roomID)
+                let tasks = tasksByRoom[roomID] ?? []
+                room.activeTaskCount = tasks.count(where: { !$0.isResolved })
+                room.doneTaskCount = tasks.count(where: \.isResolved)
+                room.pendingChoiceCount = pendingByRoom[roomID]?.count ?? 0
+            }
             rooms.append(room)
         }
-        
-        state.rooms = rooms
+
+        // Stable re-sort: pending (待批) → active (在办) → rest. `filter` preserves the relative
+        // order of the elements it keeps, so each group stays in provider order — that IS the guarantee.
+        let pending = rooms.filter { $0.pendingChoiceCount > 0 }
+        let active = rooms.filter { $0.pendingChoiceCount == 0 && $0.activeTaskCount > 0 }
+        let rest = rooms.filter { $0.pendingChoiceCount == 0 && $0.activeTaskCount == 0 }
+        state.rooms = pending + active + rest
     }
     
     private func markRoomAsFavourite(_ roomID: String, isFavourite: Bool) async {

@@ -25,7 +25,9 @@ enum ChatsTabFlowCoordinatorAction {
 class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
     private let navigationSplitCoordinator: NavigationSplitCoordinator
     private let flowParameters: CommonFlowParameters
-    
+    private let agentTaskIndexService: AgentTaskIndexServiceProtocol
+    private let agentProjectIndexService: AgentProjectIndexServiceProtocol
+
     private var userSession: UserSessionProtocol {
         flowParameters.userSession
     }
@@ -57,11 +59,15 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
     
     init(isNewLogin: Bool,
          navigationSplitCoordinator: NavigationSplitCoordinator,
+         agentTaskIndexService: AgentTaskIndexServiceProtocol,
+         agentProjectIndexService: AgentProjectIndexServiceProtocol,
          flowParameters: CommonFlowParameters) {
         stateMachine = flowParameters.stateMachineFactory.makeChatsTabFlowStateMachine()
         self.navigationSplitCoordinator = navigationSplitCoordinator
+        self.agentTaskIndexService = agentTaskIndexService
+        self.agentProjectIndexService = agentProjectIndexService
         self.flowParameters = flowParameters
-        
+
         sidebarNavigationStackCoordinator = NavigationStackCoordinator(navigationSplitCoordinator: navigationSplitCoordinator)
         navigationSplitCoordinator.setSidebarCoordinator(sidebarNavigationStackCoordinator)
         
@@ -389,7 +395,9 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
                                                          appSettings: flowParameters.appSettings,
                                                          analyticsService: flowParameters.analytics,
                                                          notificationManager: flowParameters.notificationManager,
-                                                         userIndicatorController: flowParameters.userIndicatorController)
+                                                         userIndicatorController: flowParameters.userIndicatorController,
+                                                         agentTaskIndexService: agentTaskIndexService,
+                                                         agentProjectIndexService: agentProjectIndexService)
         let coordinator = HomeScreenCoordinator(parameters: parameters)
         
         coordinator.actions

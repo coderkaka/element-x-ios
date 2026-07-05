@@ -148,6 +148,8 @@ struct HomeScreenEmptyStateView_Previews: PreviewProvider, TestablePreview {
                                    appSettings: .volatile(),
                                    analyticsService: AnalyticsServiceMock(.init()),
                                    notificationManager: NotificationManagerMock(),
-                                   userIndicatorController: UserIndicatorControllerMock())
+                                   userIndicatorController: UserIndicatorControllerMock(),
+                                   agentTaskIndexService: AgentTaskIndexServiceMock(.init()),
+                                   agentProjectIndexService: AgentProjectIndexServiceMock(.init()))
     }()
 }

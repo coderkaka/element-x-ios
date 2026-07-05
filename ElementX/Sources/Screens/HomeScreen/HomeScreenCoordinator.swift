@@ -17,6 +17,8 @@ struct HomeScreenCoordinatorParameters {
     let analyticsService: AnalyticsServiceProtocol
     let notificationManager: NotificationManagerProtocol
     let userIndicatorController: UserIndicatorControllerProtocol
+    let agentTaskIndexService: AgentTaskIndexServiceProtocol
+    let agentProjectIndexService: AgentProjectIndexServiceProtocol
 }
 
 enum HomeScreenCoordinatorAction {
@@ -56,7 +58,9 @@ final class HomeScreenCoordinator: CoordinatorProtocol {
                                         appSettings: parameters.appSettings,
                                         analyticsService: parameters.analyticsService,
                                         notificationManager: parameters.notificationManager,
-                                        userIndicatorController: parameters.userIndicatorController)
+                                        userIndicatorController: parameters.userIndicatorController,
+                                        agentTaskIndexService: parameters.agentTaskIndexService,
+                                        agentProjectIndexService: parameters.agentProjectIndexService)
         bugReportService = parameters.bugReportService
         
         viewModel.actions
