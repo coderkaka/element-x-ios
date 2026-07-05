@@ -431,6 +431,10 @@ extension AccessibilityTests {
         try await performAccessibilityAudit(named: "PaginationIndicatorRoomTimelineView_Previews")
     }
 
+    func testPendingChoicesStripView() async throws {
+        try await performAccessibilityAudit(named: "PendingChoicesStripView_Previews")
+    }
+
     func testPillViewOnBubble() async throws {
         try await performAccessibilityAudit(named: "PillViewOnBubble_Previews")
     }

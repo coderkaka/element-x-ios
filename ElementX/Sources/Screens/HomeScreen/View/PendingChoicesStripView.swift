@@ -15,7 +15,7 @@ import SwiftUI
 struct PendingChoicesStripView: View {
     let count: Int
     let onTap: () -> Void
-
+    
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 9) {
@@ -42,7 +42,7 @@ struct PendingChoicesStripView_Previews: PreviewProvider, TestablePreview {
         PendingChoicesStripView(count: 1) { }
             .previewLayout(.sizeThatFits)
             .previewDisplayName("Single pending")
-
+        
         PendingChoicesStripView(count: 3) { }
             .previewLayout(.sizeThatFits)
             .previewDisplayName("Multiple pending")

@@ -50,12 +50,12 @@ enum HomeScreenViewAction {
     case markRoomAsUnread(roomIdentifier: String)
     case markRoomAsRead(roomIdentifier: String)
     case markRoomAsFavourite(roomIdentifier: String, isFavourite: Bool)
-
+    
     case acceptInvite(roomIdentifier: String)
     case declineInvite(roomIdentifier: String)
-
+    
     case selectSpaceFilter(SpaceServiceFilter?)
-
+    
     case tappedPendingChoicesStrip
     case selectPendingChoice(roomID: String)
 }
@@ -169,7 +169,7 @@ struct HomeScreenViewState: BindableState {
     var shouldShowBanner: Bool {
         securityBannerMode.isShown || shouldShowNewSoundBanner
     }
-
+    
     /// Outstanding `AgentPendingChoiceSummary` items across every room, 道-filtered when a space is selected.
     var pendingChoices: [HomeScreenPendingChoice] = []
 }
@@ -180,8 +180,10 @@ struct HomeScreenPendingChoice: Identifiable, Equatable {
     let eventID: String
     let question: String?
     let roomName: String?
-
-    var id: String { "\(roomID)|\(eventID)" }
+    
+    var id: String {
+        "\(roomID)|\(eventID)"
+    }
 }
 
 struct HomeScreenViewStateBindings {
@@ -194,7 +196,7 @@ struct HomeScreenViewStateBindings {
     
     var spaceFiltersViewModel: ChatsSpaceFiltersScreenViewModel?
     var roomListFiltersViewModel: RoomListFiltersScreenViewModel?
-
+    
     var isPresentingPendingChoices = false
 }
 

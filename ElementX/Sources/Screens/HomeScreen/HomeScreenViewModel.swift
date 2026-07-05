@@ -159,7 +159,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             .receive(on: DispatchQueue.main)
             .weakAssign(to: \.state.selectedSpaceFilter, on: self)
             .store(in: &cancellables)
-
+        
         // The pending-choices strip/sheet re-intersects with the 道 filter on every change —
         // unlike the room list itself, `latestPendingChoices` isn't re-fetched by `setFilter`.
         spaceFilterSubject
@@ -168,7 +168,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 self?.updateRooms()
             }
             .store(in: &cancellables)
-
+        
         Task {
             state.reportRoomEnabled = await userSession.clientProxy.isReportRoomSupported
         }
@@ -452,7 +452,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         let projectRoomIDs = Set(latestProjects.map(\.roomID))
         let pendingByRoom = Dictionary(grouping: latestPendingChoices, by: \.roomID)
         let roomSummaries = roomSummaryProvider.roomListPublisher.value
-
+        
         for summary in roomSummaries {
             var room = HomeScreenRoom(summary: summary,
                                       roomListActivityVisibility: appSettings.roomListActivityVisibility,
@@ -473,7 +473,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         let active = rooms.filter { $0.pendingChoiceCount == 0 && $0.activeTaskCount > 0 }
         let rest = rooms.filter { $0.pendingChoiceCount == 0 && $0.activeTaskCount == 0 }
         state.rooms = pending + active + rest
-
+        
         // Cross-room pending-choices strip/sheet: joins ALL pending choices (not just ones whose room
         // is currently in the provider's list — a choice can outlive pagination/filtering), 道-filtered
         // when a space is selected. Room name lookup is best-effort and degrades to nil.

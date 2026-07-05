@@ -754,6 +754,13 @@ extension PreviewTests {
     }
 
     @Test
+    func pendingChoicesStripView() async throws {
+        for (index, preview) in PendingChoicesStripView_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func pillViewOnBubble() async throws {
         for (index, preview) in PillViewOnBubble_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)

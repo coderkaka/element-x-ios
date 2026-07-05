@@ -453,56 +453,56 @@ final class HomeScreenViewModelTests {
             AgentPendingChoiceSummary(roomID: "4", eventID: "$choice1", question: "Proceed?"),
             AgentPendingChoiceSummary(roomID: "not-in-provider", eventID: "$choice2", question: "Ship it?")
         ]
-
+        
         setupViewModel(pendingChoices: pendingChoices)
-
+        
         let deferred = deferFulfillment(context.$viewState) { $0.pendingChoices.count == 2 }
         try await deferred.fulfill()
-
+        
         let joined = try #require(context.viewState.pendingChoices.first { $0.roomID == "4" })
         #expect(joined.roomName == "Foundation's Edge")
-
+        
         // A pending choice whose room isn't in the (possibly filtered/paginated) provider list
         // must still surface in the strip/sheet, just without a resolvable room name.
         let orphan = try #require(context.viewState.pendingChoices.first { $0.roomID == "not-in-provider" })
         #expect(orphan.roomName == nil)
     }
-
+    
     @Test
     func pendingChoicesStripIntersectsWithSpaceFilter() async throws {
         let pendingChoices = [
             AgentPendingChoiceSummary(roomID: "2", eventID: "$choice1", question: "A"),
             AgentPendingChoiceSummary(roomID: "4", eventID: "$choice2", question: "B")
         ]
-
+        
         setupViewModel(pendingChoices: pendingChoices)
-
+        
         let deferred = deferFulfillment(context.$viewState) { $0.pendingChoices.count == 2 }
         try await deferred.fulfill()
-
+        
         let spaceFilter = SpaceServiceFilter(room: .mock(id: "space1", isSpace: true), level: 0, descendants: ["4"])
         let filteredDeferred = deferFulfillment(context.$viewState) { $0.pendingChoices.count == 1 }
         context.send(viewAction: .selectSpaceFilter(spaceFilter))
         try await filteredDeferred.fulfill()
-
+        
         #expect(context.viewState.pendingChoices.map(\.roomID) == ["4"])
     }
-
+    
     @Test
     func tappedPendingChoicesStripWithSinglePendingOpensRoomDirectly() async throws {
         let pendingChoices = [AgentPendingChoiceSummary(roomID: "4", eventID: "$choice1", question: "Proceed?")]
         setupViewModel(pendingChoices: pendingChoices)
-
+        
         let deferred = deferFulfillment(context.$viewState) { $0.pendingChoices.count == 1 }
         try await deferred.fulfill()
-
+        
         let deferredAction = deferFulfillment(viewModel.actions) { $0 == .presentRoom(roomIdentifier: "4") }
         context.send(viewAction: .tappedPendingChoicesStrip)
         try await deferredAction.fulfill()
-
+        
         #expect(!context.viewState.bindings.isPresentingPendingChoices)
     }
-
+    
     @Test
     func tappedPendingChoicesStripWithMultiplePendingOpensSheet() async throws {
         let pendingChoices = [
@@ -510,15 +510,15 @@ final class HomeScreenViewModelTests {
             AgentPendingChoiceSummary(roomID: "4", eventID: "$choice2", question: "B")
         ]
         setupViewModel(pendingChoices: pendingChoices)
-
+        
         let deferred = deferFulfillment(context.$viewState) { $0.pendingChoices.count == 2 }
         try await deferred.fulfill()
-
+        
         #expect(!context.viewState.bindings.isPresentingPendingChoices)
         context.send(viewAction: .tappedPendingChoicesStrip)
         #expect(context.viewState.bindings.isPresentingPendingChoices)
     }
-
+    
     @Test
     func selectPendingChoiceClosesSheetAndOpensRoom() async throws {
         let pendingChoices = [
@@ -526,20 +526,20 @@ final class HomeScreenViewModelTests {
             AgentPendingChoiceSummary(roomID: "4", eventID: "$choice2", question: "B")
         ]
         setupViewModel(pendingChoices: pendingChoices)
-
+        
         let deferred = deferFulfillment(context.$viewState) { $0.pendingChoices.count == 2 }
         try await deferred.fulfill()
-
+        
         context.send(viewAction: .tappedPendingChoicesStrip)
         #expect(context.viewState.bindings.isPresentingPendingChoices)
-
+        
         let deferredAction = deferFulfillment(viewModel.actions) { $0 == .presentRoom(roomIdentifier: "4") }
         context.send(viewAction: .selectPendingChoice(roomID: "4"))
         try await deferredAction.fulfill()
-
+        
         #expect(!context.viewState.bindings.isPresentingPendingChoices)
     }
-
+    
     @Test
     func newSoundBanner() {
         appSettings.hasSeenNewSoundBanner = false

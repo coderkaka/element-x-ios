@@ -45,7 +45,7 @@ struct HomeScreen: View {
                 pendingChoicesSheet
             }
     }
-
+    
     private var pendingChoicesSheet: some View {
         ElementNavigationStack {
             Form {

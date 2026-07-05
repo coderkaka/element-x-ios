@@ -111,6 +111,7 @@ enum TestablePreviewsDictionary {
             "NotificationSettingsEditScreen_Previews" : NotificationSettingsEditScreen_Previews.self,
             "PINTextField_Previews" : PINTextField_Previews.self,
             "PaginationIndicatorRoomTimelineView_Previews" : PaginationIndicatorRoomTimelineView_Previews.self,
+            "PendingChoicesStripView_Previews" : PendingChoicesStripView_Previews.self,
             "PillViewOnBubble_Previews" : PillViewOnBubble_Previews.self,
             "PillView_Previews" : PillView_Previews.self,
             "PinnedEventsTimelineScreen_Previews" : PinnedEventsTimelineScreen_Previews.self,

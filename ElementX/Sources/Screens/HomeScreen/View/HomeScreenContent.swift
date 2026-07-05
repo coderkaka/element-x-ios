@@ -129,14 +129,14 @@ struct HomeScreenContent: View {
                     }
                     Divider()
                 }
-
+                
                 if !context.viewState.pendingChoices.isEmpty {
                     PendingChoicesStripView(count: context.viewState.pendingChoices.count) {
                         context.send(viewAction: .tappedPendingChoicesStrip)
                     }
                     Divider()
                 }
-
+                
                 if case let .show(state) = context.viewState.securityBannerMode {
                     HomeScreenRecoveryKeyConfirmationBanner(state: state, context: context)
                 } else if context.viewState.shouldShowNewSoundBanner {
