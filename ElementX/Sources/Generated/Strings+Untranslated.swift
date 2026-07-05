@@ -16,6 +16,8 @@ internal nonisolated enum UntranslatedL10n {
   internal static var a11yExpandToolCalls: String { return UntranslatedL10n.tr("Untranslated", "a11y_expand_tool_calls") }
   /// Show filters
   internal static var a11yRoomListFiltersButton: String { return UntranslatedL10n.tr("Untranslated", "a11y_room_list_filters_button") }
+  /// 管理诸道
+  internal static var actionManageSpaces: String { return UntranslatedL10n.tr("Untranslated", "action_manage_spaces") }
   /// 暂无差事
   internal static var screenAgentTasksEmpty: String { return UntranslatedL10n.tr("Untranslated", "screen_agent_tasks_empty") }
   /// 在办

@@ -106,7 +106,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         spacesSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
         spacesTabFlowCoordinator = SpacesTabFlowCoordinator(navigationSplitCoordinator: spacesSplitCoordinator,
                                                             flowParameters: flowParameters)
-
+        
         if flowParameters.appSettings.globalSearchEnabled, #available(iOS 26.0, *) {
             let searchCoordinator = SearchScreenCoordinator(parameters: .init(roomSummaryProvider: flowParameters.userSession.clientProxy.alternateRoomSummaryProvider,
                                                                               mediaProvider: flowParameters.userSession.mediaProvider))
@@ -370,7 +370,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     }
     
     // MARK: - Spaces
-
+    
     private func presentSpaceManagement() {
         if !spacesFlowStarted {
             spacesFlowStarted = true
@@ -378,9 +378,9 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         }
         navigationTabCoordinator.setSheetCoordinator(spacesSplitCoordinator)
     }
-
+    
     // MARK: - Settings
-
+    
     private func startSettingsFlow(detached: Bool) {
         let navigationStackCoordinator = NavigationStackCoordinator()
         let coordinator = SettingsFlowCoordinator(appLockService: appLockService,

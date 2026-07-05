@@ -43,7 +43,7 @@ struct SpaceTabBarView: View {
             .scrollIndicators(.hidden)
             
             RoomFiltersButton(activeFilterCount: activeFilterCount, action: onFilterButtonTapped)
-
+            
             Button(action: onManageTapped) {
                 CompoundIcon(\.settings, size: .small, relativeTo: .compound.bodyMD)
                     .foregroundColor(.compound.iconSecondary)
@@ -132,9 +132,9 @@ struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
                             selectedFilter: nil,
                             mediaProvider: mediaProvider,
                             activeFilterCount: 0) { _ in } onFilterButtonTapped: { } onManageTapped: { }
-
+            
             Divider()
-
+            
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: mockFilters.first,
                             mediaProvider: mediaProvider,
