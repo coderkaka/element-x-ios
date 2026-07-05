@@ -86,7 +86,10 @@ state events directly and has no such gap — the panel converges as the timelin
   shows for done-only? No: V1 hides it; 案卷 reachable from 差事 tab row in that case).
 - Copy: single active task & no pending → task title + progress (like today);
   otherwise → 「N 件差事在办 · M 件请旨待批」 (M segment omitted when 0).
-- Tap → `.tappedRoomTaskChip` view action → `presentTaskPanel` flow.
+- Tap → `.tappedRoomTaskChip` view action. **Smart shortcut (决策 6)**: when the summary holds
+  exactly one item in total (one active task, no pending choices, no done tasks) the flow pushes
+  the task detail directly, skipping the panel; otherwise it presents the panel. Progressive
+  disclosure — single-task rooms feel identical to today's banner.
 
 ### 3. 案卷 — `AgentTaskPanelScreen` (new MVVM-C quartet)
 

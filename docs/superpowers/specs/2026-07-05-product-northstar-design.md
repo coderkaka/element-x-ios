@@ -105,7 +105,40 @@ Projects  Tasks  Messages  Search
 - 终局:看板视图,按项目分列 ↔ 按状态分列可切换;条目点击 → 对应房间的任务详情(而非仅房间)
 - "需要你"聚合与项目 tab 共享数据源
 
-## 7. 协议演进
+## 7. 产出物架构(过程/产出/索引三分)
+
+```
+案卷(索引层)—— 这个案有什么
+├─ 差事:进度、metric 进度条(如 118/130 分)
+│   ├─ 实录(thread)→ 过程:讨论、推理、波折
+│   └─ 附卷 → 产出:报告/方案/图表/代码/网页
+└─ 结案陈词(result)
+```
+
+**核心原则:产出物的存储与展示解耦。**
+
+- 存储:附卷即时间线里的一条消息(markdown/图片/文件),差事以 `artifact_event_id` 引用;
+  或以 `artifact_url` 指向一个网页(见下)。
+- 展示:案卷中点附卷打开**全屏查看器**渲染内容,而非滚回聊天气泡。查看器按内容类型
+  逐步升级(markdown 渲染、diff 查看器…),不动存储架构。
+- 版本:文档修订=发新消息,state 重指 `artifact_event_id`;旧版本自然留在时间线,免费的版本历史。
+- 量化趋势:Matrix 保留 state event 历史,metric 时间序列直接读 state 历史,零新增存储。
+- **网页附卷(`artifact_url`)**:应用内 WebView/SFSafariViewController 打开任意网页;agent 可在
+  homelab 生成 HTML 报告供全屏渲染,表现力无上限。边界:webview 内容不在 Matrix 加密/审计
+  范围内,适合展示、不作为事实源。
+- 诚实的天花板:实时协同编辑(Google Docs 式)不适合 Matrix 承载,该场景以 `artifact_url` 跳出。
+
+### 差事 schema 演进(全部可选字段,向后兼容)
+
+| 字段 | 层级 | 用途 |
+|---|---|---|
+| `description` | 任务 | 背景/目标一句话 |
+| `metric` `{current,target,unit}` | 任务 | 量化进度(学生场景命门) |
+| `result` | 任务 | 结案陈词 |
+| `note` | 步骤 | 单步结果备注 |
+| `artifact_event_id` / `artifact_url` | 步骤 | 附卷引用(Matrix 事件 / 网页) |
+
+## 8. 协议演进
 
 已定稿部分见 `~/homelab/element-agent-protocol.md`(hermes 适配规范)。演进字段:
 
@@ -117,12 +150,12 @@ Projects  Tasks  Messages  Search
 
 原则:字段只增不改语义;客户端对缺失字段一律降级显示,老数据永远可读。
 
-## 8. Slack 参照系(结论)
+## 9. Slack 参照系(结论)
 
 **采纳**:Home/DMs 分离;workspace 不占 tab;Canvas-per-channel(=房间任务面板);Slack Lists 的"条目↔thread"交互(=任务详情跳 thread);Activity 概念改造为"需要你(待决策)"聚合。
 **不采纳**:把 Lists/Canvas 埋进 Files 二级入口(Slack 里任务是附属,我们这里任务是主产品,必须一等 tab);More tab 式的功能堆叠。
 
-## 9. 演进路径
+## 10. 演进路径
 
 | 阶段 | 内容 | 状态 |
 |---|---|---|
@@ -132,7 +165,7 @@ Projects  Tasks  Messages  Search
 | C | `io.element.agent.goal` + 政事 tab 改造 + 御案体命名全量落地 + 道切换器 | 规划 |
 | D | 看板、场景预设(创业者/学生视图)、归档策略、"需要你"聚合 | 远期 |
 
-## 10. 开放问题(不阻塞 B)
+## 11. 开放问题(不阻塞 B)
 
 1. 项目房间与普通房间混居一室的过渡期体验(C 阶段前,项目 tab 仍显示所有房间)
 2. 多设备/多用户共享项目时的权限模型(目前假设单用户 + agent)
