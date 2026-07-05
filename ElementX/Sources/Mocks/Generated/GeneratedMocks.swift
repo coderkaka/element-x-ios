@@ -14,6 +14,36 @@ import Foundation
 import LocalAuthentication
 import Photos
 
+nonisolated class AgentProjectIndexServiceMock: AgentProjectIndexServiceProtocol, @unchecked Sendable {
+    var projectsPublisher: CurrentValuePublisher<[AgentProjectSummary], Never> {
+        get { return underlyingProjectsPublisher }
+        set(value) { underlyingProjectsPublisher = value }
+    }
+    nonisolated(unsafe) var underlyingProjectsPublisher: CurrentValuePublisher<[AgentProjectSummary], Never>!
+    var pendingChoicesPublisher: CurrentValuePublisher<[AgentPendingChoiceSummary], Never> {
+        get { return underlyingPendingChoicesPublisher }
+        set(value) { underlyingPendingChoicesPublisher = value }
+    }
+    nonisolated(unsafe) var underlyingPendingChoicesPublisher: CurrentValuePublisher<[AgentPendingChoiceSummary], Never>!
+
+    //MARK: - start
+
+    private let startCallsCountLock = NSLock()
+    private nonisolated(unsafe) var startUnderlyingCallsCount = 0
+    var startCallsCount: Int {
+        get { startCallsCountLock.withLock { startUnderlyingCallsCount } }
+        set { startCallsCountLock.withLock { startUnderlyingCallsCount = newValue } }
+    }
+    var startCalled: Bool {
+        return startCallsCount > 0
+    }
+    nonisolated(unsafe) var startClosure: (() -> Void)?
+
+    func start() {
+        startCallsCountLock.withLock { startUnderlyingCallsCount += 1 }
+        startClosure?()
+    }
+}
 nonisolated class AgentTaskIndexServiceMock: AgentTaskIndexServiceProtocol, @unchecked Sendable {
     var tasksPublisher: CurrentValuePublisher<[AgentTaskSummary], Never> {
         get { return underlyingTasksPublisher }
