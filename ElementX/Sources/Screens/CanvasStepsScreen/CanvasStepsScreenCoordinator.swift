@@ -40,7 +40,7 @@ final class CanvasStepsScreenCoordinator: CoordinatorProtocol {
                                                threadRootEventID: parameters.threadRootEventID,
                                                roomProxy: parameters.roomProxy)
     }
-
+    
     func start() {
         viewModel.actionsPublisher.sink { [weak self] action in
             guard let self else { return }

@@ -14,7 +14,7 @@ struct CanvasStepsScreenViewModelTests {
     @Test
     func closeDismisses() async throws {
         let viewModel = makeViewModel()
-
+        
         let deferred = deferFulfillment(viewModel.actionsPublisher) { action in
             guard case .dismiss = action else { return false }
             return true
@@ -22,11 +22,11 @@ struct CanvasStepsScreenViewModelTests {
         viewModel.context.send(viewAction: .close)
         try await deferred.fulfill()
     }
-
+    
     @Test
     func viewThreadPresentsTheTaskThread() async throws {
         let viewModel = makeViewModel(threadRootEventID: "$thread-root")
-
+        
         let deferred = deferFulfillment(viewModel.actionsPublisher) { action in
             guard case .presentThread(let threadRootEventID) = action else { return false }
             return threadRootEventID == "$thread-root"
@@ -34,18 +34,18 @@ struct CanvasStepsScreenViewModelTests {
         viewModel.context.send(viewAction: .viewThread)
         try await deferred.fulfill()
     }
-
+    
     @Test
     func viewThreadWithoutThreadRootDoesNothing() async throws {
         let viewModel = makeViewModel()
-
+        
         let deferred = deferFailure(viewModel.actionsPublisher, timeout: .seconds(1)) { _ in true }
         viewModel.context.send(viewAction: .viewThread)
         try await deferred.fulfill()
     }
-
+    
     // MARK: - Helpers
-
+    
     private func makeViewModel(threadRootEventID: String? = nil) -> CanvasStepsScreenViewModel {
         CanvasStepsScreenViewModel(title: "Refactor auth module",
                                    steps: [CanvasStep(id: "s1", label: "Read existing code", status: .done)],

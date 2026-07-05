@@ -124,7 +124,7 @@ extension RoomFlowCoordinator {
         
         case presentCanvasSteps(eventID: String, taskID: String)
         case dismissCanvasSteps
-
+        
         case presentTaskPanel
         case dismissTaskPanel
         
@@ -252,23 +252,23 @@ extension RoomFlowCoordinator {
                 
             case (.room, .presentCanvasSteps(let eventID, let taskID)):
                 return .canvasSteps(eventID: eventID, taskID: taskID, previousState: fromState)
-
+                
             case (.canvasSteps(_, _, let previousState), .dismissCanvasSteps):
                 return previousState
-
+                
             case (.room, .presentTaskPanel):
                 return .taskPanel(previousState: fromState)
-
+                
             case (.taskPanel(let previousState), .dismissTaskPanel):
                 return previousState
-
+                
             case (.taskPanel, .presentCanvasSteps(let eventID, let taskID)):
                 return .canvasSteps(eventID: eventID, taskID: taskID, previousState: fromState)
-
+                
             // The detail's 实录 row jumps into the task's thread.
             case (.canvasSteps, .presentThread(let threadRootEventID, _)):
                 return .thread(threadRootEventID: threadRootEventID, previousState: fromState)
-
+                
             // Thread List
             case (.room, .presentThreadList):
                 return .threadList

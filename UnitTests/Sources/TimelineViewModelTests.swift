@@ -627,18 +627,18 @@ final class TimelineViewModelTests {
         ]
         let timelineController = TimelineControllerMock(.init(timelineItems: items))
         let viewModel = makeViewModel(timelineController: timelineController)
-
+        
         // When tapping the progress chip.
         let deferred = deferFulfillment(viewModel.actions) { action in
             guard case .presentCanvasSteps(let eventID, let taskID) = action else { return false }
             return eventID == "only-task" && taskID == "task-1"
         }
         viewModel.process(viewAction: .tappedRoomTaskChip)
-
+        
         // Then the smart shortcut should skip the panel and push the task's detail.
         try await deferred.fulfill()
     }
-
+    
     @Test
     func chipTapWithMultipleActiveTasksOpensTaskPanel() async throws {
         // Given a timeline with more than one active task.
@@ -648,18 +648,18 @@ final class TimelineViewModelTests {
         ]
         let timelineController = TimelineControllerMock(.init(timelineItems: items))
         let viewModel = makeViewModel(timelineController: timelineController)
-
+        
         // When tapping the progress chip.
         let deferred = deferFulfillment(viewModel.actions) { action in
             guard case .presentTaskPanel = action else { return false }
             return true
         }
         viewModel.process(viewAction: .tappedRoomTaskChip)
-
+        
         // Then the task panel should be presented instead of a single detail.
         try await deferred.fulfill()
     }
-
+    
     @Test
     func chipTapWithActiveTaskAndPendingChoiceOpensTaskPanel() async throws {
         // Given a single active task accompanied by a pending choice request.
@@ -669,18 +669,18 @@ final class TimelineViewModelTests {
         ]
         let timelineController = TimelineControllerMock(.init(timelineItems: items))
         let viewModel = makeViewModel(timelineController: timelineController)
-
+        
         // When tapping the progress chip.
         let deferred = deferFulfillment(viewModel.actions) { action in
             guard case .presentTaskPanel = action else { return false }
             return true
         }
         viewModel.process(viewAction: .tappedRoomTaskChip)
-
+        
         // Then the pending choice should force the panel even with one active task.
         try await deferred.fulfill()
     }
-
+    
     @Test
     func chipTapWithActiveAndDoneTasksOpensTaskPanel() async throws {
         // Given a single active task alongside an already-resolved one.
@@ -690,18 +690,18 @@ final class TimelineViewModelTests {
         ]
         let timelineController = TimelineControllerMock(.init(timelineItems: items))
         let viewModel = makeViewModel(timelineController: timelineController)
-
+        
         // When tapping the progress chip.
         let deferred = deferFulfillment(viewModel.actions) { action in
             guard case .presentTaskPanel = action else { return false }
             return true
         }
         viewModel.process(viewAction: .tappedRoomTaskChip)
-
+        
         // Then the done task should count towards the panel threshold.
         try await deferred.fulfill()
     }
-
+    
     @Test
     func roomTaskSummaryPublisherMirrorsViewState() {
         // Given a timeline with an active task.
@@ -710,12 +710,12 @@ final class TimelineViewModelTests {
         ]
         let timelineController = TimelineControllerMock(.init(timelineItems: items))
         let viewModel = makeViewModel(timelineController: timelineController)
-
+        
         // Then the publisher feeding the task panel should carry the same summary as the view state.
         #expect(viewModel.roomTaskSummaryPublisher.value == viewModel.state.roomTaskSummary)
         #expect(viewModel.roomTaskSummaryPublisher.value.activeTasks.map(\.eventID) == ["only-task"])
     }
-
+    
     @Test
     func summaryIsEmptyWithoutAgentItems() {
         // Given a timeline without any agent items.

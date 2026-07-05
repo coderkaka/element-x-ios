@@ -26,7 +26,7 @@ class CanvasStepsScreenViewModel: CanvasStepsScreenViewModelType, CanvasStepsScr
     init(title: String, steps: [CanvasStep], taskID: String, threadRootEventID: String?, roomProxy: JoinedRoomProxyProtocol) {
         self.taskID = taskID
         self.roomProxy = roomProxy
-
+        
         super.init(initialViewState: CanvasStepsScreenViewState(title: title, steps: steps, threadRootEventID: threadRootEventID))
         
         refreshSteps()

@@ -405,16 +405,16 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                 
             case (.room, .presentCanvasSteps, .canvasSteps(let eventID, let taskID, _)):
                 Task { await self.presentCanvasSteps(eventID: eventID, taskID: taskID, animated: animated) }
-
+                
             case (.taskPanel, .presentCanvasSteps, .canvasSteps):
                 guard let task = (context.userInfo as? EventUserInfo)?.roomTask else {
                     fatalError("Missing required RoomTaskSummary.Task")
                 }
                 presentCanvasSteps(task: task, animated: animated)
-
+                
             case (.room, .presentTaskPanel, .taskPanel):
                 presentTaskPanel(animated: animated)
-
+                
             // Thread List
                 
             case (.room, .presentThreadList, .threadList):
@@ -796,13 +796,13 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
             presentCanvasSteps(task: task, animated: animated)
             return
         }
-
+        
         guard let canvasItem = timelineController?.timelineItems.first(where: { $0.id.eventID == eventID }) as? AgentCanvasStepsRoomTimelineItem else {
             MXLog.error("Failed presenting canvas steps: item not found for eventID \(eventID), taskID \(taskID)")
             stateMachine.tryEvent(.dismissCanvasSteps)
             return
         }
-
+        
         let title = canvasItem.content.title.isEmpty ? canvasItem.content.body : canvasItem.content.title
         presentCanvasSteps(parameters: .init(title: title,
                                              steps: canvasItem.content.steps,
@@ -811,7 +811,7 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                                              roomProxy: roomProxy),
                            animated: animated)
     }
-
+    
     /// Pushes the step list screen directly from the task panel's summary data — no timeline-item
     /// lookup, so it works for tasks whose presenting message isn't loaded (and carries the
     /// state-event-resolved steps and thread root along).
@@ -823,10 +823,10 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                                              roomProxy: roomProxy),
                            animated: animated)
     }
-
+    
     private func presentCanvasSteps(parameters: CanvasStepsScreenCoordinatorParameters, animated: Bool) {
         let coordinator = CanvasStepsScreenCoordinator(parameters: parameters)
-
+        
         coordinator.actionsPublisher.sink { [weak self] action in
             guard let self else { return }
             switch action {
@@ -837,22 +837,22 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
             }
         }
         .store(in: &cancellables)
-
+        
         navigationStackCoordinator.push(coordinator, animated: animated) { [weak self] in
             guard let self else { return }
             stateMachine.tryEvent(.dismissCanvasSteps)
         }
     }
-
+    
     private func presentTaskPanel(animated: Bool) {
         guard let roomScreenCoordinator else {
             MXLog.error("Failed presenting task panel: no room screen")
             stateMachine.tryEvent(.dismissTaskPanel)
             return
         }
-
+        
         let coordinator = AgentTaskPanelScreenCoordinator(parameters: .init(summaryPublisher: roomScreenCoordinator.roomTaskSummaryPublisher))
-
+        
         coordinator.actionsPublisher.sink { [weak self] action in
             guard let self else { return }
             switch action {
@@ -867,7 +867,7 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
             }
         }
         .store(in: &cancellables)
-
+        
         navigationStackCoordinator.push(coordinator, animated: animated) { [weak self] in
             guard let self else { return }
             stateMachine.tryEvent(.dismissTaskPanel)

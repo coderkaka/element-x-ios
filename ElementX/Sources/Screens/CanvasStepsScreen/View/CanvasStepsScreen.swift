@@ -18,7 +18,7 @@ struct CanvasStepsScreen: View {
                     ListRow(kind: .custom { stepRow(step) })
                 }
             }
-
+            
             if context.viewState.threadRootEventID != nil {
                 Section {
                     ListRow(label: .default(title: UntranslatedL10n.screenCanvasStepsViewThread, icon: \.threads),
@@ -82,24 +82,24 @@ struct CanvasStepsScreen_Previews: PreviewProvider, TestablePreview {
         CanvasStep(id: "s2", label: "Run tests", status: .done)
     ])
     static let threadViewModel = makeViewModel(threadRootEventID: "$thread-root")
-
+    
     static var previews: some View {
         ElementNavigationStack {
             CanvasStepsScreen(context: viewModel.context)
         }
         .previewDisplayName("In progress")
-
+        
         ElementNavigationStack {
             CanvasStepsScreen(context: allDoneViewModel.context)
         }
         .previewDisplayName("All done")
-
+        
         ElementNavigationStack {
             CanvasStepsScreen(context: threadViewModel.context)
         }
         .previewDisplayName("With thread")
     }
-
+    
     static func makeViewModel(steps: [CanvasStep] = [
         CanvasStep(id: "s1", label: "Read existing code", status: .done),
         CanvasStep(id: "s2", label: "Wait for approval", status: .inProgress),

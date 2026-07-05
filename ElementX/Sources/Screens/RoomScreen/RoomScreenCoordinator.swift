@@ -112,12 +112,12 @@ final class RoomScreenCoordinator: CoordinatorProtocol {
     }
     
     // MARK: - Public
-
+    
     /// Feeds the task panel while it's pushed on top of this room.
     var roomTaskSummaryPublisher: CurrentValuePublisher<RoomTaskSummary, Never> {
         timelineViewModel.roomTaskSummaryPublisher
     }
-
+    
     func start() {
         timelineViewModel.actions
             .sink { [weak self] action in

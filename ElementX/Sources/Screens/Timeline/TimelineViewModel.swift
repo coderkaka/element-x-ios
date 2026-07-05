@@ -41,7 +41,7 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
     var actions: AnyPublisher<TimelineViewModelAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-
+    
     private let roomTaskSummarySubject = CurrentValueSubject<RoomTaskSummary, Never>(.init())
     var roomTaskSummaryPublisher: CurrentValuePublisher<RoomTaskSummary, Never> {
         roomTaskSummarySubject.asCurrentValuePublisher()
@@ -977,7 +977,7 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         state.roomTaskSummary = RoomTaskSummary(activeTasks: sortedByUpdatedAtDescendingNilsLast(activeTasks),
                                                 doneTasks: sortedByUpdatedAtDescendingNilsLast(doneTasks),
                                                 pendingChoices: pendingChoices)
-
+        
         // Mirror into the publisher feeding the task panel while it's pushed.
         if roomTaskSummarySubject.value != state.roomTaskSummary {
             roomTaskSummarySubject.send(state.roomTaskSummary)
