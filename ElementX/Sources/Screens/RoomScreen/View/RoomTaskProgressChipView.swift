@@ -64,12 +64,12 @@ struct RoomTaskProgressChipView: View {
         if let singleTask {
             return singleTask.title.isEmpty ? UntranslatedL10n.screenRoomTimelineCanvasTaskBannerTitle : singleTask.title
         }
-
+        
         // Pending-only rooms skip the "0 件差事在办" segment — a bare pending count reads naturally.
         if summary.activeTasks.isEmpty {
             return UntranslatedL10n.screenRoomTaskChipPendingOnly(String(summary.pendingChoices.count))
         }
-
+        
         var title = UntranslatedL10n.screenRoomTaskChipMulti(String(summary.activeTasks.count))
         if !summary.pendingChoices.isEmpty {
             title += UntranslatedL10n.screenRoomTaskChipPendingSuffix(String(summary.pendingChoices.count))

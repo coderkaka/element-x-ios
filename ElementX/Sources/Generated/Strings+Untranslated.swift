@@ -32,6 +32,10 @@ internal nonisolated enum UntranslatedL10n {
   internal static func screenRoomTaskChipMulti(_ p1: Any) -> String {
     return UntranslatedL10n.tr("Untranslated", "screen_room_task_chip_multi", String(describing: p1))
   }
+  /// %1$@ 件请旨待批
+  internal static func screenRoomTaskChipPendingOnly(_ p1: Any) -> String {
+    return UntranslatedL10n.tr("Untranslated", "screen_room_task_chip_pending_only", String(describing: p1))
+  }
   ///  · %1$@ 件请旨待批
   internal static func screenRoomTaskChipPendingSuffix(_ p1: Any) -> String {
     return UntranslatedL10n.tr("Untranslated", "screen_room_task_chip_pending_suffix", String(describing: p1))
