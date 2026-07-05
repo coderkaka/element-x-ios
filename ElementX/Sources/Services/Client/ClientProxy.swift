@@ -688,7 +688,7 @@ class ClientProxy: ClientProxyProtocol {
             return .failure(.sdkError(error))
         }
     }
-
+    
     func loadUserDisplayName() async -> Result<Void, ClientProxyError> {
         do {
             let displayName = try await client.displayName()
