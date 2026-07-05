@@ -99,10 +99,6 @@ extension AccessibilityTests {
         try await performAccessibilityAudit(named: "CanvasStepsScreen_Previews")
     }
 
-    func testCanvasTaskBannerView() async throws {
-        try await performAccessibilityAudit(named: "CanvasTaskBannerView_Previews")
-    }
-
     func testChatsSpaceFilterCell() async throws {
         try await performAccessibilityAudit(named: "ChatsSpaceFilterCell_Previews")
     }
@@ -621,6 +617,10 @@ extension AccessibilityTests {
 
     func testRoomSelectionScreen() async throws {
         try await performAccessibilityAudit(named: "RoomSelectionScreen_Previews")
+    }
+
+    func testRoomTaskProgressChipView() async throws {
+        try await performAccessibilityAudit(named: "RoomTaskProgressChipView_Previews")
     }
 
     func testRoomThreadListScreen() async throws {

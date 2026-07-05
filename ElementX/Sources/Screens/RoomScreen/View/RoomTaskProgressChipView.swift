@@ -22,7 +22,7 @@ extension RoomTaskSummary {
 struct RoomTaskProgressChipView: View {
     let summary: RoomTaskSummary
     let onTap: () -> Void
-
+    
     var body: some View {
         if summary.showsProgressChip {
             Button(action: onTap) {
@@ -52,26 +52,26 @@ struct RoomTaskProgressChipView: View {
             .background(Color.compound.bgCanvasDefault)
         }
     }
-
+    
     /// The chip shows the task itself only when there's exactly one active task
     /// and nothing awaiting approval, otherwise it aggregates counts.
     private var singleTask: RoomTaskSummary.Task? {
         guard summary.activeTasks.count == 1, summary.pendingChoices.isEmpty else { return nil }
         return summary.activeTasks.first
     }
-
+    
     private var title: String {
         if let singleTask {
             return singleTask.title.isEmpty ? UntranslatedL10n.screenRoomTimelineCanvasTaskBannerTitle : singleTask.title
         }
-
+        
         var title = UntranslatedL10n.screenRoomTaskChipMulti(String(summary.activeTasks.count))
         if !summary.pendingChoices.isEmpty {
             title += UntranslatedL10n.screenRoomTaskChipPendingSuffix(String(summary.pendingChoices.count))
         }
         return title
     }
-
+    
     private var subtitle: String? {
         guard let singleTask else { return nil }
         return "\(singleTask.doneStepCount)/\(singleTask.totalStepCount)"
@@ -83,19 +83,19 @@ struct RoomTaskProgressChipView_Previews: PreviewProvider, TestablePreview {
         RoomTaskProgressChipView(summary: .init(activeTasks: [makeTask(id: "1", title: "Refactor auth module", doneStepCount: 3, totalStepCount: 7)])) { }
             .previewLayout(.sizeThatFits)
             .previewDisplayName("Single task")
-
+        
         RoomTaskProgressChipView(summary: .init(activeTasks: [makeTask(id: "1", title: "Refactor auth module", doneStepCount: 3, totalStepCount: 7),
                                                               makeTask(id: "2", title: "Write release notes", doneStepCount: 0, totalStepCount: 4)])) { }
             .previewLayout(.sizeThatFits)
             .previewDisplayName("Multiple tasks")
-
+        
         RoomTaskProgressChipView(summary: .init(activeTasks: [makeTask(id: "1", title: "Refactor auth module", doneStepCount: 3, totalStepCount: 7),
                                                               makeTask(id: "2", title: "Write release notes", doneStepCount: 0, totalStepCount: 4)],
                                                 pendingChoices: [.init(eventID: "$choice-1", question: "Deploy to production?")])) { }
             .previewLayout(.sizeThatFits)
             .previewDisplayName("Multiple tasks with pending")
     }
-
+    
     static func makeTask(id: String, title: String, doneStepCount: Int, totalStepCount: Int) -> RoomTaskSummary.Task {
         .init(eventID: "$task-\(id)",
               taskID: id,

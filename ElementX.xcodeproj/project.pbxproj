@@ -721,7 +721,6 @@
 		7434A7F02D587A920B376A9A /* LoginScreenViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A43964330459965AF048A8C /* LoginScreenViewModelTests.swift */; };
 		743790BF6A5B0577EA74AF14 /* ReadMarkerRoomTimelineItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF3D25B3EDB283B5807EADCF /* ReadMarkerRoomTimelineItem.swift */; };
 		748F482FEF4E04D61C39AAD7 /* EmojiPickerScreenModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F174A5627CDB3CAF280D1880 /* EmojiPickerScreenModels.swift */; };
-		749760015E0E305F7621D822 /* CanvasTaskBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF927D9744A96E9FB0C01C69 /* CanvasTaskBannerView.swift */; };
 		74DF5BC17DE9F51E077FD457 /* LinkNewDeviceServiceMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA257D747DD7E6FFA5C2BE2D /* LinkNewDeviceServiceMock.swift */; };
 		7501442D52A65F73DF79FFD4 /* PaginationIndicatorRoomTimelineItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B987FC3FDBAA0E1C5AA235C /* PaginationIndicatorRoomTimelineItem.swift */; };
 		75072C529C9C363F531721F1 /* RecoveryKeyScreenHook.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE97AD18893E2D8120F559D /* RecoveryKeyScreenHook.swift */; };
@@ -843,6 +842,7 @@
 		86DFA58FBBEB0AF671D2A1E1 /* HomeScreenKnockedCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A103580EBA06155B1343EF16 /* HomeScreenKnockedCell.swift */; };
 		86F9D3028A1F4AE819D75560 /* RoomChangePermissionsScreenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D879FC4E881E748BB9B34DC /* RoomChangePermissionsScreenCoordinator.swift */; };
 		872A6457DF573AF8CEAE927A /* LoginHomeserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9349F590E35CE514A71E6764 /* LoginHomeserver.swift */; };
+		876E9FB1255373805C9BDC6F /* RoomTaskProgressChipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA01F7E7F37B0DE2579D70B /* RoomTaskProgressChipView.swift */; };
 		877D3CE8680536DB430DE6A2 /* TimelineItemIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = E48C91C8BE55CAE1A3DBC3BC /* TimelineItemIdentifier.swift */; };
 		878070573C7BF19E735707B4 /* RoomTimelineItemProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE8D25D6A91030175D52A20 /* RoomTimelineItemProperties.swift */; };
 		87CEA3E07B602705BC2D2A20 /* ClientBuilderHook.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC0CD1CAFD3F8B057F9AEA5 /* ClientBuilderHook.swift */; };
@@ -2885,7 +2885,6 @@
 		CEE41494C837AA403A06A5D9 /* UnitTests.xctestplan */ = {isa = PBXFileReference; path = UnitTests.xctestplan; sourceTree = "<group>"; };
 		CF19027E7FFA5E63D148873A /* CreateRoomScreenViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateRoomScreenViewModel.swift; sourceTree = "<group>"; };
 		CF847A34FC4C8C937CD39E08 /* LabsScreenViewModelProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabsScreenViewModelProtocol.swift; sourceTree = "<group>"; };
-		CF927D9744A96E9FB0C01C69 /* CanvasTaskBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasTaskBannerView.swift; sourceTree = "<group>"; };
 		CF98D38D40991413D6587F6E /* RoomListFiltersScreenViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomListFiltersScreenViewModelTests.swift; sourceTree = "<group>"; };
 		CFFA5E881D281810AB428EA3 /* RoomPowerLevelsProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPowerLevelsProxy.swift; sourceTree = "<group>"; };
 		D03D7ECAC68C2FFB8CF01BCB /* DeactivateAccountScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeactivateAccountScreen.swift; sourceTree = "<group>"; };
@@ -3158,6 +3157,7 @@
 		FE1E6FAA3719E9B7A2D5510B /* FormattingToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormattingToolbar.swift; sourceTree = "<group>"; };
 		FE3AB4D399D39FBD78119011 /* AuthenticationStartScreenModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationStartScreenModels.swift; sourceTree = "<group>"; };
 		FE5CD2993048222B64C45006 /* SDKListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SDKListener.swift; sourceTree = "<group>"; };
+		FEA01F7E7F37B0DE2579D70B /* RoomTaskProgressChipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomTaskProgressChipView.swift; sourceTree = "<group>"; };
 		FEC4B431B0117BDEE697DB4A /* ComposerDisabledView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerDisabledView.swift; sourceTree = "<group>"; };
 		FF720BA68256297680980481 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		FFECCE59967018204876D0A5 /* LocationMarkerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationMarkerView.swift; sourceTree = "<group>"; };
@@ -5335,12 +5335,12 @@
 		79023E5904B155E8E2B8B502 /* View */ = {
 			isa = PBXGroup;
 			children = (
-				CF927D9744A96E9FB0C01C69 /* CanvasTaskBannerView.swift */,
 				47F441A78A5CAA9E2937E463 /* KnockRequestsBannerView.swift */,
 				5C60559596897AC65D2CB799 /* LiveLocationSharingBannerView.swift */,
 				F48A2FA6814F824ABB4C07F3 /* RoomCallControlsToolbar.swift */,
 				5221DFDF809142A2D6AC82B9 /* RoomScreen.swift */,
 				4137900E28201C314C835C11 /* RoomScreenFooterView.swift */,
+				FEA01F7E7F37B0DE2579D70B /* RoomTaskProgressChipView.swift */,
 				4552D3466B1453F287223ADA /* SwipeRightAction.swift */,
 				464C6BFAA853DC755B9C1F60 /* PinnedItemsBanner */,
 			);
@@ -8490,7 +8490,6 @@
 				D455BD9EC3FA4AD95F88F4F7 /* CanvasStepsScreenModels.swift in Sources */,
 				EB4412E30945B20C0105EE30 /* CanvasStepsScreenViewModel.swift in Sources */,
 				1B5978974286005DAB55EA08 /* CanvasStepsScreenViewModelProtocol.swift in Sources */,
-				749760015E0E305F7621D822 /* CanvasTaskBannerView.swift in Sources */,
 				D885B783B95AD7832D4EF5DD /* CharacterSet.swift in Sources */,
 				3E2EE5782688054B3026EF8E /* ChatsSpaceFilterCell.swift in Sources */,
 				E713F930C5AD0F4B11119E2B /* ChatsSpaceFiltersScreen.swift in Sources */,
@@ -9099,6 +9098,7 @@
 				983896D611ABF52A5C37498D /* RoomSummaryProvider.swift in Sources */,
 				B5899F18AD6C56CE08FE532B /* RoomSummaryProviderMock.swift in Sources */,
 				AA050DF4AEE54A641BA7CA22 /* RoomSummaryProviderProtocol.swift in Sources */,
+				876E9FB1255373805C9BDC6F /* RoomTaskProgressChipView.swift in Sources */,
 				16133FD887BC4091B94795A6 /* RoomTaskSummary.swift in Sources */,
 				757862045774A0F458357E19 /* RoomThreadListScreen.swift in Sources */,
 				805D16A15BDF97B4EA8D3EC6 /* RoomThreadListScreenCoordinator.swift in Sources */,
