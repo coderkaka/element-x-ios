@@ -38,6 +38,8 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     private let agentTaskIndexService: AgentTaskIndexServiceProtocol
     private let agentTasksScreenCoordinator: AgentTasksScreenCoordinator
     private let tasksTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
+    private let messagesScreenCoordinator: MessagesScreenCoordinator
+    private let messagesTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
     private let spacesTabFlowCoordinator: SpacesTabFlowCoordinator
     private let spacesSplitCoordinator: NavigationSplitCoordinator
     private var spacesFlowStarted = false
@@ -102,7 +104,15 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         tasksSplitCoordinator.setSidebarCoordinator(agentTasksScreenCoordinator)
         tasksTabDetails = .init(tag: HomeTab.tasks, title: UntranslatedL10n.screenHomeTabTasks, icon: \.listBulleted, selectedIcon: \.listBulleted)
         tasksTabDetails.navigationSplitCoordinator = tasksSplitCoordinator
-        
+
+        let messagesSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
+        messagesScreenCoordinator = MessagesScreenCoordinator(parameters: .init(roomSummaryProvider: flowParameters.userSession.clientProxy.messagesRoomSummaryProvider,
+                                                                                appSettings: flowParameters.appSettings,
+                                                                                mediaProvider: flowParameters.userSession.mediaProvider))
+        messagesSplitCoordinator.setSidebarCoordinator(messagesScreenCoordinator)
+        messagesTabDetails = .init(tag: HomeTab.messages, title: UntranslatedL10n.screenHomeTabMessages, icon: \.userProfile, selectedIcon: \.userProfileSolid)
+        messagesTabDetails.navigationSplitCoordinator = messagesSplitCoordinator
+
         spacesSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
         spacesTabFlowCoordinator = SpacesTabFlowCoordinator(navigationSplitCoordinator: spacesSplitCoordinator,
                                                             flowParameters: flowParameters)
@@ -130,7 +140,8 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         
         var tabs: [NavigationTabCoordinator<HomeTab>.Tab] = [
             .init(coordinator: chatsSplitCoordinator, details: chatsTabDetails),
-            .init(coordinator: tasksSplitCoordinator, details: tasksTabDetails)
+            .init(coordinator: tasksSplitCoordinator, details: tasksTabDetails),
+            .init(coordinator: messagesSplitCoordinator, details: messagesTabDetails)
         ]
         if let searchTabNavigationStackCoordinator, let searchTabDetails {
             tabs.append(.init(coordinator: searchTabNavigationStackCoordinator, details: searchTabDetails))
@@ -255,7 +266,17 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                 }
             }
             .store(in: &cancellables)
-        
+
+        messagesScreenCoordinator.actionsPublisher
+            .sink { [weak self] action in
+                guard let self else { return }
+                switch action {
+                case .presentRoom(let roomID):
+                    handleAppRoute(.room(roomID: roomID, via: []), animated: true)
+                }
+            }
+            .store(in: &cancellables)
+
         chatsTabFlowCoordinator.actionsPublisher
             .sink { [weak self] action in
                 guard let self else { return }

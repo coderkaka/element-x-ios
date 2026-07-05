@@ -141,7 +141,10 @@ protocol ClientProxyProtocol: AnyObject {
     /// But can still be filtered by queries, since this may be shared across multiple views, remember to reset
     /// The filtering state when you are done with it
     var alternateRoomSummaryProvider: RoomSummaryProviderProtocol { get }
-    
+
+    /// DM-only provider backing the 书信 tab; its filter is fixed at init and never changes.
+    var messagesRoomSummaryProvider: RoomSummaryProviderProtocol { get }
+
     /// Used for listing rooms, can't be filtered nor its state observed
     var staticRoomSummaryProvider: StaticRoomSummaryProviderProtocol { get }
     

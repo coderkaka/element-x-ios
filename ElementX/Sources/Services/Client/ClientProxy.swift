@@ -56,6 +56,7 @@ class ClientProxy: ClientProxyProtocol {
     // can apply their own filtering and pagination
     private(set) var roomSummaryProvider: RoomSummaryProviderProtocol
     private(set) var alternateRoomSummaryProvider: RoomSummaryProviderProtocol
+    private(set) var messagesRoomSummaryProvider: RoomSummaryProviderProtocol
     
     private(set) var staticRoomSummaryProvider: StaticRoomSummaryProviderProtocol
     
@@ -239,6 +240,8 @@ class ClientProxy: ClientProxyProtocol {
         roomListService = configuredAppService.roomListService
         roomSummaryProvider = configuredAppService.roomSummaryProvider
         alternateRoomSummaryProvider = configuredAppService.alternateRoomSummaryProvider
+        messagesRoomSummaryProvider = configuredAppService.messagesRoomSummaryProvider
+        messagesRoomSummaryProvider.setFilter(.all(filters: [.people]))
         staticRoomSummaryProvider = configuredAppService.staticRoomSummaryProvider
         eventStringBuilder = configuredAppService.eventStringBuilder
         
@@ -1457,6 +1460,7 @@ private struct ClientProxyServices {
     let roomListService: RoomListService
     let roomSummaryProvider: RoomSummaryProviderProtocol
     let alternateRoomSummaryProvider: RoomSummaryProviderProtocol
+    let messagesRoomSummaryProvider: RoomSummaryProviderProtocol
     let staticRoomSummaryProvider: StaticRoomSummaryProviderProtocol
     let eventStringBuilder: RoomEventStringBuilder
     
@@ -1494,7 +1498,14 @@ private struct ClientProxyServices {
                                                            notificationSettings: notificationSettings,
                                                            appSettings: appSettings)
         try await alternateRoomSummaryProvider.setRoomList(roomListService.allRooms())
-        
+
+        messagesRoomSummaryProvider = RoomSummaryProvider(roomListService: roomListService,
+                                                          eventStringBuilder: eventStringBuilder,
+                                                          name: "MessagesRooms",
+                                                          notificationSettings: notificationSettings,
+                                                          appSettings: appSettings)
+        try await messagesRoomSummaryProvider.setRoomList(roomListService.allRooms())
+
         staticRoomSummaryProvider = RoomSummaryProvider(roomListService: roomListService,
                                                         eventStringBuilder: eventStringBuilder,
                                                         name: "StaticAllRooms",
