@@ -33,9 +33,13 @@ struct RoomListFiltersScreen: View {
     /// Only show filters that are either already active, or still selectable given the current
     /// selection — mirrors `RoomListFiltersState.availableFilters` excluding mutually-exclusive
     /// options from the list entirely, matching today's chip-row behaviour.
+    ///
+    /// `.people` is excluded: 政事 (chats tab) is group-rooms-only now, DMs live in 书信,
+    /// so this would be a dead toggle. The enum case itself stays — 书信's provider still uses it.
     private var visibleFilters: [RoomListFilter] {
         RoomListFilter.allCases.filter { filter in
-            context.viewState.filtersState.isFilterActive(filter) || context.viewState.filtersState.availableFilters.contains(filter)
+            filter != .people &&
+                (context.viewState.filtersState.isFilterActive(filter) || context.viewState.filtersState.availableFilters.contains(filter))
         }
     }
     

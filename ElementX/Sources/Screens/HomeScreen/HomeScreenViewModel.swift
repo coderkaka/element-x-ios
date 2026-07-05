@@ -314,11 +314,16 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             if state.bindings.isSearchFieldFocused {
                 roomSummaryProvider?.setFilter(.search(query: state.bindings.searchQuery))
             } else {
+                // 政事 (chats tab) is group-rooms-only, DMs live in 书信 exclusively.
+                // Strip `.people` first: it's no longer user-selectable here, but a stale/persisted
+                // active `.people` filter must not collide with the force-applied `.rooms`
+                // (the two are declared mutually exclusive in `incompatibleFilters`).
+                let filters = state.bindings.filtersState.activeFilters.set.subtracting([.people]).union([.rooms])
                 if let spaceFilter = spaceFilterSubject.value {
                     roomSummaryProvider?.setFilter(.rooms(roomsIDs: spaceFilter.descendants,
-                                                          filters: state.bindings.filtersState.activeFilters.set))
+                                                          filters: filters))
                 } else {
-                    roomSummaryProvider?.setFilter(.all(filters: state.bindings.filtersState.activeFilters.set))
+                    roomSummaryProvider?.setFilter(.all(filters: filters))
                 }
             }
         }

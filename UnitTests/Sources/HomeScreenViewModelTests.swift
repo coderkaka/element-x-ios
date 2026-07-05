@@ -164,17 +164,28 @@ final class HomeScreenViewModelTests {
     @Test
     func filters() async throws {
         setupViewModel()
-        
+
+        // 政事 (chats tab) always excludes DMs: `.rooms` is force-applied and a (still technically
+        // possible) `.people` filter is stripped before the filter reaches the provider.
         context.filtersState.activateFilter(.people)
         try await Task.sleep(for: .milliseconds(100))
-        #expect(roomSummaryProvider.roomListPublisher.value.count == 2)
-        #expect(roomSummaryProvider.roomListPublisher.value.first?.name == "Foundation and Earth")
+        #expect(roomSummaryProvider.setFilterReceivedFilter == .all(filters: [.rooms]))
+        #expect(roomSummaryProvider.roomListPublisher.value.allSatisfy { !$0.isDirect })
     }
     
     @Test
+    func defaultFilterExcludesDirectMessages() async throws {
+        setupViewModel()
+
+        // Even with no user-selected filter active, 政事 must still only ask the provider for group rooms.
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(roomSummaryProvider.setFilterReceivedFilter == .all(filters: [.rooms]))
+    }
+
+    @Test
     func search() async throws {
         setupViewModel()
-        
+
         context.isSearchFieldFocused = true
         context.searchQuery = "lude to Found"
         try await Task.sleep(for: .milliseconds(100))
