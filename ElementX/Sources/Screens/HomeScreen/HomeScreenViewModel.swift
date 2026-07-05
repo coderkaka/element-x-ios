@@ -229,6 +229,8 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
         case .selectSpaceFilter(let filter):
             spaceFilterSubject.send(filter)
+        case .manageSpaces:
+            actionsSubject.send(.presentSpaceManagement)
         case .roomListFilters:
             let roomListFiltersViewModel = RoomListFiltersScreenViewModel(initialFiltersState: state.bindings.filtersState)
             

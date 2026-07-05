@@ -124,6 +124,8 @@ struct HomeScreenContent: View {
                         context.send(viewAction: .selectSpaceFilter(filter))
                     } onFilterButtonTapped: {
                         context.send(viewAction: .roomListFilters)
+                    } onManageTapped: {
+                        context.send(viewAction: .manageSpaces)
                     }
                     Divider()
                 }

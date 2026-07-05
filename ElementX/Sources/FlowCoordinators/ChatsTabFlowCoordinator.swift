@@ -14,6 +14,7 @@ import SwiftUI
 enum ChatsTabFlowCoordinatorAction {
     case switchToChatsTab
     case showSettings
+    case showSpaceManagement
     case showChatBackupSettings
     case sessionVerification(SessionVerificationScreenFlow)
     case showCallScreen(roomProxy: JoinedRoomProxyProtocol, isVoiceCall: Bool)
@@ -413,6 +414,8 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
                     }
                 case .presentSettingsScreen:
                     actionsSubject.send(.showSettings)
+                case .presentSpaceManagement:
+                    actionsSubject.send(.showSpaceManagement)
                 case .presentFeedbackScreen:
                     stateMachine.processEvent(.feedbackScreen)
                 case .presentSecureBackupSettings:

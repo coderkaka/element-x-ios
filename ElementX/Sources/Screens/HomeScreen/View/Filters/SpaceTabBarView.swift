@@ -16,6 +16,7 @@ struct SpaceTabBarView: View {
     let activeFilterCount: Int
     let action: (SpaceServiceFilter?) -> Void
     let onFilterButtonTapped: () -> Void
+    let onManageTapped: () -> Void
     
     var body: some View {
         HStack(spacing: 8) {
@@ -42,7 +43,13 @@ struct SpaceTabBarView: View {
             .scrollIndicators(.hidden)
             
             RoomFiltersButton(activeFilterCount: activeFilterCount, action: onFilterButtonTapped)
-                .padding(.trailing, 16)
+
+            Button(action: onManageTapped) {
+                CompoundIcon(\.settings, size: .small, relativeTo: .compound.bodyMD)
+                    .foregroundColor(.compound.iconSecondary)
+            }
+            .accessibilityLabel(UntranslatedL10n.actionManageSpaces)
+            .padding(.trailing, 16)
         }
         .padding(.leading, 16)
     }
@@ -124,14 +131,14 @@ struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: nil,
                             mediaProvider: mediaProvider,
-                            activeFilterCount: 0) { _ in } onFilterButtonTapped: { }
-            
+                            activeFilterCount: 0) { _ in } onFilterButtonTapped: { } onManageTapped: { }
+
             Divider()
-            
+
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: mockFilters.first,
                             mediaProvider: mediaProvider,
-                            activeFilterCount: 2) { _ in } onFilterButtonTapped: { }
+                            activeFilterCount: 2) { _ in } onFilterButtonTapped: { } onManageTapped: { }
         }
         .background(Color.compound.bgCanvasDefault)
     }

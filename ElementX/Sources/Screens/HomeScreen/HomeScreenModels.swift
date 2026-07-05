@@ -23,6 +23,7 @@ enum HomeScreenViewModelAction {
     case presentRecoveryKeyScreen
     case presentEncryptionResetScreen
     case presentSettingsScreen
+    case presentSpaceManagement
     case presentFeedbackScreen
     case presentStartChatScreen
     case logout
@@ -45,6 +46,7 @@ enum HomeScreenViewAction {
     case updateVisibleItemRange(Range<Int>)
     case spaceFilters
     case roomListFilters
+    case manageSpaces
     case markRoomAsUnread(roomIdentifier: String)
     case markRoomAsRead(roomIdentifier: String)
     case markRoomAsFavourite(roomIdentifier: String, isFavourite: Bool)

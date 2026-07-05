@@ -20,7 +20,7 @@ enum UserSessionFlowCoordinatorAction {
 }
 
 class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
-    enum HomeTab: Hashable { case chats, tasks, spaces, search }
+    enum HomeTab: Hashable { case chats, tasks, messages, search }
     
     private let navigationRootCoordinator: NavigationRootCoordinator
     private let navigationTabCoordinator: NavigationTabCoordinator<HomeTab>
@@ -39,7 +39,8 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     private let agentTasksScreenCoordinator: AgentTasksScreenCoordinator
     private let tasksTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
     private let spacesTabFlowCoordinator: SpacesTabFlowCoordinator
-    private let spacesTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
+    private let spacesSplitCoordinator: NavigationSplitCoordinator
+    private var spacesFlowStarted = false
     
     private let searchScreenCoordinator: SearchScreenCoordinator?
     private let searchTabNavigationStackCoordinator: NavigationStackCoordinator?
@@ -102,12 +103,10 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         tasksTabDetails = .init(tag: HomeTab.tasks, title: UntranslatedL10n.screenHomeTabTasks, icon: \.listBulleted, selectedIcon: \.listBulleted)
         tasksTabDetails.navigationSplitCoordinator = tasksSplitCoordinator
         
-        let spacesSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
+        spacesSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
         spacesTabFlowCoordinator = SpacesTabFlowCoordinator(navigationSplitCoordinator: spacesSplitCoordinator,
                                                             flowParameters: flowParameters)
-        spacesTabDetails = .init(tag: HomeTab.spaces, title: L10n.screenHomeTabSpaces, icon: \.space, selectedIcon: \.spaceSolid)
-        spacesTabDetails.navigationSplitCoordinator = spacesSplitCoordinator
-        
+
         if flowParameters.appSettings.globalSearchEnabled, #available(iOS 26.0, *) {
             let searchCoordinator = SearchScreenCoordinator(parameters: .init(roomSummaryProvider: flowParameters.userSession.clientProxy.alternateRoomSummaryProvider,
                                                                               mediaProvider: flowParameters.userSession.mediaProvider))
@@ -131,8 +130,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         
         var tabs: [NavigationTabCoordinator<HomeTab>.Tab] = [
             .init(coordinator: chatsSplitCoordinator, details: chatsTabDetails),
-            .init(coordinator: tasksSplitCoordinator, details: tasksTabDetails),
-            .init(coordinator: spacesSplitCoordinator, details: spacesTabDetails)
+            .init(coordinator: tasksSplitCoordinator, details: tasksTabDetails)
         ]
         if let searchTabNavigationStackCoordinator, let searchTabDetails {
             tabs.append(.init(coordinator: searchTabNavigationStackCoordinator, details: searchTabDetails))
@@ -219,7 +217,6 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
             guard let self else { return }
             
             chatsTabFlowCoordinator.start()
-            spacesTabFlowCoordinator.start()
             attemptStartingOnboarding()
         }
         
@@ -269,6 +266,8 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                     handleAppRoute(.settings, animated: true)
                 case .showChatBackupSettings:
                     handleAppRoute(.chatBackupSettings, animated: true)
+                case .showSpaceManagement:
+                    presentSpaceManagement()
                 case .sessionVerification(let flow):
                     presentSessionVerificationScreen(flow: flow)
                 case .showCallScreen(let roomProxy, let isVoiceCall):
@@ -370,8 +369,18 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         }
     }
     
+    // MARK: - Spaces
+
+    private func presentSpaceManagement() {
+        if !spacesFlowStarted {
+            spacesFlowStarted = true
+            spacesTabFlowCoordinator.start()
+        }
+        navigationTabCoordinator.setSheetCoordinator(spacesSplitCoordinator)
+    }
+
     // MARK: - Settings
-    
+
     private func startSettingsFlow(detached: Bool) {
         let navigationStackCoordinator = NavigationStackCoordinator()
         let coordinator = SettingsFlowCoordinator(appLockService: appLockService,

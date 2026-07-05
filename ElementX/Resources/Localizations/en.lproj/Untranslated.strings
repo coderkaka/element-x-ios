@@ -1,5 +1,6 @@
 "a11y_collapse_tool_calls" = "Collapse tool calls";
 "a11y_expand_tool_calls" = "Expand tool calls";
+"action_manage_spaces" = "管理诸道";
 "screen_room_timeline_agent_choice_confirm_button" = "Confirm";
 "screen_room_timeline_agent_choice_selected_prefix" = "Selected";
 "screen_room_timeline_canvas_task_banner_title" = "Task in progress";
