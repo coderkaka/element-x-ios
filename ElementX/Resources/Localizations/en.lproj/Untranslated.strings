@@ -6,6 +6,11 @@
 "screen_room_timeline_canvas_task_banner_action" = "View progress";
 "screen_room_task_chip_multi" = "%1$@ 件差事在办";
 "screen_room_task_chip_pending_suffix" = " · %1$@ 件请旨待批";
+"screen_task_panel_title" = "案卷";
+"screen_task_panel_section_pending" = "待批";
+"screen_task_panel_section_active" = "在办";
+"screen_task_panel_section_done" = "已结";
+"screen_task_panel_empty" = "本案暂无差事";
 "screen_agent_tasks_section_active" = "In progress";
 "screen_agent_tasks_section_done" = "Done";
 "screen_agent_tasks_empty" = "No agent tasks yet";
