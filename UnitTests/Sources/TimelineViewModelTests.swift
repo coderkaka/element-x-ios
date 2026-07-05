@@ -720,15 +720,156 @@ final class TimelineViewModelTests {
     func summaryIsEmptyWithoutAgentItems() {
         // Given a timeline without any agent items.
         let items = [TextRoomTimelineItem(eventID: "t1")]
-        
+
         // When showing them in a timeline.
         let timelineController = TimelineControllerMock(.init(timelineItems: items))
         let viewModel = makeViewModel(timelineController: timelineController)
-        
+
         // Then the summary should be empty.
         #expect(viewModel.state.roomTaskSummary.isEmpty)
     }
-    
+
+    // MARK: - Room Task Summary (state enumeration)
+
+    @Test
+    func stateOnlyTaskAppearsWithoutTimelineItem() async throws {
+        // Given a room whose only knowledge of a canvas task lives in room state — its presenting
+        // message hasn't been paginated into the timeline.
+        let roomProxy = JoinedRoomProxyMock(.init(name: ""))
+        roomProxy.getStateEventsRawEventTypeClosure = { eventType in
+            guard eventType == AgentCanvasStepsRoomTimelineItemContent.msgType else { return .success([]) }
+            return .success(["""
+            {"type":"io.element.agent.canvas.steps","state_key":"task-state-only",
+            "content":{"status":"in_progress","title":"State-only task",
+            "steps":[{"id":"s1","label":"One","status":"done"}]}}
+            """])
+        }
+
+        // When showing an empty timeline and enumerating room state.
+        let timelineController = TimelineControllerMock(.init(timelineItems: []))
+        let viewModel = makeViewModel(roomProxy: roomProxy, timelineController: timelineController)
+
+        // Then the chip's summary should carry the task straight from state, with no event ID.
+        let deferred = deferFulfillment(viewModel.context.$viewState) { value in
+            value.roomTaskSummary.activeTasks.map(\.taskID) == ["task-state-only"]
+        }
+        try await deferred.fulfill()
+
+        let task = try #require(viewModel.state.roomTaskSummary.activeTasks.first)
+        #expect(task.eventID.isEmpty)
+        #expect(task.title == "State-only task")
+        #expect(task.doneStepCount == 1)
+        #expect(task.totalStepCount == 1)
+    }
+
+    @Test
+    func stateAndMessageTaskAreMergedNotDuplicated() async throws {
+        // Given a canvas task present both as a loaded timeline message and in room state, where
+        // state has moved on to a different title and resolution.
+        let items = [
+            AgentCanvasStepsRoomTimelineItem(eventID: "task-message", taskID: "task-1", title: "Message title", isResolved: false)
+        ]
+        let roomProxy = JoinedRoomProxyMock(.init(name: ""))
+        roomProxy.getStateEventsRawEventTypeClosure = { eventType in
+            guard eventType == AgentCanvasStepsRoomTimelineItemContent.msgType else { return .success([]) }
+            return .success(["""
+            {"type":"io.element.agent.canvas.steps","state_key":"task-1",
+            "content":{"status":"done","title":"State title","steps":[{"id":"s1","label":"One","status":"done"}]}}
+            """])
+        }
+
+        // When showing the timeline and enumerating room state.
+        let timelineController = TimelineControllerMock(.init(timelineItems: items))
+        let viewModel = makeViewModel(roomProxy: roomProxy, timelineController: timelineController)
+
+        // Then exactly one merged task should appear (no duplicate), resolved per state, keeping
+        // the presenting message's event ID.
+        let deferred = deferFulfillment(viewModel.context.$viewState) { value in
+            value.roomTaskSummary.doneTasks.map(\.taskID) == ["task-1"]
+        }
+        try await deferred.fulfill()
+
+        #expect(viewModel.state.roomTaskSummary.activeTasks.isEmpty)
+        let task = try #require(viewModel.state.roomTaskSummary.doneTasks.first)
+        #expect(task.eventID == "task-message")
+        #expect(task.title == "State title")
+    }
+
+    @Test
+    func stateOnlyPendingChoiceAppearsWithoutTimelineItem() async throws {
+        // Given a room whose only knowledge of a choice request lives in room state (no ask-time
+        // message paginated in), with its ask-time state present and still pending.
+        let roomProxy = JoinedRoomProxyMock(.init(name: ""))
+        roomProxy.getStateEventsRawEventTypeClosure = { eventType in
+            guard eventType == AgentChoiceRequestRoomTimelineItemContent.msgType else { return .success([]) }
+            return .success(["""
+            {"type":"io.element.agent.choice_request","state_key":"choice-state-only",
+            "content":{"status":"pending","question":"Deploy to prod?","resolved_selection":[]}}
+            """])
+        }
+
+        // When showing an empty timeline and enumerating room state.
+        let timelineController = TimelineControllerMock(.init(timelineItems: []))
+        let viewModel = makeViewModel(roomProxy: roomProxy, timelineController: timelineController)
+
+        // Then the pending choice should appear, sourced entirely from state.
+        let deferred = deferFulfillment(viewModel.context.$viewState) { value in
+            value.roomTaskSummary.pendingChoices.map(\.eventID) == ["choice-state-only"]
+        }
+        try await deferred.fulfill()
+
+        #expect(viewModel.state.roomTaskSummary.pendingChoices.first?.question == "Deploy to prod?")
+    }
+
+    @Test
+    func stateConfirmedResolvedChoiceOverridesTimelinePendingGuess() async throws {
+        // Given a choice request the timeline alone would still call pending (no per-key state
+        // fetch configured), but full state enumeration confirms it's already been answered.
+        let items = [
+            AgentChoiceRequestRoomTimelineItem(eventID: "choice-1", question: "Deploy?")
+        ]
+        let roomProxy = JoinedRoomProxyMock(.init(name: ""))
+        roomProxy.getStateEventsRawEventTypeClosure = { eventType in
+            guard eventType == AgentChoiceRequestRoomTimelineItemContent.msgType else { return .success([]) }
+            return .success(["""
+            {"type":"io.element.agent.choice_request","state_key":"choice-1",
+            "content":{"status":"resolved","question":"Deploy?","resolved_selection":["option-1"]}}
+            """])
+        }
+
+        // When showing the timeline and enumerating room state.
+        let timelineController = TimelineControllerMock(.init(timelineItems: items))
+        let viewModel = makeViewModel(roomProxy: roomProxy, timelineController: timelineController)
+
+        // Then state's resolution should win, dropping the choice from pending.
+        let deferred = deferFulfillment(viewModel.context.$viewState) { value in
+            value.roomTaskSummary.isEmpty
+        }
+        try await deferred.fulfill()
+    }
+
+    @Test
+    func timelineOnlyItemsStillCollectedForOldProtocolRooms() async throws {
+        // Given an old-protocol room: no agent state events exist at all, only timeline messages.
+        let items: [RoomTimelineItemProtocol] = [
+            AgentCanvasStepsRoomTimelineItem(eventID: "task-message", taskID: "task-1", title: "Message title", isResolved: false),
+            AgentChoiceRequestRoomTimelineItem(eventID: "choice-1", question: "Deploy?")
+        ]
+        let roomProxy = JoinedRoomProxyMock(.init(name: ""))
+        roomProxy.getStateEventsRawEventTypeClosure = { _ in .success([]) }
+
+        // When showing the timeline and enumerating room state (which comes back empty).
+        let timelineController = TimelineControllerMock(.init(timelineItems: items))
+        let viewModel = makeViewModel(roomProxy: roomProxy, timelineController: timelineController)
+
+        // Then the timeline-only task and pending choice should still be collected.
+        let deferred = deferFulfillment(viewModel.context.$viewState) { value in
+            value.roomTaskSummary.activeTasks.map(\.taskID) == ["task-1"]
+                && value.roomTaskSummary.pendingChoices.map(\.eventID) == ["choice-1"]
+        }
+        try await deferred.fulfill()
+    }
+
     // MARK: - Pins
     
     @Test

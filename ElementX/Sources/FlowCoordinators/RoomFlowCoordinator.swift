@@ -791,8 +791,10 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
     /// steps and thread root); the already-loaded timeline item is the fallback. V1 is read-only
     /// and doesn't re-fetch beyond that.
     private func presentCanvasSteps(eventID: String, taskID: String, animated: Bool) async {
+        // Matched by taskID, not eventID: state-only tasks (not yet paginated into the timeline)
+        // carry an empty eventID, so taskID is the only identity guaranteed to be present.
         if let summary = roomScreenCoordinator?.roomTaskSummaryPublisher.value,
-           let task = (summary.activeTasks + summary.doneTasks).first(where: { $0.eventID == eventID }) {
+           let task = (summary.activeTasks + summary.doneTasks).first(where: { $0.taskID == taskID }) {
             presentCanvasSteps(task: task, animated: animated)
             return
         }

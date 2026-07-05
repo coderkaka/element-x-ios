@@ -13,7 +13,9 @@ import Foundation
 /// `io.element.agent.choice_request`s still awaiting an answer.
 nonisolated struct RoomTaskSummary: Equatable {
     struct Task: Identifiable, Equatable {
-        let eventID: String // presenting message event (for detail push)
+        /// The presenting message's event ID, for detail push and scroll-to. Empty for tasks known
+        /// only from room state (no matching message has been paginated into the timeline yet).
+        var eventID: String
         let taskID: String
         let title: String
         let isResolved: Bool
@@ -22,8 +24,10 @@ nonisolated struct RoomTaskSummary: Equatable {
         let steps: [CanvasStep] // current steps (state-event-resolved)
         let threadRootEventID: String?
         let updatedAt: Date?
+        /// `taskID`, not `eventID` — state-only tasks (not yet paginated into the timeline) have no
+        /// event ID, and a task's identity shouldn't change once its presenting message loads.
         var id: String {
-            eventID
+            taskID
         }
     }
     
