@@ -777,7 +777,7 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
     
     /// Looks up the already-loaded timeline item for `eventID` and pushes the full step list screen.
     /// V1 is read-only and doesn't re-fetch: the item must already be in `timelineController.timelineItems`,
-    /// the same source `TimelineViewModel.updateActiveCanvasTask` reads from.
+    /// the same source `TimelineViewModel.updateRoomTaskSummary` reads from.
     private func presentCanvasSteps(eventID: String, taskID: String, animated: Bool) async {
         guard let canvasItem = timelineController?.timelineItems.first(where: { $0.id.eventID == eventID }) as? AgentCanvasStepsRoomTimelineItem else {
             MXLog.error("Failed presenting canvas steps: item not found for eventID \(eventID), taskID \(taskID)")

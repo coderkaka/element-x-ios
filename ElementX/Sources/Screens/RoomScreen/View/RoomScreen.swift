@@ -76,7 +76,7 @@ struct RoomScreen: View {
                 TopBannerLayer(verticalBanners: [
                     TopBannerItem(pinnedItemsBanner, isVisible: context.viewState.shouldShowPinnedEventsBanner && !isVoiceOverEnabled),
                     TopBannerItem(liveLocationBanner, isVisible: context.viewState.isSharingLiveLocation && !isVoiceOverEnabled),
-                    TopBannerItem(canvasTaskBanner, isVisible: timelineContext.viewState.activeCanvasTask != nil && !isVoiceOverEnabled)
+                    TopBannerItem(canvasTaskBanner, isVisible: !timelineContext.viewState.roomTaskSummary.activeTasks.isEmpty && !isVoiceOverEnabled)
                 ]),
                 // This can overlay on top of the stacked banners
                 TopBannerLayer(knockRequestsBanner, isVisible: context.viewState.shouldSeeKnockRequests)
@@ -86,7 +86,7 @@ struct RoomScreen: View {
                 // don't trigger meaning the banner never hides itself and so the .overlay layout
                 // above permanently obscures the top of the timeline. So whenever VoiceOver is
                 // enabled we use a safe area inset to vertically stack it above the timeline.
-                if context.viewState.shouldShowPinnedEventsBanner || context.viewState.isSharingLiveLocation || timelineContext.viewState.activeCanvasTask != nil, isVoiceOverEnabled {
+                if context.viewState.shouldShowPinnedEventsBanner || context.viewState.isSharingLiveLocation || !timelineContext.viewState.roomTaskSummary.activeTasks.isEmpty, isVoiceOverEnabled {
                     VStack(spacing: 0) {
                         if context.viewState.shouldShowPinnedEventsBanner {
                             pinnedItemsBanner
@@ -94,7 +94,7 @@ struct RoomScreen: View {
                         if context.viewState.isSharingLiveLocation {
                             liveLocationBanner
                         }
-                        if timelineContext.viewState.activeCanvasTask != nil {
+                        if !timelineContext.viewState.roomTaskSummary.activeTasks.isEmpty {
                             canvasTaskBanner
                         }
                     }
@@ -148,7 +148,7 @@ struct RoomScreen: View {
     }
     
     private var canvasTaskBanner: some View {
-        CanvasTaskBannerView(title: timelineContext.viewState.activeCanvasTask?.title ?? "") {
+        CanvasTaskBannerView(title: timelineContext.viewState.roomTaskSummary.activeTasks.first?.title ?? "") {
             timelineContext.send(viewAction: .tappedCanvasTaskBanner)
         }
     }

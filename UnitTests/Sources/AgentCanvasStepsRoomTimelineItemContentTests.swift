@@ -127,4 +127,53 @@ struct AgentCanvasStepsStateContentTests {
     func nilRawJSONReturnsNil() {
         #expect(AgentCanvasStepsStateContent(parsingFrom: nil) == nil)
     }
+
+    @Test
+    func parsesTitleThreadRootAndUpdatedAtWhenPresent() {
+        let json = """
+        {"type":"io.element.agent.canvas.steps","state_key":"t",
+        "content":{"status":"in_progress","title":"Refactor auth module",
+        "thread_root_id":"$thread-root","updated_at":1783222459000,
+        "steps":[{"id":"s1","label":"L","status":"done"}]}}
+        """
+        let content = AgentCanvasStepsStateContent(parsingFrom: json)
+        #expect(content?.title == "Refactor auth module")
+        #expect(content?.threadRootEventID == "$thread-root")
+        #expect(content?.updatedAt == Date(timeIntervalSince1970: 1_783_222_459))
+    }
+
+    @Test
+    func missingOptionalFieldsFallBackToNil() {
+        let json = """
+        {"type":"io.element.agent.canvas.steps","state_key":"t","content":{"status":"in_progress"}}
+        """
+        let content = AgentCanvasStepsStateContent(parsingFrom: json)
+        #expect(content != nil)
+        #expect(content?.title == nil)
+        #expect(content?.threadRootEventID == nil)
+        #expect(content?.updatedAt == nil)
+    }
+
+    @Test
+    func updatedAtIsParsedAsMillisecondsSinceEpoch() {
+        let json = """
+        {"type":"io.element.agent.canvas.steps","state_key":"t",
+        "content":{"status":"done","updated_at":1500}}
+        """
+        let content = AgentCanvasStepsStateContent(parsingFrom: json)
+        #expect(content?.updatedAt == Date(timeIntervalSince1970: 1.5))
+    }
+
+    @Test
+    func malformedOptionalFieldsDoNotFailTheWholeDecode() {
+        let json = """
+        {"type":"io.element.agent.canvas.steps","state_key":"t",
+        "content":{"status":"done","title":42,"thread_root_id":true,"updated_at":"not-a-number"}}
+        """
+        let content = AgentCanvasStepsStateContent(parsingFrom: json)
+        #expect(content?.isResolved == true)
+        #expect(content?.title == nil)
+        #expect(content?.threadRootEventID == nil)
+        #expect(content?.updatedAt == nil)
+    }
 }

@@ -462,61 +462,176 @@ final class TimelineViewModelTests {
         #expect(viewModel.context.manageMemberViewModel?.id == RoomMemberProxyMock.mockBanned[0].userID)
     }
     
-    // MARK: - Canvas Steps
-    
+    // MARK: - Room Task Summary
+
     @Test
-    func mostRecentUnresolvedCanvasTaskDrivesActiveCanvasTask() {
-        // Given a timeline with an older resolved canvas task followed by a newer unresolved one.
+    func canvasTasksAreGroupedByResolution() {
+        // Given a timeline with a resolved canvas task followed by an unresolved one.
         let items: [RoomTimelineItemProtocol] = [
             AgentCanvasStepsRoomTimelineItem(eventID: "resolved-task", taskID: "task-1", title: "Old task", isResolved: true),
             TextRoomTimelineItem(eventID: "t1"),
             AgentCanvasStepsRoomTimelineItem(eventID: "unresolved-task", taskID: "task-2", title: "New task", isResolved: false)
         ]
-        
+
         // When showing them in a timeline.
         let timelineController = TimelineControllerMock(.init(timelineItems: items))
         let viewModel = makeViewModel(timelineController: timelineController)
-        
-        // Then activeCanvasTask should reflect only the most recent unresolved task.
-        #expect(viewModel.state.activeCanvasTask?.eventID == "unresolved-task")
-        #expect(viewModel.state.activeCanvasTask?.taskID == "task-2")
-        #expect(viewModel.state.activeCanvasTask?.title == "New task")
+
+        // Then the summary should group the unresolved task as active and the resolved one as done.
+        #expect(viewModel.state.roomTaskSummary.activeTasks.map(\.eventID) == ["unresolved-task"])
+        #expect(viewModel.state.roomTaskSummary.activeTasks.first?.taskID == "task-2")
+        #expect(viewModel.state.roomTaskSummary.activeTasks.first?.title == "New task")
+        #expect(viewModel.state.roomTaskSummary.doneTasks.map(\.eventID) == ["resolved-task"])
+        #expect(viewModel.state.roomTaskSummary.doneTasks.first?.title == "Old task")
     }
-    
+
     @Test
-    func twoUnresolvedCanvasTasksMeansTheLaterOneWins() {
-        // Given a timeline with two unresolved canvas tasks, an earlier one and a later one.
-        let items: [RoomTimelineItemProtocol] = [
-            AgentCanvasStepsRoomTimelineItem(eventID: "earlier-unresolved-task", taskID: "task-1", title: "Earlier task", isResolved: false),
-            TextRoomTimelineItem(eventID: "t1"),
-            AgentCanvasStepsRoomTimelineItem(eventID: "later-unresolved-task", taskID: "task-2", title: "Later task", isResolved: false)
+    func messageOnlyTaskUsesMessagePayload() {
+        // Given a canvas task whose only source of truth is its message (no state event fetched yet).
+        let steps = [CanvasStep(id: "s1", label: "One", status: .done),
+                     CanvasStep(id: "s2", label: "Two", status: .inProgress),
+                     CanvasStep(id: "s3", label: "Three", status: .pending)]
+        let items = [
+            AgentCanvasStepsRoomTimelineItem(eventID: "task-message", taskID: "task-1", title: "Message title", isResolved: false, steps: steps)
         ]
-        
-        // When showing them in a timeline.
+
+        // When showing it in a timeline.
         let timelineController = TimelineControllerMock(.init(timelineItems: items))
         let viewModel = makeViewModel(timelineController: timelineController)
-        
-        // Then activeCanvasTask should reflect the later unresolved task, not the earlier one.
-        #expect(viewModel.state.activeCanvasTask?.eventID == "later-unresolved-task")
-        #expect(viewModel.state.activeCanvasTask?.taskID == "task-2")
-        #expect(viewModel.state.activeCanvasTask?.title == "Later task")
+
+        // Then every summary field should come from the message payload, with the
+        // state-event-only fields left nil.
+        let task = viewModel.state.roomTaskSummary.activeTasks.first
+        #expect(task?.eventID == "task-message")
+        #expect(task?.taskID == "task-1")
+        #expect(task?.title == "Message title")
+        #expect(task?.steps == steps)
+        #expect(task?.doneStepCount == 1)
+        #expect(task?.totalStepCount == 3)
+        #expect(task?.threadRootEventID == nil)
+        #expect(task?.updatedAt == nil)
     }
-    
+
     @Test
-    func noUnresolvedCanvasTaskMeansNoActiveCanvasTask() {
+    func stateEventFieldsOverrideMessagePayload() async throws {
+        // Given a canvas task whose state event has moved on from the initial message.
+        let items = [
+            AgentCanvasStepsRoomTimelineItem(eventID: "task-message", taskID: "task-1", title: "Message title", isResolved: false)
+        ]
+        let roomProxy = JoinedRoomProxyMock(.init(name: ""))
+        roomProxy.getStateEventRawEventTypeStateKeyClosure = { eventType, stateKey in
+            guard eventType == AgentCanvasStepsRoomTimelineItemContent.msgType, stateKey == "task-1" else { return .success(nil) }
+            return .success("""
+            {"type":"io.element.agent.canvas.steps","state_key":"task-1",
+            "content":{"status":"in_progress","title":"State title","thread_root_id":"$thread-root","updated_at":2000,
+            "steps":[{"id":"s1","label":"One","status":"done"},{"id":"s2","label":"Two","status":"pending"}]}}
+            """)
+        }
+
+        // When showing it in a timeline and the state event arrives.
+        let timelineController = TimelineControllerMock(.init(timelineItems: items))
+        let viewModel = makeViewModel(roomProxy: roomProxy, timelineController: timelineController)
+
+        let deferred = deferFulfillment(viewModel.context.$viewState) { value in
+            value.roomTaskSummary.activeTasks.first?.title == "State title"
+        }
+        try await deferred.fulfill()
+
+        // Then the state event's fields should win over the message payload.
+        let task = try #require(viewModel.state.roomTaskSummary.activeTasks.first)
+        #expect(task.eventID == "task-message")
+        #expect(task.threadRootEventID == "$thread-root")
+        #expect(task.updatedAt == Date(timeIntervalSince1970: 2))
+        #expect(task.doneStepCount == 1)
+        #expect(task.totalStepCount == 2)
+    }
+
+    @Test
+    func onlyDoneCanvasTasksLeaveNoActiveTasks() {
         // Given a timeline with only a resolved canvas task.
         let items = [
             AgentCanvasStepsRoomTimelineItem(eventID: "resolved-task", taskID: "task-1", title: "Old task", isResolved: true)
         ]
-        
+
         // When showing them in a timeline.
         let timelineController = TimelineControllerMock(.init(timelineItems: items))
         let viewModel = makeViewModel(timelineController: timelineController)
-        
-        // Then there should be no active canvas task.
-        #expect(viewModel.state.activeCanvasTask == nil)
+
+        // Then there should be no active tasks but the summary shouldn't be empty either.
+        #expect(viewModel.state.roomTaskSummary.activeTasks.isEmpty)
+        #expect(viewModel.state.roomTaskSummary.doneTasks.map(\.eventID) == ["resolved-task"])
+        #expect(!viewModel.state.roomTaskSummary.isEmpty)
     }
-    
+
+    @Test
+    func activeTasksAreSortedByUpdatedAtDescendingWithNilsLast() async throws {
+        // Given three unresolved tasks: an older update, a newer update and one with no state event.
+        let items: [RoomTimelineItemProtocol] = [
+            AgentCanvasStepsRoomTimelineItem(eventID: "early-task", taskID: "task-early", title: "Early", isResolved: false),
+            AgentCanvasStepsRoomTimelineItem(eventID: "late-task", taskID: "task-late", title: "Late", isResolved: false),
+            AgentCanvasStepsRoomTimelineItem(eventID: "undated-task", taskID: "task-undated", title: "Undated", isResolved: false)
+        ]
+        let roomProxy = JoinedRoomProxyMock(.init(name: ""))
+        roomProxy.getStateEventRawEventTypeStateKeyClosure = { eventType, stateKey in
+            guard eventType == AgentCanvasStepsRoomTimelineItemContent.msgType else { return .success(nil) }
+            switch stateKey {
+            case "task-early": return .success(#"{"content":{"status":"in_progress","updated_at":1000}}"#)
+            case "task-late": return .success(#"{"content":{"status":"in_progress","updated_at":2000}}"#)
+            default: return .success(nil)
+            }
+        }
+
+        // When showing them in a timeline and both state events arrive.
+        let timelineController = TimelineControllerMock(.init(timelineItems: items))
+        let viewModel = makeViewModel(roomProxy: roomProxy, timelineController: timelineController)
+
+        // Then the most recently updated task should come first, with the undated one last.
+        let deferred = deferFulfillment(viewModel.context.$viewState) { value in
+            value.roomTaskSummary.activeTasks.map(\.taskID) == ["task-late", "task-early", "task-undated"]
+        }
+        try await deferred.fulfill()
+    }
+
+    @Test
+    func onlyUnresolvedChoiceRequestsArePending() async throws {
+        // Given two choice requests, one already answered via its resolution state event. The
+        // pending one has no question so its body should be used instead.
+        let items: [RoomTimelineItemProtocol] = [
+            AgentChoiceRequestRoomTimelineItem(eventID: "choice-resolved", question: "Answered?"),
+            AgentChoiceRequestRoomTimelineItem(eventID: "choice-pending", question: "", body: "Fallback question")
+        ]
+        let roomProxy = JoinedRoomProxyMock(.init(name: ""))
+        roomProxy.getStateEventRawEventTypeStateKeyClosure = { eventType, stateKey in
+            guard eventType == AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey == "choice-resolved" else { return .success(nil) }
+            return .success(#"{"content":{"resolved_selection":["option-1"]}}"#)
+        }
+
+        // When showing them in a timeline and the resolution state event arrives.
+        let timelineController = TimelineControllerMock(.init(timelineItems: items))
+        let viewModel = makeViewModel(roomProxy: roomProxy, timelineController: timelineController)
+
+        // Then only the unanswered request should be pending, using its body as the question.
+        let deferred = deferFulfillment(viewModel.context.$viewState) { value in
+            value.roomTaskSummary.pendingChoices.map(\.eventID) == ["choice-pending"]
+        }
+        try await deferred.fulfill()
+
+        #expect(viewModel.state.roomTaskSummary.pendingChoices.first?.question == "Fallback question")
+    }
+
+    @Test
+    func summaryIsEmptyWithoutAgentItems() {
+        // Given a timeline without any agent items.
+        let items = [TextRoomTimelineItem(eventID: "t1")]
+
+        // When showing them in a timeline.
+        let timelineController = TimelineControllerMock(.init(timelineItems: items))
+        let viewModel = makeViewModel(timelineController: timelineController)
+
+        // Then the summary should be empty.
+        #expect(viewModel.state.roomTaskSummary.isEmpty)
+    }
+
     // MARK: - Pins
     
     @Test
@@ -703,14 +818,26 @@ private extension TextRoomTimelineItem {
 }
 
 private extension AgentCanvasStepsRoomTimelineItem {
-    init(eventID: String, taskID: String, title: String, isResolved: Bool) {
+    init(eventID: String, taskID: String, title: String, isResolved: Bool, steps: [CanvasStep] = []) {
         self.init(id: .event(uniqueID: .init(UUID().uuidString), eventOrTransactionID: .eventID(eventID)),
                   timestamp: .mock,
                   isOutgoing: false,
                   isEditable: false,
                   canBeRepliedTo: true,
                   sender: .init(id: "@agent:server.com"),
-                  content: .init(body: title, taskID: taskID, title: title, isResolved: isResolved))
+                  content: .init(body: title, taskID: taskID, title: title, isResolved: isResolved, steps: steps))
+    }
+}
+
+private extension AgentChoiceRequestRoomTimelineItem {
+    init(eventID: String, question: String, body: String = "fallback body") {
+        self.init(id: .event(uniqueID: .init(UUID().uuidString), eventOrTransactionID: .eventID(eventID)),
+                  timestamp: .mock,
+                  isOutgoing: false,
+                  isEditable: false,
+                  canBeRepliedTo: true,
+                  sender: .init(id: "@agent:server.com"),
+                  content: .init(body: body, question: question))
     }
 }
 

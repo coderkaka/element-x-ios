@@ -207,8 +207,9 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         case .displayThread(let itemID):
             actionsSubject.send(.displayThread(itemID: itemID))
         case .tappedCanvasTaskBanner:
-            guard let activeCanvasTask = state.activeCanvasTask else { return }
-            actionsSubject.send(.presentCanvasSteps(eventID: activeCanvasTask.eventID, taskID: activeCanvasTask.taskID))
+            // Banner-like behaviour (first active task) until Task 4 routes this to the task panel.
+            guard !state.roomTaskSummary.isEmpty, let task = state.roomTaskSummary.activeTasks.first else { return }
+            actionsSubject.send(.presentCanvasSteps(eventID: task.eventID, taskID: task.taskID))
         case .fetchStateEvent(let eventType, let stateKey):
             fetchStateEvent(eventType: eventType, stateKey: stateKey)
         case .handlePasteOrDrop(let providers):
@@ -910,38 +911,74 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         state.timelineState.itemsDictionary = timelineItemsDictionary
         state.timelineState.recomputeReadMarkerUniqueID()
         
-        updateActiveCanvasTask(timelineItems: timelineItems)
+        updateRoomTaskSummary(timelineItems: timelineItems)
     }
     
-    /// Finds the most recent (last-in-timeline-order) unresolved canvas-steps task, matching this
-    /// plan's V1 "at most one active banner, most recent wins" decision.
+    /// Collects every canvas-steps task (grouped by resolution) and every pending choice request
+    /// in the timeline into `TimelineViewState.roomTaskSummary`.
     ///
-    /// Progress updates after the initial message live in a `io.element.agent.canvas.steps` room state
-    /// event (state key = `task_id`), not in the message itself — so resolution here is checked against
-    /// whichever is more current: the fetched state event if one has arrived, else the message's own
-    /// initial `isResolved`. Fetches are kicked off for every candidate so state eventually arrives.
-    private func updateActiveCanvasTask(timelineItems: [RoomTimelineItemProtocol]) {
-        let canvasItems = timelineItems.compactMap { $0 as? AgentCanvasStepsRoomTimelineItem }
-        for canvasItem in canvasItems {
+    /// Updates after the initial message live in room state events (canvas steps keyed by `task_id`,
+    /// choice requests by the message's event ID), not in the messages themselves — so each item's
+    /// current fields come from whichever is more current: the fetched state event if one has
+    /// arrived, else the message payload. Fetches are kicked off for every candidate so state
+    /// eventually arrives.
+    private func updateRoomTaskSummary(timelineItems: [RoomTimelineItemProtocol]) {
+        var activeTasks = [RoomTaskSummary.Task]()
+        var doneTasks = [RoomTaskSummary.Task]()
+        var pendingChoices = [RoomTaskSummary.PendingChoice]()
+
+        for canvasItem in timelineItems.compactMap({ $0 as? AgentCanvasStepsRoomTimelineItem }) {
+            guard let eventID = canvasItem.id.eventID else { continue }
             fetchStateEvent(eventType: AgentCanvasStepsRoomTimelineItemContent.msgType, stateKey: canvasItem.content.taskID)
+
+            let key = StateEventKey(eventType: AgentCanvasStepsRoomTimelineItemContent.msgType, stateKey: canvasItem.content.taskID)
+            let stateContent = state.fetchedStateEvents[key].flatMap { AgentCanvasStepsStateContent(parsingFrom: $0) }
+
+            let steps = stateContent?.steps ?? canvasItem.content.steps
+            let task = RoomTaskSummary.Task(eventID: eventID,
+                                            taskID: canvasItem.content.taskID,
+                                            title: stateContent?.title ?? canvasItem.content.title,
+                                            isResolved: stateContent?.isResolved ?? canvasItem.content.isResolved,
+                                            doneStepCount: steps.count(where: { $0.status == .done }),
+                                            totalStepCount: steps.count,
+                                            steps: steps,
+                                            threadRootEventID: stateContent?.threadRootEventID,
+                                            updatedAt: stateContent?.updatedAt)
+
+            if task.isResolved {
+                doneTasks.append(task)
+            } else {
+                activeTasks.append(task)
+            }
         }
-        
-        let unresolvedCanvasItem = canvasItems.reversed().first { !isCanvasTaskResolved($0) }
-        
-        guard let unresolvedCanvasItem, let eventID = unresolvedCanvasItem.id.eventID else {
-            state.activeCanvasTask = nil
-            return
+
+        for choiceItem in timelineItems.compactMap({ $0 as? AgentChoiceRequestRoomTimelineItem }) {
+            guard let eventID = choiceItem.id.eventID else { continue }
+            fetchStateEvent(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey: eventID)
+
+            // A parseable resolution state event means the choice has been answered.
+            let key = StateEventKey(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey: eventID)
+            guard state.fetchedStateEvents[key].flatMap({ AgentChoiceRequestStateContent(parsingFrom: $0) }) == nil else { continue }
+
+            let question = choiceItem.content.question.isEmpty ? choiceItem.content.body : choiceItem.content.question
+            pendingChoices.append(.init(eventID: eventID, question: question))
         }
-        
-        state.activeCanvasTask = (eventID: eventID, taskID: unresolvedCanvasItem.content.taskID, title: unresolvedCanvasItem.content.title)
+
+        state.roomTaskSummary = RoomTaskSummary(activeTasks: sortedByUpdatedAtDescendingNilsLast(activeTasks),
+                                                doneTasks: sortedByUpdatedAtDescendingNilsLast(doneTasks),
+                                                pendingChoices: pendingChoices)
     }
-    
-    private func isCanvasTaskResolved(_ canvasItem: AgentCanvasStepsRoomTimelineItem) -> Bool {
-        let key = StateEventKey(eventType: AgentCanvasStepsRoomTimelineItemContent.msgType, stateKey: canvasItem.content.taskID)
-        guard let rawStateEvent = state.fetchedStateEvents[key] else {
-            return canvasItem.content.isResolved
+
+    /// Tasks without a known `updatedAt` sort after dated ones, keeping their timeline order
+    /// (`sorted` is documented stable).
+    private func sortedByUpdatedAtDescendingNilsLast(_ tasks: [RoomTaskSummary.Task]) -> [RoomTaskSummary.Task] {
+        tasks.sorted { lhs, rhs in
+            switch (lhs.updatedAt, rhs.updatedAt) {
+            case let (lhsDate?, rhsDate?): lhsDate > rhsDate
+            case (.some, .none): true
+            default: false
+            }
         }
-        return AgentCanvasStepsStateContent(parsingFrom: rawStateEvent)?.isResolved ?? canvasItem.content.isResolved
     }
     
     private func updateViewState(item: RoomTimelineItemProtocol, groupStyle: TimelineGroupStyle) -> RoomTimelineItemViewState {
@@ -1074,9 +1111,9 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
                 // dictionary's value type is itself `String?` — the subscript setter treats an outer
                 // `nil` as "remove this key", which would erase the "already fetched" marker.
                 state.fetchedStateEvents.updateValue(raw, forKey: key)
-                // A freshly-fetched state event can flip whether a canvas task counts as resolved,
-                // so the active-task banner needs recomputing against the now-current state.
-                updateActiveCanvasTask(timelineItems: timelineController.timelineItems)
+                // A freshly-fetched state event can flip a task's resolution or a choice's pending
+                // status, so the room task summary needs recomputing against the now-current state.
+                updateRoomTaskSummary(timelineItems: timelineController.timelineItems)
             case .failure(let error):
                 MXLog.error("Failed fetching state event eventType: \(key.eventType) stateKey: \(key.stateKey) with error: \(error)")
             }

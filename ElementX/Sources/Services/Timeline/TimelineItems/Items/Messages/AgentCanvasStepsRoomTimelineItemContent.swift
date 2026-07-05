@@ -108,16 +108,28 @@ nonisolated struct AgentCanvasStepsRoomTimelineItemContent: Hashable {
 nonisolated struct AgentCanvasStepsStateContent: Decodable {
     let isResolved: Bool
     let steps: [CanvasStep]
-    
+    let title: String?
+    let threadRootEventID: String?
+    let updatedAt: Date?
+
     private enum CodingKeys: String, CodingKey {
         case status
         case steps
+        case title
+        case threadRootEventID = "thread_root_id"
+        case updatedAt = "updated_at"
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         isResolved = try container.decode(String.self, forKey: .status) == "done"
         steps = try container.decodeIfPresent([CanvasStep].self, forKey: .steps) ?? []
+        title = try? container.decodeIfPresent(String.self, forKey: .title)
+        threadRootEventID = try? container.decodeIfPresent(String.self, forKey: .threadRootEventID)
+        // Milliseconds since the epoch on the wire.
+        updatedAt = (try? container.decodeIfPresent(UInt64.self, forKey: .updatedAt))
+            .flatMap { $0 }
+            .map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
     }
     
     /// - Parameter rawStateEventJSON: the full raw state event JSON string returned by

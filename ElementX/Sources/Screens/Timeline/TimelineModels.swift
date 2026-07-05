@@ -141,9 +141,9 @@ struct TimelineViewState: BindableState {
     /// It's updated from the room info, so it's faster than using the timeline
     var pinnedEventIDs: Set<String> = []
     
-    /// The Matrix event ID and title of the most recently active (unresolved) `io.element.agent.canvas.steps`
-    /// task in this timeline, if any. Drives `CanvasTaskBannerView`'s visibility in `RoomScreen`.
-    var activeCanvasTask: (eventID: String, taskID: String, title: String)?
+    /// Every `io.element.agent.canvas.steps` task and pending `io.element.agent.choice_request`
+    /// in this timeline. Drives `CanvasTaskBannerView`'s visibility in `RoomScreen`.
+    var roomTaskSummary = RoomTaskSummary()
     
     /// A closure providing the associated audio player state for an item in the timeline.
     var audioPlayerStateProvider: (@MainActor (_ itemId: TimelineItemIdentifier) -> AudioPlayerState?)?
