@@ -239,7 +239,7 @@ struct HomeScreenRoom: Identifiable, Equatable {
     let canonicalAlias: String?
     
     let isTombstoned: Bool
-
+    
     /// Whether an `io.element.agent.goal` state event marks this room as an agent project (政事案).
     var isProject = false
     /// Unresolved `AgentTaskSummary` count for this room.
@@ -248,9 +248,11 @@ struct HomeScreenRoom: Identifiable, Equatable {
     var doneTaskCount = 0
     /// Outstanding `AgentPendingChoiceSummary` count for this room (待批).
     var pendingChoiceCount = 0
-
-    var totalTaskCount: Int { activeTaskCount + doneTaskCount }
-
+    
+    var totalTaskCount: Int {
+        activeTaskCount + doneTaskCount
+    }
+    
     var displayedLastMessage: AttributedString? {
         if isTombstoned {
             AttributedString(L10n.screenRoomlistTombstonedRoomDescription)

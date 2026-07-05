@@ -10,10 +10,10 @@ extension AgentTaskIndexServiceMock {
     struct Configuration {
         var tasks: [AgentTaskSummary] = []
     }
-
+    
     convenience init(_ configuration: Configuration) {
         self.init()
-
+        
         underlyingTasksPublisher = CurrentValuePublisher(configuration.tasks)
     }
 }

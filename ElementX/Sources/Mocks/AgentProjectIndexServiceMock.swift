@@ -11,10 +11,10 @@ extension AgentProjectIndexServiceMock {
         var projects: [AgentProjectSummary] = []
         var pendingChoices: [AgentPendingChoiceSummary] = []
     }
-
+    
     convenience init(_ configuration: Configuration) {
         self.init()
-
+        
         underlyingProjectsPublisher = CurrentValuePublisher(configuration.projects)
         underlyingPendingChoicesPublisher = CurrentValuePublisher(configuration.pendingChoices)
     }

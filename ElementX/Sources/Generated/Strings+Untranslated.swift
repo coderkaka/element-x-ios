@@ -26,6 +26,10 @@ internal nonisolated enum UntranslatedL10n {
   internal static var screenAgentTasksSectionDone: String { return UntranslatedL10n.tr("Untranslated", "screen_agent_tasks_section_done") }
   /// 查看实录
   internal static var screenCanvasStepsViewThread: String { return UntranslatedL10n.tr("Untranslated", "screen_canvas_steps_view_thread") }
+  /// 差事 %1$@/%2$@
+  internal static func screenHomeRoomTaskProgress(_ p1: Any, _ p2: Any) -> String {
+    return UntranslatedL10n.tr("Untranslated", "screen_home_room_task_progress", String(describing: p1), String(describing: p2))
+  }
   /// 书信
   internal static var screenHomeTabMessages: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_messages") }
   /// 政事

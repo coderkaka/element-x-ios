@@ -27,7 +27,7 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
     private let flowParameters: CommonFlowParameters
     private let agentTaskIndexService: AgentTaskIndexServiceProtocol
     private let agentProjectIndexService: AgentProjectIndexServiceProtocol
-
+    
     private var userSession: UserSessionProtocol {
         flowParameters.userSession
     }
@@ -67,7 +67,7 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
         self.agentTaskIndexService = agentTaskIndexService
         self.agentProjectIndexService = agentProjectIndexService
         self.flowParameters = flowParameters
-
+        
         sidebarNavigationStackCoordinator = NavigationStackCoordinator(navigationSplitCoordinator: navigationSplitCoordinator)
         navigationSplitCoordinator.setSidebarCoordinator(sidebarNavigationStackCoordinator)
         

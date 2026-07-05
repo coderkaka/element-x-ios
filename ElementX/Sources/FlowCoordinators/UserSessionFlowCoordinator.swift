@@ -96,7 +96,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         agentProjectIndexService = AgentProjectIndexService(clientProxy: flowParameters.userSession.clientProxy,
                                                             roomSummaryProvider: flowParameters.userSession.clientProxy.roomSummaryProvider)
         agentProjectIndexService.start()
-
+        
         let chatsSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
         chatsTabFlowCoordinator = ChatsTabFlowCoordinator(isNewLogin: isNewLogin,
                                                           navigationSplitCoordinator: chatsSplitCoordinator,
@@ -105,7 +105,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                                                           flowParameters: flowParameters)
         chatsTabDetails = .init(tag: HomeTab.chats, title: UntranslatedL10n.screenHomeTabProjects, icon: \.chat, selectedIcon: \.chatSolid)
         chatsTabDetails.navigationSplitCoordinator = chatsSplitCoordinator
-
+        
         let tasksSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
         agentTasksScreenCoordinator = AgentTasksScreenCoordinator(parameters: .init(agentTaskIndexService: agentTaskIndexService))
         tasksSplitCoordinator.setSidebarCoordinator(agentTasksScreenCoordinator)
