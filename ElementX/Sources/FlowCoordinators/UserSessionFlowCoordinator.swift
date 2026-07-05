@@ -36,6 +36,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     private let chatsTabFlowCoordinator: ChatsTabFlowCoordinator
     private let chatsTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
     private let agentTaskIndexService: AgentTaskIndexServiceProtocol
+    private let agentProjectIndexService: AgentProjectIndexServiceProtocol
     private let agentTasksScreenCoordinator: AgentTasksScreenCoordinator
     private let tasksTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
     private let messagesScreenCoordinator: MessagesScreenCoordinator
@@ -100,6 +101,9 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         agentTaskIndexService = AgentTaskIndexService(clientProxy: flowParameters.userSession.clientProxy,
                                                       roomSummaryProvider: flowParameters.userSession.clientProxy.roomSummaryProvider)
         agentTaskIndexService.start()
+        agentProjectIndexService = AgentProjectIndexService(clientProxy: flowParameters.userSession.clientProxy,
+                                                            roomSummaryProvider: flowParameters.userSession.clientProxy.roomSummaryProvider)
+        agentProjectIndexService.start()
         agentTasksScreenCoordinator = AgentTasksScreenCoordinator(parameters: .init(agentTaskIndexService: agentTaskIndexService))
         tasksSplitCoordinator.setSidebarCoordinator(agentTasksScreenCoordinator)
         tasksTabDetails = .init(tag: HomeTab.tasks, title: UntranslatedL10n.screenHomeTabTasks, icon: \.listBulleted, selectedIcon: \.listBulleted)
