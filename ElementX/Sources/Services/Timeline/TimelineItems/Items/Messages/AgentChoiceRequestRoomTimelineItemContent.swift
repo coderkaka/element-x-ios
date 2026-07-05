@@ -87,16 +87,16 @@ nonisolated struct AgentChoiceRequestRoomTimelineItemContent: Hashable {
 nonisolated struct AgentChoiceRequestStateContent: Decodable {
     let resolvedSelection: [String]
     let status: String?
-
+    
     var isCancelled: Bool {
         status == "cancelled" && resolvedSelection.isEmpty
     }
-
+    
     enum CodingKeys: String, CodingKey {
         case resolvedSelection = "resolved_selection"
         case status
     }
-
+    
     /// Missing `resolved_selection` defaults to empty rather than failing the decode — a cancelled
     /// choice's state content may carry only `status`, with no selection at all.
     init(from decoder: Decoder) throws {
@@ -104,16 +104,16 @@ nonisolated struct AgentChoiceRequestStateContent: Decodable {
         resolvedSelection = try container.decodeIfPresent([String].self, forKey: .resolvedSelection) ?? []
         status = try container.decodeIfPresent(String.self, forKey: .status)
     }
-
+    
     /// - Parameter rawStateEventJSON: the full raw state event JSON string returned by
     ///   `getStateEventRaw`, i.e. `{"type": ..., "state_key": ..., "content": {"resolved_selection": [...]}, ...}`.
     init?(parsingFrom rawStateEventJSON: String?) {
         guard let data = rawStateEventJSON?.data(using: .utf8) else { return nil }
-
+        
         struct EventEnvelope: Decodable {
             let content: AgentChoiceRequestStateContent
         }
-
+        
         guard let event = try? JSONDecoder().decode(EventEnvelope.self, from: data) else { return nil }
         self = event.content
     }

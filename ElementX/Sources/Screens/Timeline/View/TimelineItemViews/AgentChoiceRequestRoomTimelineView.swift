@@ -32,18 +32,18 @@ struct AgentChoiceRequestRoomTimelineView: View {
         }
         return AgentChoiceRequestStateContent(parsingFrom: rawStateEvent)
     }
-
+    
     private func stateEventKey(for eventID: String) -> StateEventKey {
         StateEventKey(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey: eventID)
     }
-
+    
     var body: some View {
         TimelineStyler(timelineItem: timelineItem) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(content.question.isEmpty ? content.body : content.question)
                     .font(.compound.bodyMD)
                     .foregroundColor(.compound.textPrimary)
-
+                
                 if let resolvedSelection = stateContent?.resolvedSelection, !resolvedSelection.isEmpty {
                     resolvedView(selectedIDs: resolvedSelection)
                 } else if stateContent?.isCancelled == true {
@@ -104,7 +104,7 @@ struct AgentChoiceRequestRoomTimelineView: View {
             .font(.compound.bodySM)
             .foregroundColor(.compound.textSecondary)
     }
-
+    
     private var cancelledView: some View {
         Text(UntranslatedL10n.screenRoomTimelineAgentChoiceCancelled)
             .font(.compound.bodySM)

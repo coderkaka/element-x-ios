@@ -103,7 +103,7 @@ struct AgentChoiceRequestStateContentTests {
     func nilRawJSONReturnsNil() {
         #expect(AgentChoiceRequestStateContent(parsingFrom: nil) == nil)
     }
-
+    
     @Test
     func missingResolvedSelectionKeyDefaultsToEmpty() {
         // A cancelled choice's state content may carry only `status`, with no selection at all —
@@ -115,7 +115,7 @@ struct AgentChoiceRequestStateContentTests {
         #expect(content?.resolvedSelection == [])
         #expect(content?.status == nil)
     }
-
+    
     @Test
     func cancelledWithNoResolvedSelectionIsCancelled() {
         let json = """
@@ -126,7 +126,7 @@ struct AgentChoiceRequestStateContentTests {
         #expect(content?.resolvedSelection == [])
         #expect(content?.isCancelled == true)
     }
-
+    
     @Test
     func cancelledWithNonEmptySelectionIsNotCancelled() {
         // Resolved wins: a non-empty selection alongside a "cancelled" status must not be treated
@@ -138,7 +138,7 @@ struct AgentChoiceRequestStateContentTests {
         #expect(content?.resolvedSelection == ["a"])
         #expect(content?.isCancelled == false)
     }
-
+    
     @Test
     func plainPendingIsNotCancelled() {
         let json = """

@@ -145,12 +145,12 @@ struct AgentProjectIndexServiceTests {
         {"type":"io.element.agent.choice_request","state_key":"$original-event-id","content":\
         {"status":"cancelled","question":"Which approach?"}}
         """
-
+        
         let event = AgentChoiceStateIndexEvent(parsingFrom: json)
-
+        
         #expect(event?.isPending == false)
     }
-
+    
     @Test
     func choiceStateEventParsingCancelledWithNonEmptySelectionIsNotPending() {
         // Resolved wins even alongside a cancelled status — either way it's not pending.
@@ -158,12 +158,12 @@ struct AgentProjectIndexServiceTests {
         {"type":"io.element.agent.choice_request","state_key":"$original-event-id","content":\
         {"status":"cancelled","question":"Which approach?","resolved_selection":["option-a"]}}
         """
-
+        
         let event = AgentChoiceStateIndexEvent(parsingFrom: json)
-
+        
         #expect(event?.isPending == false)
     }
-
+    
     @Test
     func choiceStateEventParsingFailures() {
         #expect(AgentChoiceStateIndexEvent(parsingFrom: "not json at all") == nil)
@@ -220,7 +220,7 @@ struct AgentProjectIndexServiceTests {
         #expect(pendingChoices[0].roomID == "!a:example.com")
         #expect(pendingChoices[0].eventID == "$pending-event")
     }
-
+    
     @Test
     func cancelledChoicesAreExcludedFromPending() async throws {
         // 请旨撤销: a cancelled choice request must not surface in the cross-room pending index.
@@ -235,16 +235,16 @@ struct AgentProjectIndexServiceTests {
                                           .success([Self.choiceEventJSON(stateKey: "$cancelled-event", status: "cancelled", resolvedSelection: nil)])
                                       }
                                   })
-
+        
         let deferred = deferFulfillment(service.pendingChoicesPublisher) { !$0.isEmpty }
         service.start()
         let pendingChoices = try await deferred.fulfill()
-
+        
         #expect(pendingChoices.count == 1)
         #expect(pendingChoices[0].roomID == "!a:example.com")
         #expect(pendingChoices[0].eventID == "$pending-event")
     }
-
+    
     @Test
     func failingRoomIsSkippedForBothPublishersWhileOthersStillIndex() async throws {
         let service = makeService(rooms: [.mock(id: "!a:example.com", name: "Room A"),

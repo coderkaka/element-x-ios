@@ -13,9 +13,9 @@ import SwiftUI
 
 struct HomeScreen: View {
     @ObservedObject var context: HomeScreenViewModel.Context
-
+    
     @State private var scrollViewAdapter = ScrollViewAdapter()
-
+    
     var body: some View {
         HomeScreenContent(context: context, scrollViewAdapter: scrollViewAdapter)
             .alert(item: $context.alertInfo)
@@ -61,7 +61,7 @@ struct HomeScreen: View {
     }
     
     // MARK: - Private
-
+    
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .navigationBarLeading) {

@@ -54,7 +54,7 @@ enum HomeScreenViewAction {
     
     case selectSpaceFilter(SpaceServiceFilter?)
     case reorderSpaceFilter(roomID: String, direction: MoveDirection)
-
+    
     case tappedPendingChoicesStrip
     case selectPendingChoice(roomID: String)
 }
@@ -130,7 +130,7 @@ struct HomeScreenViewState: BindableState {
     var selectedSpaceFilter: SpaceServiceFilter?
     /// User-customised order of the 道 chips (space room IDs) — see `sortSpaceFilters(_:byOrder:)`.
     var spaceFilterOrder: [String] = []
-
+    
     var topLevelSpaceFilters: [SpaceServiceFilter] {
         sortSpaceFilters(availableSpaceFilters.filter { $0.level == 0 }, byOrder: spaceFilterOrder)
     }
@@ -185,7 +185,7 @@ struct HomeScreenViewState: BindableState {
 /// own relative order and are placed after every filter that *is* listed (stable sort throughout).
 func sortSpaceFilters(_ filters: [SpaceServiceFilter], byOrder order: [String]) -> [SpaceServiceFilter] {
     guard !order.isEmpty else { return filters }
-
+    
     let indexByRoomID = Dictionary(order.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
     return filters.enumerated()
         .sorted { lhs, rhs in
@@ -224,7 +224,7 @@ struct HomeScreenViewStateBindings {
     
     var alertInfo: AlertInfo<UUID>?
     var leaveRoomAlertItem: LeaveRoomAlertItem?
-
+    
     var isPresentingPendingChoices = false
 }
 

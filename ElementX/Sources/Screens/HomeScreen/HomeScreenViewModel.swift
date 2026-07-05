@@ -120,13 +120,13 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 
                 state.shouldShowSpaceFilters = !filters.isEmpty
                 state.availableSpaceFilters = filters
-
+                
                 if let selectedSpaceFilter = spaceFilterSubject.value,
                    !filters.contains(selectedSpaceFilter) {
                     // Clear the spaces filter if the space has been left.
                     spaceFilterSubject.send(nil)
                 }
-
+                
                 restorePersistedSpaceFilterIfNeeded(availableFilters: filters)
             }
             .store(in: &cancellables)
@@ -363,37 +363,37 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     private func restorePersistedSpaceFilterIfNeeded(availableFilters: [SpaceServiceFilter]) {
         guard !hasRestoredSpaceFilter, !availableFilters.isEmpty else { return }
         hasRestoredSpaceFilter = true
-
+        
         guard spaceFilterSubject.value == nil, let persistedRoomID = appSettings.selectedSpaceFilterRoomID else { return }
-
+        
         let topLevelFilters = availableFilters.filter { $0.level == 0 }
         guard let match = topLevelFilters.first(where: { $0.room.id == persistedRoomID }) else {
             // Stale persisted ID (space left/never joined) — clear it and stay on 全部.
             appSettings.selectedSpaceFilterRoomID = nil
             return
         }
-
+        
         // Drive the same path as the user tapping the chip, so filter + UI + persistence stay consistent.
         process(viewAction: .selectSpaceFilter(match))
     }
-
+    
     private func reorderSpaceFilter(roomID: String, direction: MoveDirection) {
         // Build the full current order from what's displayed (already reflecting any partial
         // persisted order), so a partially-populated/empty setting still swaps sensibly.
         var order = state.topLevelSpaceFilters.map(\.room.id)
         guard let currentIndex = order.firstIndex(of: roomID) else { return }
-
+        
         let swapIndex = switch direction {
         case .left: currentIndex - 1
         case .right: currentIndex + 1
         }
         guard order.indices.contains(swapIndex) else { return } // Already at an edge.
-
+        
         order.swapAt(currentIndex, swapIndex)
         appSettings.spaceFilterOrder = order
         state.spaceFilterOrder = order
     }
-
+    
     private func setupRoomListSubscriptions() {
         guard let roomSummaryProvider else {
             MXLog.error("Room summary provider unavailable")

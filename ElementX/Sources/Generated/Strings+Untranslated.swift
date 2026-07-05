@@ -18,6 +18,10 @@ internal nonisolated enum UntranslatedL10n {
   internal static var a11yRoomListFiltersButton: String { return UntranslatedL10n.tr("Untranslated", "a11y_room_list_filters_button") }
   /// 管理诸道
   internal static var actionManageSpaces: String { return UntranslatedL10n.tr("Untranslated", "action_manage_spaces") }
+  /// 左移
+  internal static var actionMoveLeft: String { return UntranslatedL10n.tr("Untranslated", "action_move_left") }
+  /// 右移
+  internal static var actionMoveRight: String { return UntranslatedL10n.tr("Untranslated", "action_move_right") }
   /// 暂无差事
   internal static var screenAgentTasksEmpty: String { return UntranslatedL10n.tr("Untranslated", "screen_agent_tasks_empty") }
   /// 在办
@@ -36,6 +40,8 @@ internal nonisolated enum UntranslatedL10n {
   internal static func screenHomeRoomTaskProgress(_ p1: Any, _ p2: Any) -> String {
     return UntranslatedL10n.tr("Untranslated", "screen_home_room_task_progress", String(describing: p1), String(describing: p2))
   }
+  /// 全部
+  internal static var screenHomeSpaceAll: String { return UntranslatedL10n.tr("Untranslated", "screen_home_space_all") }
   /// 书信
   internal static var screenHomeTabMessages: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_messages") }
   /// 政事
@@ -44,6 +50,8 @@ internal nonisolated enum UntranslatedL10n {
   internal static var screenHomeTabSearch: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_search") }
   /// 差事
   internal static var screenHomeTabTasks: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_tasks") }
+  /// 政事堂
+  internal static var screenHomeTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_home_title") }
   /// 暂无书信
   internal static var screenMessagesEmpty: String { return UntranslatedL10n.tr("Untranslated", "screen_messages_empty") }
   /// %1$@ 件差事在办
@@ -58,6 +66,8 @@ internal nonisolated enum UntranslatedL10n {
   internal static func screenRoomTaskChipPendingSuffix(_ p1: Any) -> String {
     return UntranslatedL10n.tr("Untranslated", "screen_room_task_chip_pending_suffix", String(describing: p1))
   }
+  /// 已撤销
+  internal static var screenRoomTimelineAgentChoiceCancelled: String { return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_agent_choice_cancelled") }
   /// Confirm
   internal static var screenRoomTimelineAgentChoiceConfirmButton: String { return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_agent_choice_confirm_button") }
   /// Selected

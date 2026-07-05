@@ -16,7 +16,7 @@ struct SpaceTabBarView: View {
     let action: (SpaceServiceFilter?) -> Void
     let onManageTapped: () -> Void
     let onReorder: (String, MoveDirection) -> Void
-
+    
     var body: some View {
         HStack(spacing: 8) {
             ScrollView(.horizontal) {
@@ -27,7 +27,7 @@ struct SpaceTabBarView: View {
                                      mediaProvider: mediaProvider) {
                         action(nil)
                     }
-
+                    
                     ForEach(Array(filters.enumerated()), id: \.element.id) { index, filter in
                         SpaceTabChipView(name: filter.room.name,
                                          avatar: filter.room.avatar,
@@ -40,7 +40,7 @@ struct SpaceTabBarView: View {
                                 onReorder(filter.room.id, .left)
                             }
                             .disabled(index == 0)
-
+                            
                             Button(UntranslatedL10n.actionMoveRight) {
                                 onReorder(filter.room.id, .right)
                             }
@@ -51,7 +51,7 @@ struct SpaceTabBarView: View {
                 .padding(.vertical, 12)
             }
             .scrollIndicators(.hidden)
-
+            
             Button(action: onManageTapped) {
                 CompoundIcon(\.settings, size: .small, relativeTo: .compound.bodyMD)
                     .foregroundColor(.compound.iconSecondary)
@@ -116,28 +116,28 @@ private struct SpaceTabChipView: View {
 
 struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
     static let mediaProvider = MediaProviderMock(.init())
-
+    
     static var previews: some View {
         VStack(spacing: 0) {
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: nil,
                             mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
-
+            
             Divider()
-
+            
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: mockFilters.first,
                             mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
-
+            
             Divider()
-
+            
             SpaceTabBarView(filters: [],
                             selectedFilter: nil,
                             mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
         }
         .background(Color.compound.bgCanvasDefault)
     }
-
+    
     static var mockFilters: [SpaceServiceFilter] {
         [SpaceServiceRoom].mockJoinedSpaces.prefix(4).map {
             SpaceServiceFilter(room: $0, level: 0, descendants: [])
