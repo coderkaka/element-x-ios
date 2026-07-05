@@ -15,10 +15,10 @@ class AgentTaskPanelScreenViewModel: AgentTaskPanelScreenViewModelType, AgentTas
     var actionsPublisher: AnyPublisher<AgentTaskPanelScreenViewModelAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-
+    
     init(summaryPublisher: CurrentValuePublisher<RoomTaskSummary, Never>) {
         super.init(initialViewState: AgentTaskPanelScreenViewState())
-
+        
         // No queue hop: the timeline publishes on the main actor and the synchronous
         // initial emission populates state before the first render (previews rely on this).
         summaryPublisher
@@ -30,12 +30,12 @@ class AgentTaskPanelScreenViewModel: AgentTaskPanelScreenViewModelType, AgentTas
             }
             .store(in: &cancellables)
     }
-
+    
     // MARK: - Public
-
+    
     override func process(viewAction: AgentTaskPanelScreenViewAction) {
         MXLog.info("View model: received view action: \(viewAction)")
-
+        
         switch viewAction {
         case .taskTapped(let task):
             actionsSubject.send(.presentTaskDetail(task: task))

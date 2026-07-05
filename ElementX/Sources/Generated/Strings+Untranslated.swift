@@ -56,6 +56,16 @@ internal nonisolated enum UntranslatedL10n {
   internal static func screenSearchNoResultsMessage(_ p1: Any) -> String {
     return UntranslatedL10n.tr("Untranslated", "screen_search_no_results_message", String(describing: p1))
   }
+  /// 本案暂无差事
+  internal static var screenTaskPanelEmpty: String { return UntranslatedL10n.tr("Untranslated", "screen_task_panel_empty") }
+  /// 在办
+  internal static var screenTaskPanelSectionActive: String { return UntranslatedL10n.tr("Untranslated", "screen_task_panel_section_active") }
+  /// 已结
+  internal static var screenTaskPanelSectionDone: String { return UntranslatedL10n.tr("Untranslated", "screen_task_panel_section_done") }
+  /// 待批
+  internal static var screenTaskPanelSectionPending: String { return UntranslatedL10n.tr("Untranslated", "screen_task_panel_section_pending") }
+  /// 案卷
+  internal static var screenTaskPanelTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_task_panel_title") }
   /// Clear all data currently stored on this device?
   /// Sign in again to access your account data and messages.
   internal static var softLogoutClearDataDialogContent: String { return UntranslatedL10n.tr("Untranslated", "soft_logout_clear_data_dialog_content") }

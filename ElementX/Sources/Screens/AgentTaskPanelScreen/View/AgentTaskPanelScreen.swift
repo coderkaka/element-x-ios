@@ -11,13 +11,13 @@ import SwiftUI
 
 struct AgentTaskPanelScreen: View {
     @Bindable var context: AgentTaskPanelScreenViewModel.Context
-
+    
     var body: some View {
         content
             .navigationTitle(UntranslatedL10n.screenTaskPanelTitle)
             .navigationBarTitleDisplayMode(.inline)
     }
-
+    
     @ViewBuilder
     private var content: some View {
         if context.viewState.isEmpty {
@@ -26,7 +26,7 @@ struct AgentTaskPanelScreen: View {
             panelList
         }
     }
-
+    
     private var panelList: some View {
         Form {
             if !context.viewState.pendingChoices.isEmpty {
@@ -42,7 +42,7 @@ struct AgentTaskPanelScreen: View {
                         .compoundListSectionHeader()
                 }
             }
-
+            
             if !context.viewState.activeTasks.isEmpty {
                 Section {
                     ForEach(context.viewState.activeTasks) { task in
@@ -53,7 +53,7 @@ struct AgentTaskPanelScreen: View {
                         .compoundListSectionHeader()
                 }
             }
-
+            
             if !context.viewState.doneTasks.isEmpty {
                 Section {
                     DisclosureGroup {
@@ -70,7 +70,7 @@ struct AgentTaskPanelScreen: View {
         }
         .compoundList()
     }
-
+    
     private func taskRow(_ task: RoomTaskSummary.Task) -> some View {
         ListRow(label: .plain(title: task.title),
                 details: .title("\(task.doneStepCount)/\(task.totalStepCount)"),
@@ -78,7 +78,7 @@ struct AgentTaskPanelScreen: View {
                     context.send(viewAction: .taskTapped(task))
                 })
     }
-
+    
     private var emptyState: some View {
         VStack(spacing: 8) {
             CompoundIcon(\.polls, size: .medium, relativeTo: .compound.bodyLG)
@@ -103,61 +103,61 @@ struct AgentTaskPanelScreen_Previews: PreviewProvider, TestablePreview {
     static let pendingOnlyViewModel = makeViewModel(summary: RoomTaskSummary(pendingChoices: [
         .init(eventID: "$choice-1", question: "Deploy to staging first?")
     ]))
-
+    
     static var previews: some View {
         ElementNavigationStack {
             AgentTaskPanelScreen(context: mixedViewModel.context)
         }
         .previewDisplayName("Mixed")
-
+        
         ElementNavigationStack {
             AgentTaskPanelScreen(context: emptyViewModel.context)
         }
         .previewDisplayName("Empty")
-
+        
         ElementNavigationStack {
             AgentTaskPanelScreen(context: pendingOnlyViewModel.context)
         }
         .previewDisplayName("Pending only")
     }
-
+    
     static var mixedSummary: RoomTaskSummary {
         RoomTaskSummary(activeTasks: [
-                            .init(eventID: "$task-1",
-                                  taskID: "task-1",
-                                  title: "Refactor auth module",
-                                  isResolved: false,
-                                  doneStepCount: 1,
-                                  totalStepCount: 3,
-                                  steps: [],
-                                  threadRootEventID: nil,
-                                  updatedAt: nil),
-                            .init(eventID: "$task-2",
-                                  taskID: "task-2",
-                                  title: "Ship release notes",
-                                  isResolved: false,
-                                  doneStepCount: 0,
-                                  totalStepCount: 2,
-                                  steps: [],
-                                  threadRootEventID: nil,
-                                  updatedAt: nil)
-                        ],
-                        doneTasks: [
-                            .init(eventID: "$task-3",
-                                  taskID: "task-3",
-                                  title: "Update dependencies",
-                                  isResolved: true,
-                                  doneStepCount: 2,
-                                  totalStepCount: 2,
-                                  steps: [],
-                                  threadRootEventID: nil,
-                                  updatedAt: nil)
-                        ],
-                        pendingChoices: [
-                            .init(eventID: "$choice-1", question: "Deploy to staging first?")
-                        ])
+            .init(eventID: "$task-1",
+                  taskID: "task-1",
+                  title: "Refactor auth module",
+                  isResolved: false,
+                  doneStepCount: 1,
+                  totalStepCount: 3,
+                  steps: [],
+                  threadRootEventID: nil,
+                  updatedAt: nil),
+            .init(eventID: "$task-2",
+                  taskID: "task-2",
+                  title: "Ship release notes",
+                  isResolved: false,
+                  doneStepCount: 0,
+                  totalStepCount: 2,
+                  steps: [],
+                  threadRootEventID: nil,
+                  updatedAt: nil)
+        ],
+        doneTasks: [
+            .init(eventID: "$task-3",
+                  taskID: "task-3",
+                  title: "Update dependencies",
+                  isResolved: true,
+                  doneStepCount: 2,
+                  totalStepCount: 2,
+                  steps: [],
+                  threadRootEventID: nil,
+                  updatedAt: nil)
+        ],
+        pendingChoices: [
+            .init(eventID: "$choice-1", question: "Deploy to staging first?")
+        ])
     }
-
+    
     static func makeViewModel(summary: RoomTaskSummary) -> AgentTaskPanelScreenViewModel {
         AgentTaskPanelScreenViewModel(summaryPublisher: CurrentValueSubject<RoomTaskSummary, Never>(summary).asCurrentValuePublisher())
     }
