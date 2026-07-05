@@ -142,7 +142,7 @@ struct TimelineViewState: BindableState {
     var pinnedEventIDs: Set<String> = []
     
     /// Every `io.element.agent.canvas.steps` task and pending `io.element.agent.choice_request`
-    /// in this timeline. Drives `CanvasTaskBannerView`'s visibility in `RoomScreen`.
+    /// in this timeline. Drives `RoomTaskProgressChipView`'s visibility in `RoomScreen`.
     var roomTaskSummary = RoomTaskSummary()
     
     /// A closure providing the associated audio player state for an item in the timeline.
