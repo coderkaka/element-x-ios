@@ -4,6 +4,9 @@
 "screen_room_timeline_agent_choice_selected_prefix" = "Selected";
 "screen_room_timeline_canvas_task_banner_title" = "Task in progress";
 "screen_room_timeline_canvas_task_banner_action" = "View progress";
+"screen_agent_tasks_section_active" = "In progress";
+"screen_agent_tasks_section_done" = "Done";
+"screen_agent_tasks_empty" = "No agent tasks yet";
 "screen_home_tab_search" = "Search";
 "screen_search_empty_state_message" = "Search for rooms";
 "screen_search_empty_state_title" = "Start searching...";
