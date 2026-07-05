@@ -51,6 +51,7 @@ enum RoomScreenCoordinatorAction {
     case presentThreadList
     case presentThread(threadRootEventID: String, focussedEventID: String?)
     case presentCanvasSteps(eventID: String, taskID: String)
+    case presentTaskPanel
     case presentRoom(roomID: String, via: [String])
 }
 
@@ -111,7 +112,12 @@ final class RoomScreenCoordinator: CoordinatorProtocol {
     }
     
     // MARK: - Public
-    
+
+    /// Feeds the task panel while it's pushed on top of this room.
+    var roomTaskSummaryPublisher: CurrentValuePublisher<RoomTaskSummary, Never> {
+        timelineViewModel.roomTaskSummaryPublisher
+    }
+
     func start() {
         timelineViewModel.actions
             .sink { [weak self] action in
@@ -165,6 +171,8 @@ final class RoomScreenCoordinator: CoordinatorProtocol {
                     actionsSubject.send(.presentRoom(roomID: roomID, via: via))
                 case .presentCanvasSteps(let eventID, let taskID):
                     actionsSubject.send(.presentCanvasSteps(eventID: eventID, taskID: taskID))
+                case .presentTaskPanel:
+                    actionsSubject.send(.presentTaskPanel)
                 case .viewInRoomTimeline, .displayMediaDetails:
                     fatalError("The action: \(action) should not be sent to this coordinator")
                 }

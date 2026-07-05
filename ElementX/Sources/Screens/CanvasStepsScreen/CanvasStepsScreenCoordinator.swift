@@ -12,11 +12,13 @@ struct CanvasStepsScreenCoordinatorParameters {
     let title: String
     let steps: [CanvasStep]
     let taskID: String
+    let threadRootEventID: String?
     let roomProxy: JoinedRoomProxyProtocol
 }
 
 enum CanvasStepsScreenCoordinatorAction {
     case dismiss
+    case presentThread(threadRootEventID: String)
 }
 
 final class CanvasStepsScreenCoordinator: CoordinatorProtocol {
@@ -35,15 +37,18 @@ final class CanvasStepsScreenCoordinator: CoordinatorProtocol {
         viewModel = CanvasStepsScreenViewModel(title: parameters.title,
                                                steps: parameters.steps,
                                                taskID: parameters.taskID,
+                                               threadRootEventID: parameters.threadRootEventID,
                                                roomProxy: parameters.roomProxy)
     }
-    
+
     func start() {
         viewModel.actionsPublisher.sink { [weak self] action in
             guard let self else { return }
             switch action {
             case .dismiss:
                 actionsSubject.send(.dismiss)
+            case .presentThread(let threadRootEventID):
+                actionsSubject.send(.presentThread(threadRootEventID: threadRootEventID))
             }
         }
         .store(in: &cancellables)

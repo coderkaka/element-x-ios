@@ -22,6 +22,8 @@ internal nonisolated enum UntranslatedL10n {
   internal static var screenAgentTasksSectionActive: String { return UntranslatedL10n.tr("Untranslated", "screen_agent_tasks_section_active") }
   /// Done
   internal static var screenAgentTasksSectionDone: String { return UntranslatedL10n.tr("Untranslated", "screen_agent_tasks_section_done") }
+  /// 查看实录
+  internal static var screenCanvasStepsViewThread: String { return UntranslatedL10n.tr("Untranslated", "screen_canvas_steps_view_thread") }
   /// Search
   internal static var screenHomeTabSearch: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_search") }
   /// Tasks

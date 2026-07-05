@@ -29,6 +29,7 @@ enum TimelineViewModelAction {
     case displayResolveSendFailure(failure: TimelineItemSendFailure.VerifiedUser, sendHandle: SendHandleProxy)
     case displayThread(itemID: TimelineItemIdentifier)
     case presentCanvasSteps(eventID: String, taskID: String)
+    case presentTaskPanel
     case composer(action: TimelineComposerAction)
     case hasScrolled(direction: ScrollDirection)
     case viewInRoomTimeline(eventID: String, threadRootEventID: String?)
@@ -75,7 +76,7 @@ enum TimelineViewAction {
     case displayEmojiPicker(itemID: TimelineItemIdentifier)
     case displayReadReceipts(itemID: TimelineItemIdentifier)
     case displayThread(itemID: TimelineItemIdentifier)
-    case tappedCanvasTaskBanner
+    case tappedRoomTaskChip
     
     /// Reads a room state event and stores its raw JSON in `TimelineViewState.fetchedStateEvents`,
     /// keyed by `StateEventKey(eventType:stateKey:)`, for a view to read back once fetched.

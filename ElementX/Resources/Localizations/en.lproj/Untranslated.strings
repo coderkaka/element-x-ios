@@ -11,6 +11,7 @@
 "screen_task_panel_section_active" = "在办";
 "screen_task_panel_section_done" = "已结";
 "screen_task_panel_empty" = "本案暂无差事";
+"screen_canvas_steps_view_thread" = "查看实录";
 "screen_agent_tasks_section_active" = "In progress";
 "screen_agent_tasks_section_done" = "Done";
 "screen_agent_tasks_empty" = "No agent tasks yet";

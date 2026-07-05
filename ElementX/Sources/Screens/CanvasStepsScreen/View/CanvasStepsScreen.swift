@@ -18,6 +18,15 @@ struct CanvasStepsScreen: View {
                     ListRow(kind: .custom { stepRow(step) })
                 }
             }
+
+            if context.viewState.threadRootEventID != nil {
+                Section {
+                    ListRow(label: .default(title: UntranslatedL10n.screenCanvasStepsViewThread, icon: \.threads),
+                            kind: .button {
+                                context.send(viewAction: .viewThread)
+                            })
+                }
+            }
         }
         .compoundList()
         .navigationTitle(context.viewState.title)
@@ -72,27 +81,34 @@ struct CanvasStepsScreen_Previews: PreviewProvider, TestablePreview {
         CanvasStep(id: "s1", label: "Read existing code", status: .done),
         CanvasStep(id: "s2", label: "Run tests", status: .done)
     ])
-    
+    static let threadViewModel = makeViewModel(threadRootEventID: "$thread-root")
+
     static var previews: some View {
         ElementNavigationStack {
             CanvasStepsScreen(context: viewModel.context)
         }
         .previewDisplayName("In progress")
-        
+
         ElementNavigationStack {
             CanvasStepsScreen(context: allDoneViewModel.context)
         }
         .previewDisplayName("All done")
+
+        ElementNavigationStack {
+            CanvasStepsScreen(context: threadViewModel.context)
+        }
+        .previewDisplayName("With thread")
     }
-    
+
     static func makeViewModel(steps: [CanvasStep] = [
         CanvasStep(id: "s1", label: "Read existing code", status: .done),
         CanvasStep(id: "s2", label: "Wait for approval", status: .inProgress),
         CanvasStep(id: "s3", label: "Run tests", status: .pending)
-    ]) -> CanvasStepsScreenViewModel {
+    ], threadRootEventID: String? = nil) -> CanvasStepsScreenViewModel {
         CanvasStepsScreenViewModel(title: "Refactor auth module",
                                    steps: steps,
                                    taskID: "task-preview",
+                                   threadRootEventID: threadRootEventID,
                                    roomProxy: JoinedRoomProxyMock(.init(id: "1")))
     }
 }

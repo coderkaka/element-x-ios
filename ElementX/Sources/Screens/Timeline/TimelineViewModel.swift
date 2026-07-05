@@ -41,6 +41,11 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
     var actions: AnyPublisher<TimelineViewModelAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
+
+    private let roomTaskSummarySubject = CurrentValueSubject<RoomTaskSummary, Never>(.init())
+    var roomTaskSummaryPublisher: CurrentValuePublisher<RoomTaskSummary, Never> {
+        roomTaskSummarySubject.asCurrentValuePublisher()
+    }
     
     private var currentUserProxy: RoomMemberProxyProtocol?
     
@@ -206,10 +211,15 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
             displayReadReceipts(for: itemID)
         case .displayThread(let itemID):
             actionsSubject.send(.displayThread(itemID: itemID))
-        case .tappedCanvasTaskBanner:
-            // Banner-like behaviour (first active task) until Task 4 routes this to the task panel.
-            guard !state.roomTaskSummary.isEmpty, let task = state.roomTaskSummary.activeTasks.first else { return }
-            actionsSubject.send(.presentCanvasSteps(eventID: task.eventID, taskID: task.taskID))
+        case .tappedRoomTaskChip:
+            // Smart shortcut (决策 6): exactly one active task and nothing else goes straight
+            // to its detail; any other non-empty summary opens the task panel.
+            let summary = state.roomTaskSummary
+            if let task = summary.activeTasks.first, summary.activeTasks.count == 1, summary.pendingChoices.isEmpty, summary.doneTasks.isEmpty {
+                actionsSubject.send(.presentCanvasSteps(eventID: task.eventID, taskID: task.taskID))
+            } else if !summary.isEmpty {
+                actionsSubject.send(.presentTaskPanel)
+            }
         case .fetchStateEvent(let eventType, let stateKey):
             fetchStateEvent(eventType: eventType, stateKey: stateKey)
         case .handlePasteOrDrop(let providers):
@@ -967,6 +977,11 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         state.roomTaskSummary = RoomTaskSummary(activeTasks: sortedByUpdatedAtDescendingNilsLast(activeTasks),
                                                 doneTasks: sortedByUpdatedAtDescendingNilsLast(doneTasks),
                                                 pendingChoices: pendingChoices)
+
+        // Mirror into the publisher feeding the task panel while it's pushed.
+        if roomTaskSummarySubject.value != state.roomTaskSummary {
+            roomTaskSummarySubject.send(state.roomTaskSummary)
+        }
     }
     
     /// Tasks without a known `updatedAt` sort after dated ones, keeping their timeline order
