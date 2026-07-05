@@ -111,7 +111,7 @@ nonisolated struct AgentCanvasStepsStateContent: Decodable {
     let title: String?
     let threadRootEventID: String?
     let updatedAt: Date?
-
+    
     private enum CodingKeys: String, CodingKey {
         case status
         case steps
@@ -119,7 +119,7 @@ nonisolated struct AgentCanvasStepsStateContent: Decodable {
         case threadRootEventID = "thread_root_id"
         case updatedAt = "updated_at"
     }
-
+    
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         isResolved = try container.decode(String.self, forKey: .status) == "done"

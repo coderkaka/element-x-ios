@@ -128,7 +128,7 @@ struct AgentCanvasStepsStateContentTests {
     func nilRawJSONReturnsNil() {
         #expect(AgentCanvasStepsStateContent(parsingFrom: nil) == nil)
     }
-
+    
     @Test
     func parsesTitleThreadRootAndUpdatedAtWhenPresent() {
         let json = """
@@ -142,7 +142,7 @@ struct AgentCanvasStepsStateContentTests {
         #expect(content?.threadRootEventID == "$thread-root")
         #expect(content?.updatedAt == Date(timeIntervalSince1970: 1_783_222_459))
     }
-
+    
     @Test
     func missingOptionalFieldsFallBackToNil() {
         let json = """
@@ -154,7 +154,7 @@ struct AgentCanvasStepsStateContentTests {
         #expect(content?.threadRootEventID == nil)
         #expect(content?.updatedAt == nil)
     }
-
+    
     @Test
     func updatedAtIsParsedAsMillisecondsSinceEpoch() {
         let json = """
@@ -164,7 +164,7 @@ struct AgentCanvasStepsStateContentTests {
         let content = AgentCanvasStepsStateContent(parsingFrom: json)
         #expect(content?.updatedAt == Date(timeIntervalSince1970: 1.5))
     }
-
+    
     @Test
     func malformedOptionalFieldsDoNotFailTheWholeDecode() {
         let json = """

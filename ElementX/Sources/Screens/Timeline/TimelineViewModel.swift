@@ -926,14 +926,14 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         var activeTasks = [RoomTaskSummary.Task]()
         var doneTasks = [RoomTaskSummary.Task]()
         var pendingChoices = [RoomTaskSummary.PendingChoice]()
-
+        
         for canvasItem in timelineItems.compactMap({ $0 as? AgentCanvasStepsRoomTimelineItem }) {
             guard let eventID = canvasItem.id.eventID else { continue }
             fetchStateEvent(eventType: AgentCanvasStepsRoomTimelineItemContent.msgType, stateKey: canvasItem.content.taskID)
-
+            
             let key = StateEventKey(eventType: AgentCanvasStepsRoomTimelineItemContent.msgType, stateKey: canvasItem.content.taskID)
             let stateContent = state.fetchedStateEvents[key].flatMap { AgentCanvasStepsStateContent(parsingFrom: $0) }
-
+            
             let steps = stateContent?.steps ?? canvasItem.content.steps
             let task = RoomTaskSummary.Task(eventID: eventID,
                                             taskID: canvasItem.content.taskID,
@@ -944,31 +944,31 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
                                             steps: steps,
                                             threadRootEventID: stateContent?.threadRootEventID,
                                             updatedAt: stateContent?.updatedAt)
-
+            
             if task.isResolved {
                 doneTasks.append(task)
             } else {
                 activeTasks.append(task)
             }
         }
-
+        
         for choiceItem in timelineItems.compactMap({ $0 as? AgentChoiceRequestRoomTimelineItem }) {
             guard let eventID = choiceItem.id.eventID else { continue }
             fetchStateEvent(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey: eventID)
-
+            
             // A parseable resolution state event means the choice has been answered.
             let key = StateEventKey(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey: eventID)
             guard state.fetchedStateEvents[key].flatMap({ AgentChoiceRequestStateContent(parsingFrom: $0) }) == nil else { continue }
-
+            
             let question = choiceItem.content.question.isEmpty ? choiceItem.content.body : choiceItem.content.question
             pendingChoices.append(.init(eventID: eventID, question: question))
         }
-
+        
         state.roomTaskSummary = RoomTaskSummary(activeTasks: sortedByUpdatedAtDescendingNilsLast(activeTasks),
                                                 doneTasks: sortedByUpdatedAtDescendingNilsLast(doneTasks),
                                                 pendingChoices: pendingChoices)
     }
-
+    
     /// Tasks without a known `updatedAt` sort after dated ones, keeping their timeline order
     /// (`sorted` is documented stable).
     private func sortedByUpdatedAtDescendingNilsLast(_ tasks: [RoomTaskSummary.Task]) -> [RoomTaskSummary.Task] {

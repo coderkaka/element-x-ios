@@ -13,12 +13,12 @@ typealias CanvasStepsScreenViewModelType = StateStoreViewModelV2<CanvasStepsScre
 class CanvasStepsScreenViewModel: CanvasStepsScreenViewModelType, CanvasStepsScreenViewModelProtocol {
     private let taskID: String
     private let roomProxy: JoinedRoomProxyProtocol
-
+    
     private let actionsSubject: PassthroughSubject<CanvasStepsScreenViewModelAction, Never> = .init()
     var actionsPublisher: AnyPublisher<CanvasStepsScreenViewModelAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-
+    
     /// The title/steps passed in are the presenting message's snapshot, shown immediately;
     /// current progress then comes from the task's room state event and is kept fresh while
     /// the screen is open (custom state event types aren't observable directly, so any room
@@ -26,11 +26,11 @@ class CanvasStepsScreenViewModel: CanvasStepsScreenViewModelType, CanvasStepsScr
     init(title: String, steps: [CanvasStep], taskID: String, roomProxy: JoinedRoomProxyProtocol) {
         self.taskID = taskID
         self.roomProxy = roomProxy
-
+        
         super.init(initialViewState: CanvasStepsScreenViewState(title: title, steps: steps))
-
+        
         refreshSteps()
-
+        
         roomProxy.infoPublisher
             .debounce(for: .seconds(0.3), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
@@ -38,28 +38,28 @@ class CanvasStepsScreenViewModel: CanvasStepsScreenViewModelType, CanvasStepsScr
             }
             .store(in: &cancellables)
     }
-
+    
     // MARK: - Public
-
+    
     override func process(viewAction: CanvasStepsScreenViewAction) {
         MXLog.info("View model: received view action: \(viewAction)")
-
+        
         switch viewAction {
         case .close:
             actionsSubject.send(.dismiss)
         }
     }
-
+    
     // MARK: - Private
-
+    
     private func refreshSteps() {
         Task {
             guard case let .success(rawStateEvent) = await roomProxy.getStateEventRaw(eventType: AgentCanvasStepsRoomTimelineItemContent.msgType,
                                                                                       stateKey: taskID),
-                  let stateContent = AgentCanvasStepsStateContent(parsingFrom: rawStateEvent) else {
+                let stateContent = AgentCanvasStepsStateContent(parsingFrom: rawStateEvent) else {
                 return // No state event yet (or unparseable) — keep showing the message snapshot.
             }
-
+            
             state.steps = stateContent.steps
         }
     }

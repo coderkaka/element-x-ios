@@ -22,17 +22,23 @@ nonisolated struct RoomTaskSummary: Equatable {
         let steps: [CanvasStep] // current steps (state-event-resolved)
         let threadRootEventID: String?
         let updatedAt: Date?
-        var id: String { eventID }
+        var id: String {
+            eventID
+        }
     }
-
+    
     struct PendingChoice: Identifiable, Equatable {
         let eventID: String // the choice_request message (for scroll-to)
         let question: String
-        var id: String { eventID }
+        var id: String {
+            eventID
+        }
     }
-
+    
     var activeTasks: [Task] = [] // 在办, updatedAt desc where known
     var doneTasks: [Task] = [] // 已结
     var pendingChoices: [PendingChoice] = [] // 待批
-    var isEmpty: Bool { activeTasks.isEmpty && doneTasks.isEmpty && pendingChoices.isEmpty }
+    var isEmpty: Bool {
+        activeTasks.isEmpty && doneTasks.isEmpty && pendingChoices.isEmpty
+    }
 }
