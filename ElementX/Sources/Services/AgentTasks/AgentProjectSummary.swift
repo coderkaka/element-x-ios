@@ -86,8 +86,11 @@ nonisolated struct AgentChoiceStateIndexEvent: Decodable {
     
     /// Old-protocol rooms only ever write this state once, at resolution time, always with a
     /// non-empty `resolved_selection` — so they never appear pending. That asymmetry is by design.
+    ///
+    /// A `cancelled` status (请旨撤销) is never pending either, even with an empty/missing
+    /// `resolved_selection` — cancellation is a terminal state, not an outstanding ask.
     var isPending: Bool {
-        (resolvedSelection ?? []).isEmpty
+        (resolvedSelection ?? []).isEmpty && status != "cancelled"
     }
     
     private enum EventKeys: String, CodingKey {

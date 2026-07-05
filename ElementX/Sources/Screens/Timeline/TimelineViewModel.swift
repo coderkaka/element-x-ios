@@ -985,9 +985,13 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
             guard let eventID = choiceItem.id.eventID else { continue }
             fetchStateEvent(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey: eventID)
             
-            // A parseable resolution state event means the choice has been answered.
+            // A resolution state event with a non-empty selection, or an explicit cancellation
+            // (请旨撤销), means the choice is no longer pending.
             let key = StateEventKey(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey: eventID)
-            guard state.fetchedStateEvents[key].flatMap({ AgentChoiceRequestStateContent(parsingFrom: $0) }) == nil else { continue }
+            let stateContent = state.fetchedStateEvents[key].flatMap { AgentChoiceRequestStateContent(parsingFrom: $0) }
+            if let stateContent, !stateContent.resolvedSelection.isEmpty || stateContent.isCancelled {
+                continue
+            }
             
             let question = choiceItem.content.question.isEmpty ? choiceItem.content.body : choiceItem.content.question
             timelinePendingChoices.append(.init(eventID: eventID, question: question))

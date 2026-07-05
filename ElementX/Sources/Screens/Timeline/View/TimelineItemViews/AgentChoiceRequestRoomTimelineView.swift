@@ -23,29 +23,31 @@ struct AgentChoiceRequestRoomTimelineView: View {
         timelineItem.id.eventID
     }
     
-    /// The resolved selection, read from the `io.element.agent.choice_request` room state event keyed
-    /// by this message's event ID (state is the only source of truth for this — see
-    /// `AgentChoiceRequestRoomTimelineItemContent`). `nil` while unfetched or genuinely unresolved.
-    private var resolvedSelection: [String]? {
+    /// The state content read from the `io.element.agent.choice_request` room state event keyed by
+    /// this message's event ID (state is the only source of truth for this — see
+    /// `AgentChoiceRequestRoomTimelineItemContent`). `nil` while unfetched.
+    private var stateContent: AgentChoiceRequestStateContent? {
         guard let eventID, let rawStateEvent = context.viewState.fetchedStateEvents[stateEventKey(for: eventID)] else {
             return nil
         }
-        return AgentChoiceRequestStateContent(parsingFrom: rawStateEvent)?.resolvedSelection
+        return AgentChoiceRequestStateContent(parsingFrom: rawStateEvent)
     }
-    
+
     private func stateEventKey(for eventID: String) -> StateEventKey {
         StateEventKey(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey: eventID)
     }
-    
+
     var body: some View {
         TimelineStyler(timelineItem: timelineItem) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(content.question.isEmpty ? content.body : content.question)
                     .font(.compound.bodyMD)
                     .foregroundColor(.compound.textPrimary)
-                
-                if let resolvedSelection {
+
+                if let resolvedSelection = stateContent?.resolvedSelection, !resolvedSelection.isEmpty {
                     resolvedView(selectedIDs: resolvedSelection)
+                } else if stateContent?.isCancelled == true {
+                    cancelledView
                 } else if content.multiSelect {
                     multiSelectView
                 } else {
@@ -99,6 +101,12 @@ struct AgentChoiceRequestRoomTimelineView: View {
     private func resolvedView(selectedIDs: [String]) -> some View {
         let labels = selectedIDs.compactMap { id in content.options.first { $0.id == id }?.label }
         return Text("\(UntranslatedL10n.screenRoomTimelineAgentChoiceSelectedPrefix): \(labels.joined(separator: ", "))")
+            .font(.compound.bodySM)
+            .foregroundColor(.compound.textSecondary)
+    }
+
+    private var cancelledView: some View {
+        Text(UntranslatedL10n.screenRoomTimelineAgentChoiceCancelled)
             .font(.compound.bodySM)
             .foregroundColor(.compound.textSecondary)
     }

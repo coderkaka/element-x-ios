@@ -103,12 +103,48 @@ struct AgentChoiceRequestStateContentTests {
     func nilRawJSONReturnsNil() {
         #expect(AgentChoiceRequestStateContent(parsingFrom: nil) == nil)
     }
-    
+
     @Test
-    func missingResolvedSelectionKeyReturnsNil() {
+    func missingResolvedSelectionKeyDefaultsToEmpty() {
+        // A cancelled choice's state content may carry only `status`, with no selection at all —
+        // this must decode rather than fail, unlike before.
         let json = """
         {"type":"io.element.agent.choice_request","state_key":"$original","content":{}}
         """
-        #expect(AgentChoiceRequestStateContent(parsingFrom: json) == nil)
+        let content = AgentChoiceRequestStateContent(parsingFrom: json)
+        #expect(content?.resolvedSelection == [])
+        #expect(content?.status == nil)
+    }
+
+    @Test
+    func cancelledWithNoResolvedSelectionIsCancelled() {
+        let json = """
+        {"type":"io.element.agent.choice_request","state_key":"$original","content":{"status":"cancelled"}}
+        """
+        let content = AgentChoiceRequestStateContent(parsingFrom: json)
+        #expect(content?.status == "cancelled")
+        #expect(content?.resolvedSelection == [])
+        #expect(content?.isCancelled == true)
+    }
+
+    @Test
+    func cancelledWithNonEmptySelectionIsNotCancelled() {
+        // Resolved wins: a non-empty selection alongside a "cancelled" status must not be treated
+        // as a cancellation — it's just a resolved choice.
+        let json = """
+        {"type":"io.element.agent.choice_request","state_key":"$original","content":{"status":"cancelled","resolved_selection":["a"]}}
+        """
+        let content = AgentChoiceRequestStateContent(parsingFrom: json)
+        #expect(content?.resolvedSelection == ["a"])
+        #expect(content?.isCancelled == false)
+    }
+
+    @Test
+    func plainPendingIsNotCancelled() {
+        let json = """
+        {"type":"io.element.agent.choice_request","state_key":"$original","content":{"status":"pending"}}
+        """
+        let content = AgentChoiceRequestStateContent(parsingFrom: json)
+        #expect(content?.isCancelled == false)
     }
 }

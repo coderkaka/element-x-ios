@@ -822,6 +822,50 @@ final class TimelineViewModelTests {
     }
     
     @Test
+    func cancelledStateEnumeratedChoiceIsNotPending() async throws {
+        // 请旨撤销: state enumeration alone must never surface a cancelled request as pending —
+        // `isPending` already requires `status == "pending"`, so cancelled is excluded by construction.
+        let roomProxy = JoinedRoomProxyMock(.init(name: ""))
+        roomProxy.getStateEventsRawEventTypeClosure = { eventType in
+            guard eventType == AgentChoiceRequestRoomTimelineItemContent.msgType else { return .success([]) }
+            return .success(["""
+            {"type":"io.element.agent.choice_request","state_key":"choice-cancelled",
+            "content":{"status":"cancelled","question":"Deploy to prod?","resolved_selection":[]}}
+            """])
+        }
+
+        let timelineController = TimelineControllerMock(.init(timelineItems: []))
+        let viewModel = makeViewModel(roomProxy: roomProxy, timelineController: timelineController)
+
+        // Give the (debounced) state enumeration a chance to run; the summary should stay empty.
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(viewModel.state.roomTaskSummary.pendingChoices.isEmpty)
+    }
+
+    @Test
+    func cancelledResolutionStateOverridesTimelinePendingGuess() async throws {
+        // Given a choice request the timeline alone would still call pending, but its per-key
+        // resolution state event says it was cancelled (请旨撤销), not answered.
+        let items = [
+            AgentChoiceRequestRoomTimelineItem(eventID: "choice-1", question: "Deploy?")
+        ]
+        let roomProxy = JoinedRoomProxyMock(.init(name: ""))
+        roomProxy.getStateEventRawEventTypeStateKeyClosure = { eventType, stateKey in
+            guard eventType == AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey == "choice-1" else { return .success(nil) }
+            return .success(#"{"content":{"status":"cancelled"}}"#)
+        }
+
+        let timelineController = TimelineControllerMock(.init(timelineItems: items))
+        let viewModel = makeViewModel(roomProxy: roomProxy, timelineController: timelineController)
+
+        // Then the cancellation should win, dropping the choice from pending.
+        let deferred = deferFulfillment(viewModel.context.$viewState) { value in
+            value.roomTaskSummary.isEmpty
+        }
+        try await deferred.fulfill()
+    }
+
+    @Test
     func stateConfirmedResolvedChoiceOverridesTimelinePendingGuess() async throws {
         // Given a choice request the timeline alone would still call pending (no per-key state
         // fetch configured), but full state enumeration confirms it's already been answered.
