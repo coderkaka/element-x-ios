@@ -17,32 +17,34 @@ nonisolated struct AgentTaskSummary: Identifiable, Equatable {
     let isResolved: Bool
     let doneStepCount: Int
     let totalStepCount: Int
-
-    var id: String { "\(roomID)|\(taskID)" }
+    
+    var id: String {
+        "\(roomID)|\(taskID)"
+    }
 }
 
 /// Parses the full raw state event JSON returned by `getRoomStateEventsRaw` for
 /// `io.element.agent.canvas.steps` (state key = task_id).
 nonisolated struct AgentTaskStateEvent: Decodable {
     static let eventType = "io.element.agent.canvas.steps"
-
+    
     let taskID: String
     let title: String?
     let isResolved: Bool
     let doneStepCount: Int
     let totalStepCount: Int
-
+    
     private enum EventKeys: String, CodingKey {
         case stateKey = "state_key"
         case content
     }
-
+    
     private struct Content: Decodable {
         let title: String?
         let status: String
         let steps: [CanvasStep]?
     }
-
+    
     init(from decoder: Decoder) throws {
         let event = try decoder.container(keyedBy: EventKeys.self)
         taskID = try event.decode(String.self, forKey: .stateKey)
@@ -53,7 +55,7 @@ nonisolated struct AgentTaskStateEvent: Decodable {
         doneStepCount = steps.count { $0.status == .done }
         totalStepCount = steps.count
     }
-
+    
     init?(parsingFrom rawStateEventJSON: String) {
         guard let data = rawStateEventJSON.data(using: .utf8),
               let event = try? JSONDecoder().decode(Self.self, from: data) else {

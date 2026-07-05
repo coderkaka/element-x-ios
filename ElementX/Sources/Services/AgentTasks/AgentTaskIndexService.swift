@@ -13,17 +13,17 @@ class AgentTaskIndexService: AgentTaskIndexServiceProtocol {
     private let clientProxy: ClientProxyProtocol
     private let roomSummaryProvider: RoomSummaryProviderProtocol
     private var cancellables = Set<AnyCancellable>()
-
+    
     private let tasksSubject = CurrentValueSubject<[AgentTaskSummary], Never>([])
     var tasksPublisher: CurrentValuePublisher<[AgentTaskSummary], Never> {
         tasksSubject.asCurrentValuePublisher()
     }
-
+    
     init(clientProxy: ClientProxyProtocol, roomSummaryProvider: RoomSummaryProviderProtocol) {
         self.clientProxy = clientProxy
         self.roomSummaryProvider = roomSummaryProvider
     }
-
+    
     func start() {
         roomSummaryProvider.roomListPublisher
             .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
@@ -32,18 +32,18 @@ class AgentTaskIndexService: AgentTaskIndexServiceProtocol {
             }
             .store(in: &cancellables)
     }
-
+    
     private func rebuildIndex(from summaries: [RoomSummary]) {
         Task { [weak self] in
             guard let self else { return }
-
+            
             var tasks = [AgentTaskSummary]()
             for summary in summaries {
                 guard case let .success(rawEvents) = await clientProxy.getRoomStateEventsRaw(roomID: summary.id,
                                                                                              eventType: AgentTaskStateEvent.eventType) else {
                     continue // One bad room must not empty the whole index.
                 }
-
+                
                 for rawEvent in rawEvents {
                     guard let stateEvent = AgentTaskStateEvent(parsingFrom: rawEvent) else {
                         MXLog.error("Skipping unparseable agent task state event in room \(summary.id)")
@@ -58,7 +58,7 @@ class AgentTaskIndexService: AgentTaskIndexServiceProtocol {
                                                   totalStepCount: stateEvent.totalStepCount))
                 }
             }
-
+            
             let unresolved = tasks.filter { !$0.isResolved }
             let resolved = tasks.filter(\.isResolved)
             tasksSubject.send(unresolved + resolved)
