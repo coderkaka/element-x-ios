@@ -20,7 +20,7 @@ enum UserSessionFlowCoordinatorAction {
 }
 
 class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
-    enum HomeTab: Hashable { case chats, spaces, search }
+    enum HomeTab: Hashable { case chats, tasks, spaces, search }
     
     private let navigationRootCoordinator: NavigationRootCoordinator
     private let navigationTabCoordinator: NavigationTabCoordinator<HomeTab>
@@ -35,6 +35,9 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     private let onboardingStackCoordinator: NavigationStackCoordinator
     private let chatsTabFlowCoordinator: ChatsTabFlowCoordinator
     private let chatsTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
+    private let agentTaskIndexService: AgentTaskIndexServiceProtocol
+    private let agentTasksScreenCoordinator: AgentTasksScreenCoordinator
+    private let tasksTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
     private let spacesTabFlowCoordinator: SpacesTabFlowCoordinator
     private let spacesTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
     
@@ -90,6 +93,15 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         chatsTabDetails = .init(tag: HomeTab.chats, title: L10n.screenHomeTabChats, icon: \.chat, selectedIcon: \.chatSolid)
         chatsTabDetails.navigationSplitCoordinator = chatsSplitCoordinator
         
+        let tasksSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
+        agentTaskIndexService = AgentTaskIndexService(clientProxy: flowParameters.userSession.clientProxy,
+                                                      roomSummaryProvider: flowParameters.userSession.clientProxy.roomSummaryProvider)
+        agentTaskIndexService.start()
+        agentTasksScreenCoordinator = AgentTasksScreenCoordinator(parameters: .init(agentTaskIndexService: agentTaskIndexService))
+        tasksSplitCoordinator.setSidebarCoordinator(agentTasksScreenCoordinator)
+        tasksTabDetails = .init(tag: HomeTab.tasks, title: UntranslatedL10n.screenHomeTabTasks, icon: \.listBulleted, selectedIcon: \.listBulleted)
+        tasksTabDetails.navigationSplitCoordinator = tasksSplitCoordinator
+        
         let spacesSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
         spacesTabFlowCoordinator = SpacesTabFlowCoordinator(navigationSplitCoordinator: spacesSplitCoordinator,
                                                             flowParameters: flowParameters)
@@ -119,6 +131,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         
         var tabs: [NavigationTabCoordinator<HomeTab>.Tab] = [
             .init(coordinator: chatsSplitCoordinator, details: chatsTabDetails),
+            .init(coordinator: tasksSplitCoordinator, details: tasksTabDetails),
             .init(coordinator: spacesSplitCoordinator, details: spacesTabDetails)
         ]
         if let searchTabNavigationStackCoordinator, let searchTabDetails {
@@ -232,6 +245,16 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                 case .cancel:
                     // Return to the tab the user came from, but never back into search.
                     navigationTabCoordinator.selectedTab = navigationTabCoordinator.previousTab == .search ? .chats : navigationTabCoordinator.previousTab ?? .chats
+                }
+            }
+            .store(in: &cancellables)
+        
+        agentTasksScreenCoordinator.actionsPublisher
+            .sink { [weak self] action in
+                guard let self else { return }
+                switch action {
+                case .presentRoom(let roomID):
+                    handleAppRoute(.room(roomID: roomID, via: []), animated: true)
                 }
             }
             .store(in: &cancellables)

@@ -96,6 +96,8 @@ extension ClientProxyMock {
         ignoreUserReturnValue = .success(())
         unignoreUserReturnValue = .success(())
         
+        getRoomStateEventsRawRoomIDEventTypeReturnValue = .success([])
+        
         trackRecentlyVisitedRoomReturnValue = .success(())
         recentlyVisitedRoomsFilterReturnValue = []
         recentConversationCounterpartsReturnValue = []
