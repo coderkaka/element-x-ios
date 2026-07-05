@@ -149,6 +149,7 @@ extension JoinedRoomProxyMock {
         clearDraftThreadRootEventIDReturnValue = .success(())
         sendTypingNotificationIsTypingReturnValue = .success(())
         isVisibleInRoomDirectoryReturnValue = .success(configuration.isVisibleInPublicDirectory)
+        getStateEventRawEventTypeStateKeyReturnValue = .success(nil)
         
         predecessorRoom = configuration.predecessor
         
