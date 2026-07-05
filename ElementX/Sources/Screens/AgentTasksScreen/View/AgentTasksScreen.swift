@@ -59,6 +59,7 @@ struct AgentTasksScreen: View {
         VStack(spacing: 8) {
             CompoundIcon(\.polls, size: .medium, relativeTo: .compound.bodyLG)
                 .foregroundColor(.compound.iconSecondary)
+                .accessibilityHidden(true)
             Text(UntranslatedL10n.screenAgentTasksEmpty)
                 .font(.compound.bodyLG)
                 .foregroundColor(.compound.textSecondary)
