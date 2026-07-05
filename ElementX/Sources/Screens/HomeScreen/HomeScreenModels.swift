@@ -50,11 +50,14 @@ enum HomeScreenViewAction {
     case markRoomAsUnread(roomIdentifier: String)
     case markRoomAsRead(roomIdentifier: String)
     case markRoomAsFavourite(roomIdentifier: String, isFavourite: Bool)
-    
+
     case acceptInvite(roomIdentifier: String)
     case declineInvite(roomIdentifier: String)
-    
+
     case selectSpaceFilter(SpaceServiceFilter?)
+
+    case tappedPendingChoicesStrip
+    case selectPendingChoice(roomID: String)
 }
 
 enum HomeScreenRoomListMode: CustomStringConvertible {
@@ -166,6 +169,19 @@ struct HomeScreenViewState: BindableState {
     var shouldShowBanner: Bool {
         securityBannerMode.isShown || shouldShowNewSoundBanner
     }
+
+    /// Outstanding `AgentPendingChoiceSummary` items across every room, 道-filtered when a space is selected.
+    var pendingChoices: [HomeScreenPendingChoice] = []
+}
+
+/// A single 请旨待批 item shown in the cross-room pending choices strip/sheet.
+struct HomeScreenPendingChoice: Identifiable, Equatable {
+    let roomID: String
+    let eventID: String
+    let question: String?
+    let roomName: String?
+
+    var id: String { "\(roomID)|\(eventID)" }
 }
 
 struct HomeScreenViewStateBindings {
@@ -178,6 +194,8 @@ struct HomeScreenViewStateBindings {
     
     var spaceFiltersViewModel: ChatsSpaceFiltersScreenViewModel?
     var roomListFiltersViewModel: RoomListFiltersScreenViewModel?
+
+    var isPresentingPendingChoices = false
 }
 
 enum CallBadgeType {

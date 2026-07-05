@@ -41,6 +41,36 @@ struct HomeScreen: View {
             .sheet(item: $context.roomListFiltersViewModel) { vm in
                 RoomListFiltersScreen(context: vm.context)
             }
+            .sheet(isPresented: $context.isPresentingPendingChoices) {
+                pendingChoicesSheet
+            }
+    }
+
+    private var pendingChoicesSheet: some View {
+        ElementNavigationStack {
+            Form {
+                Section {
+                    ForEach(context.viewState.pendingChoices) { pendingChoice in
+                        ListRow(label: .plain(title: pendingChoice.question ?? UntranslatedL10n.screenHomePendingChoicesSheetTitle,
+                                              description: pendingChoice.roomName),
+                                kind: .button {
+                                    context.send(viewAction: .selectPendingChoice(roomID: pendingChoice.roomID))
+                                })
+                    }
+                }
+            }
+            .compoundList()
+            .navigationTitle(UntranslatedL10n.screenHomePendingChoicesSheetTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    ToolbarButton(role: .close) {
+                        context.isPresentingPendingChoices = false
+                    }
+                }
+            }
+        }
+        .presentationDragIndicator(.visible)
     }
     
     // MARK: - Private

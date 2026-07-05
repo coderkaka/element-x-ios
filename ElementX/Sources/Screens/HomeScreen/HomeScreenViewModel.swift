@@ -159,7 +159,16 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             .receive(on: DispatchQueue.main)
             .weakAssign(to: \.state.selectedSpaceFilter, on: self)
             .store(in: &cancellables)
-        
+
+        // The pending-choices strip/sheet re-intersects with the 道 filter on every change —
+        // unlike the room list itself, `latestPendingChoices` isn't re-fetched by `setFilter`.
+        spaceFilterSubject
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updateRooms()
+            }
+            .store(in: &cancellables)
+
         Task {
             state.reportRoomEnabled = await userSession.clientProxy.isReportRoomSupported
         }
@@ -326,6 +335,15 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
         case .declineInvite(let roomIdentifier):
             Task { await showDeclineInviteConfirmationAlert(roomID: roomIdentifier) }
+        case .tappedPendingChoicesStrip:
+            if state.pendingChoices.count == 1, let onlyPendingChoice = state.pendingChoices.first {
+                actionsSubject.send(.presentRoom(roomIdentifier: onlyPendingChoice.roomID))
+            } else {
+                state.bindings.isPresentingPendingChoices = true
+            }
+        case .selectPendingChoice(let roomID):
+            state.bindings.isPresentingPendingChoices = false
+            actionsSubject.send(.presentRoom(roomIdentifier: roomID))
         }
     }
     
@@ -433,8 +451,9 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         let tasksByRoom = Dictionary(grouping: latestTaskSummaries, by: \.roomID)
         let projectRoomIDs = Set(latestProjects.map(\.roomID))
         let pendingByRoom = Dictionary(grouping: latestPendingChoices, by: \.roomID)
-        
-        for summary in roomSummaryProvider.roomListPublisher.value {
+        let roomSummaries = roomSummaryProvider.roomListPublisher.value
+
+        for summary in roomSummaries {
             var room = HomeScreenRoom(summary: summary,
                                       roomListActivityVisibility: appSettings.roomListActivityVisibility,
                                       seenInvites: seenInvites)
@@ -454,6 +473,22 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         let active = rooms.filter { $0.pendingChoiceCount == 0 && $0.activeTaskCount > 0 }
         let rest = rooms.filter { $0.pendingChoiceCount == 0 && $0.activeTaskCount == 0 }
         state.rooms = pending + active + rest
+
+        // Cross-room pending-choices strip/sheet: joins ALL pending choices (not just ones whose room
+        // is currently in the provider's list — a choice can outlive pagination/filtering), 道-filtered
+        // when a space is selected. Room name lookup is best-effort and degrades to nil.
+        let roomNamesByID = Dictionary(roomSummaries.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        let spaceFilteredPendingChoices = if let spaceFilter = spaceFilterSubject.value {
+            latestPendingChoices.filter { spaceFilter.descendants.contains($0.roomID) }
+        } else {
+            latestPendingChoices
+        }
+        state.pendingChoices = spaceFilteredPendingChoices.map { pendingChoice in
+            HomeScreenPendingChoice(roomID: pendingChoice.roomID,
+                                    eventID: pendingChoice.eventID,
+                                    question: pendingChoice.question,
+                                    roomName: roomNamesByID[pendingChoice.roomID])
+        }
     }
     
     private func markRoomAsFavourite(_ roomID: String, isFavourite: Bool) async {

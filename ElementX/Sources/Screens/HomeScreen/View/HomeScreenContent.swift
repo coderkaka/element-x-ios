@@ -114,7 +114,7 @@ struct HomeScreenContent: View {
     @ViewBuilder
     private var topSection: some View {
         // An empty VStack causes glitches within the room list
-        if context.viewState.shouldShowSpaceTabBar || context.viewState.shouldShowBanner {
+        if context.viewState.shouldShowSpaceTabBar || context.viewState.shouldShowBanner || !context.viewState.pendingChoices.isEmpty {
             VStack(spacing: 0) {
                 if context.viewState.shouldShowSpaceTabBar {
                     SpaceTabBarView(filters: context.viewState.topLevelSpaceFilters,
@@ -129,7 +129,14 @@ struct HomeScreenContent: View {
                     }
                     Divider()
                 }
-                
+
+                if !context.viewState.pendingChoices.isEmpty {
+                    PendingChoicesStripView(count: context.viewState.pendingChoices.count) {
+                        context.send(viewAction: .tappedPendingChoicesStrip)
+                    }
+                    Divider()
+                }
+
                 if case let .show(state) = context.viewState.securityBannerMode {
                     HomeScreenRecoveryKeyConfirmationBanner(state: state, context: context)
                 } else if context.viewState.shouldShowNewSoundBanner {
