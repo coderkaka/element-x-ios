@@ -90,6 +90,9 @@ struct CanvasStepsScreen_Previews: PreviewProvider, TestablePreview {
         CanvasStep(id: "s2", label: "Wait for approval", status: .inProgress),
         CanvasStep(id: "s3", label: "Run tests", status: .pending)
     ]) -> CanvasStepsScreenViewModel {
-        CanvasStepsScreenViewModel(title: "Refactor auth module", steps: steps)
+        CanvasStepsScreenViewModel(title: "Refactor auth module",
+                                   steps: steps,
+                                   taskID: "task-preview",
+                                   roomProxy: JoinedRoomProxyMock(.init(id: "1")))
     }
 }

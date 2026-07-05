@@ -502,7 +502,7 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         // Custom state event types aren't delivered by sliding sync, so agent task state changes
         // can't be observed directly — instead, any room activity re-checks the tracked state events.
         roomProxy.infoPublisher
-            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
+            .debounce(for: .seconds(0.3), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.refreshFetchedStateEvents()
             }

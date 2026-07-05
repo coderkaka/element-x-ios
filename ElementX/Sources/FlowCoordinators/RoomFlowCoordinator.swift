@@ -786,7 +786,10 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
         }
         
         let title = canvasItem.content.title.isEmpty ? canvasItem.content.body : canvasItem.content.title
-        let coordinator = CanvasStepsScreenCoordinator(parameters: .init(title: title, steps: canvasItem.content.steps))
+        let coordinator = CanvasStepsScreenCoordinator(parameters: .init(title: title,
+                                                                          steps: canvasItem.content.steps,
+                                                                          taskID: taskID,
+                                                                          roomProxy: roomProxy))
         
         coordinator.actionsPublisher.sink { [weak self] action in
             guard let self else { return }

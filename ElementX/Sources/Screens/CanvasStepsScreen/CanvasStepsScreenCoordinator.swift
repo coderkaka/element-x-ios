@@ -11,6 +11,8 @@ import SwiftUI
 struct CanvasStepsScreenCoordinatorParameters {
     let title: String
     let steps: [CanvasStep]
+    let taskID: String
+    let roomProxy: JoinedRoomProxyProtocol
 }
 
 enum CanvasStepsScreenCoordinatorAction {
@@ -30,7 +32,10 @@ final class CanvasStepsScreenCoordinator: CoordinatorProtocol {
     
     init(parameters: CanvasStepsScreenCoordinatorParameters) {
         self.parameters = parameters
-        viewModel = CanvasStepsScreenViewModel(title: parameters.title, steps: parameters.steps)
+        viewModel = CanvasStepsScreenViewModel(title: parameters.title,
+                                               steps: parameters.steps,
+                                               taskID: parameters.taskID,
+                                               roomProxy: parameters.roomProxy)
     }
     
     func start() {

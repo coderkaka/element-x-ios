@@ -10,9 +10,9 @@ import Foundation
 struct CanvasStepsScreenViewState: BindableState {
     /// A one-time snapshot of the task's title, taken when the screen is presented.
     let title: String
-    /// A one-time snapshot of the task's steps, taken when the screen is presented.
-    /// The screen does not live-update if the underlying event changes; reopen via the banner to refresh.
-    let steps: [CanvasStep]
+    /// Initially the steps from the presenting message; refreshed from the task's
+    /// `io.element.agent.canvas.steps` room state event while the screen is open.
+    var steps: [CanvasStep]
 }
 
 enum CanvasStepsScreenViewAction {
