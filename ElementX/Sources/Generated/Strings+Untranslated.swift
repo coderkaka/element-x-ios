@@ -16,18 +16,24 @@ internal nonisolated enum UntranslatedL10n {
   internal static var a11yExpandToolCalls: String { return UntranslatedL10n.tr("Untranslated", "a11y_expand_tool_calls") }
   /// Show filters
   internal static var a11yRoomListFiltersButton: String { return UntranslatedL10n.tr("Untranslated", "a11y_room_list_filters_button") }
-  /// No agent tasks yet
+  /// 暂无差事
   internal static var screenAgentTasksEmpty: String { return UntranslatedL10n.tr("Untranslated", "screen_agent_tasks_empty") }
-  /// In progress
+  /// 在办
   internal static var screenAgentTasksSectionActive: String { return UntranslatedL10n.tr("Untranslated", "screen_agent_tasks_section_active") }
-  /// Done
+  /// 已结
   internal static var screenAgentTasksSectionDone: String { return UntranslatedL10n.tr("Untranslated", "screen_agent_tasks_section_done") }
   /// 查看实录
   internal static var screenCanvasStepsViewThread: String { return UntranslatedL10n.tr("Untranslated", "screen_canvas_steps_view_thread") }
-  /// Search
+  /// 书信
+  internal static var screenHomeTabMessages: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_messages") }
+  /// 政事
+  internal static var screenHomeTabProjects: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_projects") }
+  /// 检索
   internal static var screenHomeTabSearch: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_search") }
-  /// Tasks
+  /// 差事
   internal static var screenHomeTabTasks: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_tasks") }
+  /// 暂无书信
+  internal static var screenMessagesEmpty: String { return UntranslatedL10n.tr("Untranslated", "screen_messages_empty") }
   /// %1$@ 件差事在办
   internal static func screenRoomTaskChipMulti(_ p1: Any) -> String {
     return UntranslatedL10n.tr("Untranslated", "screen_room_task_chip_multi", String(describing: p1))
