@@ -310,9 +310,19 @@ final nonisolated class AppSettings: @unchecked Sendable {
     var liveLocationDisclaimerDisplayed: Bool
     
     // MARK: - Home Screen
-    
+
     @UserPreference(defaultValue: RoomListActivityVisibility.current)
     var roomListActivityVisibility: RoomListActivityVisibility
+
+    /// The room ID of the last 道 (space) filter explicitly selected on the 政事 tab, restored once
+    /// on next launch so staying in a 道 survives an app relaunch. `nil` means 全部 (no filter).
+    @UserPreference
+    var selectedSpaceFilterRoomID: String?
+
+    /// User-customised left-to-right order of the 道 chips on the 政事 tab, as space room IDs.
+    /// IDs not present here keep the SDK's own order and are shown after the ones listed.
+    @UserPreference(defaultValue: [String]())
+    var spaceFilterOrder: [String]
     
     // MARK: - Room Screen
     

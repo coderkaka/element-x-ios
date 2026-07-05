@@ -119,13 +119,12 @@ struct HomeScreenContent: View {
                 if context.viewState.shouldShowSpaceTabBar {
                     SpaceTabBarView(filters: context.viewState.topLevelSpaceFilters,
                                     selectedFilter: context.viewState.selectedSpaceFilter,
-                                    mediaProvider: context.mediaProvider,
-                                    activeFilterCount: context.viewState.bindings.filtersState.activeFilters.count) { filter in
+                                    mediaProvider: context.mediaProvider) { filter in
                         context.send(viewAction: .selectSpaceFilter(filter))
-                    } onFilterButtonTapped: {
-                        context.send(viewAction: .roomListFilters)
                     } onManageTapped: {
                         context.send(viewAction: .manageSpaces)
+                    } onReorder: { roomID, direction in
+                        context.send(viewAction: .reorderSpaceFilter(roomID: roomID, direction: direction))
                     }
                     Divider()
                 }

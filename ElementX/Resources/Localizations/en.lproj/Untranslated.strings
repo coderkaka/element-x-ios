@@ -1,6 +1,10 @@
 "a11y_collapse_tool_calls" = "Collapse tool calls";
 "a11y_expand_tool_calls" = "Expand tool calls";
 "action_manage_spaces" = "管理诸道";
+"action_move_left" = "左移";
+"action_move_right" = "右移";
+"screen_home_title" = "政事堂";
+"screen_home_space_all" = "全部";
 "screen_room_timeline_agent_choice_confirm_button" = "Confirm";
 "screen_room_timeline_agent_choice_selected_prefix" = "Selected";
 "screen_room_timeline_agent_choice_cancelled" = "已撤销";

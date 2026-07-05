@@ -44,8 +44,6 @@ enum HomeScreenViewAction {
     case skipRecoveryKeyConfirmation
     case dismissNewSoundBanner
     case updateVisibleItemRange(Range<Int>)
-    case spaceFilters
-    case roomListFilters
     case manageSpaces
     case markRoomAsUnread(roomIdentifier: String)
     case markRoomAsRead(roomIdentifier: String)
@@ -55,9 +53,16 @@ enum HomeScreenViewAction {
     case declineInvite(roomIdentifier: String)
     
     case selectSpaceFilter(SpaceServiceFilter?)
-    
+    case reorderSpaceFilter(roomID: String, direction: MoveDirection)
+
     case tappedPendingChoicesStrip
     case selectPendingChoice(roomID: String)
+}
+
+/// The direction a 道 chip is nudged by the "左移"/"右移" context menu actions.
+enum MoveDirection {
+    case left
+    case right
 }
 
 enum HomeScreenRoomListMode: CustomStringConvertible {
@@ -123,13 +128,15 @@ struct HomeScreenViewState: BindableState {
     var shouldShowSpaceFilters = false
     var availableSpaceFilters: [SpaceServiceFilter] = []
     var selectedSpaceFilter: SpaceServiceFilter?
-    
+    /// User-customised order of the 道 chips (space room IDs) — see `sortSpaceFilters(_:byOrder:)`.
+    var spaceFilterOrder: [String] = []
+
     var topLevelSpaceFilters: [SpaceServiceFilter] {
-        availableSpaceFilters.filter { $0.level == 0 }
+        sortSpaceFilters(availableSpaceFilters.filter { $0.level == 0 }, byOrder: spaceFilterOrder)
     }
     
     var shouldShowSpaceTabBar: Bool {
-        !topLevelSpaceFilters.isEmpty && shouldShowFilters
+        shouldShowFilters
     }
     
     /// Inline room list search is disabled when the dedicated global search tab is shown instead (see `UserSessionFlowCoordinator`).
@@ -174,6 +181,30 @@ struct HomeScreenViewState: BindableState {
     var pendingChoices: [HomeScreenPendingChoice] = []
 }
 
+/// Orders `filters` by their room ID's index in `order`. IDs not listed in `order` keep the SDK's
+/// own relative order and are placed after every filter that *is* listed (stable sort throughout).
+func sortSpaceFilters(_ filters: [SpaceServiceFilter], byOrder order: [String]) -> [SpaceServiceFilter] {
+    guard !order.isEmpty else { return filters }
+
+    let indexByRoomID = Dictionary(order.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
+    return filters.enumerated()
+        .sorted { lhs, rhs in
+            let lhsIndex = indexByRoomID[lhs.element.room.id]
+            let rhsIndex = indexByRoomID[rhs.element.room.id]
+            switch (lhsIndex, rhsIndex) {
+            case let (lhsIndex?, rhsIndex?):
+                return lhsIndex < rhsIndex
+            case (.some, nil):
+                return true
+            case (nil, .some):
+                return false
+            case (nil, nil):
+                return lhs.offset < rhs.offset
+            }
+        }
+        .map(\.element)
+}
+
 /// A single 请旨待批 item shown in the cross-room pending choices strip/sheet.
 struct HomeScreenPendingChoice: Identifiable, Equatable {
     let roomID: String
@@ -193,10 +224,7 @@ struct HomeScreenViewStateBindings {
     
     var alertInfo: AlertInfo<UUID>?
     var leaveRoomAlertItem: LeaveRoomAlertItem?
-    
-    var spaceFiltersViewModel: ChatsSpaceFiltersScreenViewModel?
-    var roomListFiltersViewModel: RoomListFiltersScreenViewModel?
-    
+
     var isPresentingPendingChoices = false
 }
 

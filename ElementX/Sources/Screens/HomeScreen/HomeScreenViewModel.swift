@@ -28,6 +28,9 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     private var latestTaskSummaries: [AgentTaskSummary] = []
     private var latestProjects: [AgentProjectSummary] = []
     private var latestPendingChoices: [AgentPendingChoiceSummary] = []
+    /// One-shot guard so the persisted 道 filter is only ever restored on the first non-empty
+    /// `availableSpaceFilters` emission, never again after the user explicitly returns to 全部.
+    private var hasRestoredSpaceFilter = false
     
     private var actionsSubject: PassthroughSubject<HomeScreenViewModelAction, Never> = .init()
     var actions: AnyPublisher<HomeScreenViewModelAction, Never> {
@@ -56,6 +59,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         roomSummaryProvider = userSession.clientProxy.roomSummaryProvider
         
         super.init(initialViewState: .init(userID: userSession.clientProxy.userID,
+                                           spaceFilterOrder: appSettings.spaceFilterOrder,
                                            bindings: .init(filtersState: .init(appSettings: appSettings))),
                    mediaProvider: userSession.mediaProvider)
         
@@ -116,12 +120,14 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 
                 state.shouldShowSpaceFilters = !filters.isEmpty
                 state.availableSpaceFilters = filters
-                
+
                 if let selectedSpaceFilter = spaceFilterSubject.value,
                    !filters.contains(selectedSpaceFilter) {
                     // Clear the spaces filter if the space has been left.
                     spaceFilterSubject.send(nil)
                 }
+
+                restorePersistedSpaceFilterIfNeeded(availableFilters: filters)
             }
             .store(in: &cancellables)
         
@@ -253,46 +259,13 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             roomSummaryProvider?.updateVisibleRange(range)
         case .startChat:
             actionsSubject.send(.presentStartChatScreen)
-        case .spaceFilters:
-            if spaceFilterSubject.value != nil {
-                spaceFilterSubject.send(nil)
-            } else {
-                state.bindings.spaceFiltersViewModel = ChatsSpaceFiltersScreenViewModel(spaceService: userSession.clientProxy.spaceService,
-                                                                                        mediaProvider: userSession.mediaProvider)
-                
-                state.bindings.spaceFiltersViewModel?.actionsPublisher.sink { [weak self] action in
-                    guard let self else { return }
-                    
-                    switch action {
-                    case .confirm(let spaceServiceFilter):
-                        spaceFilterSubject.send(spaceServiceFilter)
-                        state.bindings.spaceFiltersViewModel = nil
-                    case .cancel:
-                        state.bindings.spaceFiltersViewModel = nil
-                    }
-                }
-                .store(in: &cancellables)
-            }
         case .selectSpaceFilter(let filter):
             spaceFilterSubject.send(filter)
+            appSettings.selectedSpaceFilterRoomID = filter?.room.id
+        case .reorderSpaceFilter(let roomID, let direction):
+            reorderSpaceFilter(roomID: roomID, direction: direction)
         case .manageSpaces:
             actionsSubject.send(.presentSpaceManagement)
-        case .roomListFilters:
-            let roomListFiltersViewModel = RoomListFiltersScreenViewModel(initialFiltersState: state.bindings.filtersState)
-            
-            roomListFiltersViewModel.actionsPublisher.sink { [weak self] action in
-                guard let self else { return }
-                
-                switch action {
-                case .filtersChanged(let newFiltersState):
-                    state.bindings.filtersState = newFiltersState
-                case .dismiss:
-                    state.bindings.roomListFiltersViewModel = nil
-                }
-            }
-            .store(in: &cancellables)
-            
-            state.bindings.roomListFiltersViewModel = roomListFiltersViewModel
         case .markRoomAsUnread(let roomIdentifier):
             Task {
                 guard case let .joined(roomProxy) = await userSession.clientProxy.roomForIdentifier(roomIdentifier) else {
@@ -384,6 +357,43 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         }
     }
     
+    /// Restores the persisted 道 filter (`AppSettings.selectedSpaceFilterRoomID`) on the first
+    /// non-empty `availableSpaceFilters` emission only — never again afterwards, so a user who
+    /// explicitly returns to 全部 doesn't get bounced back into their old 道.
+    private func restorePersistedSpaceFilterIfNeeded(availableFilters: [SpaceServiceFilter]) {
+        guard !hasRestoredSpaceFilter, !availableFilters.isEmpty else { return }
+        hasRestoredSpaceFilter = true
+
+        guard spaceFilterSubject.value == nil, let persistedRoomID = appSettings.selectedSpaceFilterRoomID else { return }
+
+        let topLevelFilters = availableFilters.filter { $0.level == 0 }
+        guard let match = topLevelFilters.first(where: { $0.room.id == persistedRoomID }) else {
+            // Stale persisted ID (space left/never joined) — clear it and stay on 全部.
+            appSettings.selectedSpaceFilterRoomID = nil
+            return
+        }
+
+        // Drive the same path as the user tapping the chip, so filter + UI + persistence stay consistent.
+        process(viewAction: .selectSpaceFilter(match))
+    }
+
+    private func reorderSpaceFilter(roomID: String, direction: MoveDirection) {
+        // Build the full current order from what's displayed (already reflecting any partial
+        // persisted order), so a partially-populated/empty setting still swaps sensibly.
+        var order = state.topLevelSpaceFilters.map(\.room.id)
+        guard let currentIndex = order.firstIndex(of: roomID) else { return }
+
+        let swapIndex = switch direction {
+        case .left: currentIndex - 1
+        case .right: currentIndex + 1
+        }
+        guard order.indices.contains(swapIndex) else { return } // Already at an edge.
+
+        order.swapAt(currentIndex, swapIndex)
+        appSettings.spaceFilterOrder = order
+        state.spaceFilterOrder = order
+    }
+
     private func setupRoomListSubscriptions() {
         guard let roomSummaryProvider else {
             MXLog.error("Room summary provider unavailable")
