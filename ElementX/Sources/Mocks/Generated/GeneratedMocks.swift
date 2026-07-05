@@ -5296,6 +5296,48 @@ nonisolated class JoinedRoomProxyMock: JoinedRoomProxyProtocol, @unchecked Senda
             return getStateEventRawEventTypeStateKeyReturnValue
         }
     }
+    //MARK: - getStateEventsRaw
+
+    private let getStateEventsRawEventTypeCallsCountLock = NSLock()
+    private nonisolated(unsafe) var getStateEventsRawEventTypeUnderlyingCallsCount = 0
+    var getStateEventsRawEventTypeCallsCount: Int {
+        get { getStateEventsRawEventTypeCallsCountLock.withLock { getStateEventsRawEventTypeUnderlyingCallsCount } }
+        set { getStateEventsRawEventTypeCallsCountLock.withLock { getStateEventsRawEventTypeUnderlyingCallsCount = newValue } }
+    }
+    var getStateEventsRawEventTypeCalled: Bool {
+        return getStateEventsRawEventTypeCallsCount > 0
+    }
+    private let getStateEventsRawEventTypeReceivedEventTypeLock = NSLock()
+    private nonisolated(unsafe) var getStateEventsRawEventTypeUnderlyingReceivedEventType: String?
+    var getStateEventsRawEventTypeReceivedEventType: String? {
+        get { getStateEventsRawEventTypeReceivedEventTypeLock.withLock { getStateEventsRawEventTypeUnderlyingReceivedEventType } }
+        set { getStateEventsRawEventTypeReceivedEventTypeLock.withLock { getStateEventsRawEventTypeUnderlyingReceivedEventType = newValue } }
+    }
+    private let getStateEventsRawEventTypeReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var getStateEventsRawEventTypeUnderlyingReceivedInvocations: [String] = []
+    var getStateEventsRawEventTypeReceivedInvocations: [String] {
+        get { getStateEventsRawEventTypeReceivedInvocationsLock.withLock { getStateEventsRawEventTypeUnderlyingReceivedInvocations } }
+        set { getStateEventsRawEventTypeReceivedInvocationsLock.withLock { getStateEventsRawEventTypeUnderlyingReceivedInvocations = newValue } }
+    }
+
+    private let getStateEventsRawEventTypeReturnValueLock = NSLock()
+    private nonisolated(unsafe) var getStateEventsRawEventTypeUnderlyingReturnValue: Result<[String], RoomProxyError>!
+    var getStateEventsRawEventTypeReturnValue: Result<[String], RoomProxyError>! {
+        get { getStateEventsRawEventTypeReturnValueLock.withLock { getStateEventsRawEventTypeUnderlyingReturnValue } }
+        set { getStateEventsRawEventTypeReturnValueLock.withLock { getStateEventsRawEventTypeUnderlyingReturnValue = newValue } }
+    }
+    nonisolated(unsafe) var getStateEventsRawEventTypeClosure: ((String) async -> Result<[String], RoomProxyError>)?
+
+    @concurrent func getStateEventsRaw(eventType: String) async -> Result<[String], RoomProxyError> {
+        getStateEventsRawEventTypeCallsCountLock.withLock { getStateEventsRawEventTypeUnderlyingCallsCount += 1 }
+        getStateEventsRawEventTypeReceivedEventType = eventType
+        getStateEventsRawEventTypeReceivedInvocationsLock.withLock { getStateEventsRawEventTypeUnderlyingReceivedInvocations.append(eventType) }
+        if let getStateEventsRawEventTypeClosure = getStateEventsRawEventTypeClosure {
+            return await getStateEventsRawEventTypeClosure(eventType)
+        } else {
+            return getStateEventsRawEventTypeReturnValue
+        }
+    }
     //MARK: - messageFilteredTimeline
 
     private let messageFilteredTimelineFocusAllowedMessageTypesPresentationCallsCountLock = NSLock()
