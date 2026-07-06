@@ -232,6 +232,16 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
             } else if !summary.isEmpty {
                 actionsSubject.send(.presentTaskPanel)
             }
+        case .tappedAgentTaskCard(let itemID, let taskID):
+            // Prefer the state-resolved task from the summary (current data, matched by taskID
+            // since state-only tasks carry no event ID); fall back to the tapped card's own event
+            // ID so the flow coordinator can still push a detail built from the message snapshot.
+            let summary = state.roomTaskSummary
+            if let task = (summary.activeTasks + summary.doneTasks).first(where: { $0.taskID == taskID }) {
+                actionsSubject.send(.presentCanvasSteps(eventID: task.eventID, taskID: task.taskID))
+            } else if let eventID = itemID.eventID {
+                actionsSubject.send(.presentCanvasSteps(eventID: eventID, taskID: taskID))
+            }
         case .fetchStateEvent(let eventType, let stateKey):
             fetchStateEvent(eventType: eventType, stateKey: stateKey)
         case .handlePasteOrDrop(let providers):

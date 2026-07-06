@@ -11,19 +11,30 @@ import SwiftUI
 
 struct AgentCanvasStepsRoomTimelineView: View {
     let timelineItem: AgentCanvasStepsRoomTimelineItem
-    
+
+    @EnvironmentObject private var context: TimelineViewModel.Context
+
     private var content: AgentCanvasStepsRoomTimelineItemContent {
         timelineItem.content
     }
-    
+
+    private var title: String {
+        content.title.isEmpty ? content.body : content.title
+    }
+
     var body: some View {
         TimelineStyler(timelineItem: timelineItem) {
             HStack(spacing: 4) {
                 CompoundIcon(\.info, size: .small, relativeTo: .compound.bodyMD)
                     .foregroundColor(.compound.iconSecondary)
-                Text(content.title.isEmpty ? content.body : content.title)
+                Text(title)
                     .font(.compound.bodyMD)
                     .foregroundColor(.compound.textPrimary)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(title)
+            .onTapGesture {
+                context.send(viewAction: .tappedAgentTaskCard(itemID: timelineItem.id, taskID: content.taskID))
             }
         }
     }

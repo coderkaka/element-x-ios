@@ -703,6 +703,43 @@ final class TimelineViewModelTests {
     }
     
     @Test
+    func tappedAgentTaskCardWithKnownTaskUsesSummaryData() async throws {
+        // Given a timeline whose summary already knows about the tapped card's task.
+        let item = AgentCanvasStepsRoomTimelineItem(eventID: "task-message", taskID: "task-1", title: "Only task", isResolved: false)
+        let timelineController = TimelineControllerMock(.init(timelineItems: [item]))
+        let viewModel = makeViewModel(timelineController: timelineController)
+
+        // When tapping the card.
+        let deferred = deferFulfillment(viewModel.actions) { action in
+            guard case .presentCanvasSteps(let eventID, let taskID) = action else { return false }
+            return eventID == "task-message" && taskID == "task-1"
+        }
+        viewModel.process(viewAction: .tappedAgentTaskCard(itemID: item.id, taskID: "task-1"))
+
+        // Then the summary-resolved task should drive the detail push.
+        try await deferred.fulfill()
+    }
+
+    @Test
+    func tappedAgentTaskCardWithUnknownTaskFallsBackToCardIdentity() async throws {
+        // Given a timeline whose summary doesn't know about the tapped card's task (e.g. the
+        // summary hasn't rebuilt yet).
+        let timelineController = TimelineControllerMock(.init(timelineItems: []))
+        let viewModel = makeViewModel(timelineController: timelineController)
+        let itemID = TimelineItemIdentifier.event(uniqueID: .init(UUID().uuidString), eventOrTransactionID: .eventID("unlisted-task-message"))
+
+        // When tapping a card whose task isn't in the summary.
+        let deferred = deferFulfillment(viewModel.actions) { action in
+            guard case .presentCanvasSteps(let eventID, let taskID) = action else { return false }
+            return eventID == "unlisted-task-message" && taskID == "task-unknown"
+        }
+        viewModel.process(viewAction: .tappedAgentTaskCard(itemID: itemID, taskID: "task-unknown"))
+
+        // Then it should still push, falling back to the card's own event ID and task ID.
+        try await deferred.fulfill()
+    }
+
+    @Test
     func roomTaskSummaryPublisherMirrorsViewState() {
         // Given a timeline with an active task.
         let items = [
