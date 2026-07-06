@@ -861,7 +861,7 @@ final class TimelineViewModelTests {
     @Test
     func cancelledStateEnumeratedChoiceIsNotPending() async throws {
         // 请旨撤销: state enumeration alone must never surface a cancelled request as pending —
-        // `isPending` already requires `status == "pending"`, so cancelled is excluded by construction.
+        // `AgentChoiceStateIndexEvent.isPending` explicitly excludes `status == "cancelled"`.
         let roomProxy = JoinedRoomProxyMock(.init(name: ""))
         roomProxy.getStateEventsRawEventTypeClosure = { eventType in
             guard eventType == AgentChoiceRequestRoomTimelineItemContent.msgType else { return .success([]) }

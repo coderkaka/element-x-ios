@@ -13,6 +13,9 @@ class AgentTaskIndexService: AgentTaskIndexServiceProtocol {
     private let clientProxy: ClientProxyProtocol
     private let roomSummaryProvider: RoomSummaryProviderProtocol
     private var cancellables = Set<AnyCancellable>()
+    /// Cancelled and replaced on every rebuild so a slower, earlier-triggered rebuild can never
+    /// overwrite a newer one's result with stale data.
+    private var rebuildTask: Task<Void, Never>?
     
     private let tasksSubject = CurrentValueSubject<[AgentTaskSummary], Never>([])
     var tasksPublisher: CurrentValuePublisher<[AgentTaskSummary], Never> {
@@ -34,11 +37,14 @@ class AgentTaskIndexService: AgentTaskIndexServiceProtocol {
     }
     
     private func rebuildIndex(from summaries: [RoomSummary]) {
-        Task { [weak self] in
+        rebuildTask?.cancel()
+        rebuildTask = Task { [weak self] in
             guard let self else { return }
             
             var tasks = [AgentTaskSummary]()
             for summary in summaries {
+                guard !Task.isCancelled else { return }
+                
                 guard case let .success(rawEvents) = await clientProxy.getRoomStateEventsRaw(roomID: summary.id,
                                                                                              eventType: AgentTaskStateEvent.eventType) else {
                     continue // One bad room must not empty the whole index.
@@ -58,6 +64,8 @@ class AgentTaskIndexService: AgentTaskIndexServiceProtocol {
                                                   totalStepCount: stateEvent.totalStepCount))
                 }
             }
+            
+            guard !Task.isCancelled else { return }
             
             let unresolved = tasks.filter { !$0.isResolved }
             let resolved = tasks.filter(\.isResolved)

@@ -16,8 +16,14 @@ struct AgentTasksScreenViewState: BindableState {
     }
 }
 
-enum AgentTasksScreenViewAction {
+enum AgentTasksScreenViewAction: CustomStringConvertible {
     case taskTapped(AgentTaskSummary)
+    
+    var description: String {
+        switch self {
+        case .taskTapped: "taskTapped"
+        }
+    }
 }
 
 enum AgentTasksScreenViewModelAction: Equatable {

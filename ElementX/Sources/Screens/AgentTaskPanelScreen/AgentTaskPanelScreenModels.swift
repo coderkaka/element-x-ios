@@ -17,9 +17,16 @@ struct AgentTaskPanelScreenViewState: BindableState {
     }
 }
 
-enum AgentTaskPanelScreenViewAction {
+enum AgentTaskPanelScreenViewAction: CustomStringConvertible {
     case taskTapped(RoomTaskSummary.Task)
     case choiceTapped(eventID: String)
+    
+    var description: String {
+        switch self {
+        case .taskTapped: "taskTapped"
+        case .choiceTapped: "choiceTapped"
+        }
+    }
 }
 
 enum AgentTaskPanelScreenViewModelAction: Equatable {

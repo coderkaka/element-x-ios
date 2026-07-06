@@ -13,6 +13,9 @@ class AgentProjectIndexService: AgentProjectIndexServiceProtocol {
     private let clientProxy: ClientProxyProtocol
     private let roomSummaryProvider: RoomSummaryProviderProtocol
     private var cancellables = Set<AnyCancellable>()
+    /// Cancelled and replaced on every rebuild so a slower, earlier-triggered rebuild can never
+    /// overwrite a newer one's result with stale data.
+    private var rebuildTask: Task<Void, Never>?
     
     private let projectsSubject = CurrentValueSubject<[AgentProjectSummary], Never>([])
     var projectsPublisher: CurrentValuePublisher<[AgentProjectSummary], Never> {
@@ -39,13 +42,16 @@ class AgentProjectIndexService: AgentProjectIndexServiceProtocol {
     }
     
     private func rebuildIndex(from summaries: [RoomSummary]) {
-        Task { [weak self] in
+        rebuildTask?.cancel()
+        rebuildTask = Task { [weak self] in
             guard let self else { return }
             
             var projects = [AgentProjectSummary]()
             var pendingChoices = [AgentPendingChoiceSummary]()
             
             for summary in summaries {
+                guard !Task.isCancelled else { return }
+                
                 let goalResult = await clientProxy.getRoomStateEventsRaw(roomID: summary.id, eventType: AgentGoalStateEvent.eventType)
                 guard case let .success(goalEvents) = goalResult else {
                     if case let .failure(error) = goalResult {
@@ -80,6 +86,8 @@ class AgentProjectIndexService: AgentProjectIndexServiceProtocol {
                                                                     question: choiceEvent.question))
                 }
             }
+            
+            guard !Task.isCancelled else { return }
             
             projectsSubject.send(projects.sorted { $0.roomID < $1.roomID })
             pendingChoicesSubject.send(pendingChoices.sorted { $0.roomID < $1.roomID })

@@ -1046,7 +1046,7 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         var pendingChoices = [RoomTaskSummary.PendingChoice]()
         for choice in timelinePendingChoices {
             if let stateEvent = stateEnumeratedChoiceEvents.first(where: { $0.eventID == choice.eventID }) {
-                guard isPending(stateEvent) else { continue } // State confirms this one's resolved.
+                guard stateEvent.isPending else { continue } // State confirms this one's resolved.
                 let question = stateEvent.question?.isEmpty == false ? (stateEvent.question ?? "") : choice.question
                 pendingChoices.append(.init(eventID: choice.eventID, question: question))
             } else {
@@ -1055,15 +1055,11 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         }
         
         let handledEventIDs = Set(pendingChoices.map(\.eventID))
-        for stateEvent in stateEnumeratedChoiceEvents where isPending(stateEvent) && !handledEventIDs.contains(stateEvent.eventID) {
+        for stateEvent in stateEnumeratedChoiceEvents where stateEvent.isPending && !handledEventIDs.contains(stateEvent.eventID) {
             pendingChoices.append(.init(eventID: stateEvent.eventID, question: stateEvent.question ?? ""))
         }
         
         return pendingChoices
-    }
-    
-    private func isPending(_ choiceEvent: AgentChoiceStateIndexEvent) -> Bool {
-        choiceEvent.status == "pending" && (choiceEvent.resolvedSelection ?? []).isEmpty
     }
     
     /// Enumerates the room's agent task/choice state directly, independently of what's been
