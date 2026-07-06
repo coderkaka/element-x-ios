@@ -56,6 +56,10 @@ settings:
   MARKETING_VERSION: 26.07.1
   CURRENT_PROJECT_VERSION: 1
   SUPPORTS_MACCATALYST: false
+  # This branch's SDK fork (../matrix-rust-sdk-pinned, wired via override.yml) only ships
+  # arm64 slices — no Intel Simulator support. Without this, a destination-less build
+  # (e.g. "generic/platform=iOS Simulator") defaults to linking x86_64 too and fails.
+  "EXCLUDED_ARCHS[sdk=iphonesimulator*]": x86_64
 
 include:
 - path: app.yml
