@@ -41,12 +41,45 @@ Status: **设计级草案,非实施 spec。** D 的多数决策依赖 C 上线�
   保持四 tab 简洁——与用户的简洁诉求一致)。
 - 前置协议:步骤级 `needs_user: true` 可选字段(照 §7 表加入保留字段)。
 
+## D-6 标的(objective)—— 案内阶段目标,AgentOS 已开始服务端预写
+
+- 协议(`~/homelab/docs/element-agent-protocol.md` §3.4,版本 2026-07-06c):新增
+  `io.element.agent.objective`,state key = `objective_id`,**案内多实例**,粒度介于
+  `goal`(单例/长期/案为什么存在)和 `canvas.steps`/`choice_request`(执行级)之间——
+  回答"这个案当前在验证/达成什么阶段目标"。`success_metrics`/`exit_options` 是标的级
+  质性判断字段,不等同于差事级 `metric{current,target,unit}`(前者回答阶段何时算完,
+  后者回答量化进度)。
+- 关联方向跟 `canvas.steps`/`choice_request` 一致:**子级(差事/请旨)带可选
+  `objective_id` 指认父级**,标的本身不维护子级列表——同一套"客户端查询时 join、
+  避免双写竞态"模式,零新设计成本。
+- **SDK 侧已完成**(07-06 本地会话):`io.element.agent.objective` 加入
+  `AGENT_EXTRA_REQUIRED_STATE`(`matrix-sdk-ui/src/room_list_service/mod.rs`),
+  fork 已重编。数据现在能进本地 store 了,但 **Swift 侧解析/索引/渲染仍留 Phase D**——
+  跟 `metric`/`needs_user`/`scenario` 同一套"协议先落地,客户端不消费"policy,不因为
+  hermes 已经在写就提前实现。
+- **呈现方向已定(07-06 讨论,写入设计但不实现)**:
+  - 案卷面板(房间内):按 `objective_id` 分组差事/请旨,标的作为可折叠 section,
+    `success_metrics` 展示为只读清单(不做可勾选组件,标的完成与否权威来源是
+    `status` 字段);`exit_options` 也只读展示,真正的阶段决策仍走已有的
+    `choice_request` 卡片,不为标的单独发明新交互组件。
+  - 政事堂案卡片(跨房间列表):副标题取**优先级最高的 `active` 标的标题**;
+    >1 个 `active` 标的时标题后加计数(如「可行性验证 · 共 2 个标的进行中」);
+    没有任何 `active` 标的(旧协议房间/尚未立标的)时卡片退回现状,只显示差事 x/y。
+  - **待办**:`priority` 字段(int)协议文档没写清楚数字方向(越大越优先,还是
+    越小越优先),需要跟 hermes/AgentOS 对齐写回协议文档,否则客户端和服务端各自
+    猜方向,排序会"看起来随机错乱"但不报错——跟协议自己列的"已知坑"是同一种隐蔽 bug。
+- 一旦 Phase D 要做标的消费,会是**第三个**"debounce 订阅 roomListPublisher → 逐房间
+  fetch state → parse → publish sorted list"的索引服务,跟下面 D-5 的合并诉求是同一件事,
+  优先级因此更高——不要在合并之前先加第三份重复实现。
+
 ## D-5 既有 defer 项(D 期或更早顺手清)
 
-PII 日志统一清理(AgentTasksScreen/AgentTaskPanelScreen 只打 case 名)、孤儿字符串 key、
-index 服务改独立 provider(C-1 落地 messagesRoomSummaryProvider 后有现成先例)、
-rebuildIndex cancel-previous、AgentTaskIndexService 与 AgentProjectIndexService 合并、
-上游 SDK PR(四 + C-2 一共五个 fork commit)。
+PII 日志统一清理(AgentTasksScreen/AgentTaskPanelScreen 只打 case 名,**已修**,07-06
+本地会话)、孤儿字符串 key、index 服务改独立 provider(C-1 落地
+messagesRoomSummaryProvider 后有现成先例)、rebuildIndex cancel-previous(**已修**,
+07-06 本地会话)、AgentTaskIndexService 与 AgentProjectIndexService 合并(**优先级
+提升**,见上 D-6——第三个同构索引服务即将出现)、上游 SDK PR(四 + C-2 一共五个 fork
+commit,现为六个,新增今天的 required_state 一行 + x86_64 target 精简两个 commit)。
 
 ## 不做(诚实的边界)
 
