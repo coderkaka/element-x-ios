@@ -41,9 +41,8 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     private let tasksTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
     private let messagesScreenCoordinator: MessagesScreenCoordinator
     private let messagesTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
-    private let spacesTabFlowCoordinator: SpacesTabFlowCoordinator
-    private let spacesSplitCoordinator: NavigationSplitCoordinator
-    private var spacesFlowStarted = false
+    // periphery:ignore - retaining purpose
+    private var spacesTabFlowCoordinator: SpacesTabFlowCoordinator?
     
     private let searchScreenCoordinator: SearchScreenCoordinator?
     private let searchTabNavigationStackCoordinator: NavigationStackCoordinator?
@@ -119,10 +118,6 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         messagesSplitCoordinator.setSidebarCoordinator(messagesScreenCoordinator)
         messagesTabDetails = .init(tag: HomeTab.messages, title: UntranslatedL10n.screenHomeTabMessages, icon: \.userProfile, selectedIcon: \.userProfileSolid)
         messagesTabDetails.navigationSplitCoordinator = messagesSplitCoordinator
-        
-        spacesSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
-        spacesTabFlowCoordinator = SpacesTabFlowCoordinator(navigationSplitCoordinator: spacesSplitCoordinator,
-                                                            flowParameters: flowParameters)
         
         if flowParameters.appSettings.globalSearchEnabled, #available(iOS 26.0, *) {
             let searchCoordinator = SearchScreenCoordinator(parameters: .init(roomSummaryProvider: flowParameters.userSession.clientProxy.alternateRoomSummaryProvider,
@@ -308,20 +303,6 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
             }
             .store(in: &cancellables)
         
-        spacesTabFlowCoordinator.actionsPublisher
-            .sink { [weak self] action in
-                guard let self else { return }
-                switch action {
-                case .presentCallScreen(let roomProxy, let isVoiceCall):
-                    presentCallScreen(roomProxy: roomProxy, voiceOnly: isVoiceCall)
-                case .verifyUser(let userID):
-                    presentSessionVerificationScreen(flow: .userInitiator(userID: userID))
-                case .showSettings:
-                    stateMachine.tryEvent(.showSettingsScreen)
-                }
-            }
-            .store(in: &cancellables)
-        
         userSession.sessionSecurityStatePublisher
             .map(\.verificationState)
             .filter { $0 != .unknown }
@@ -400,11 +381,33 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     // MARK: - Spaces
     
     private func presentSpaceManagement() {
-        if !spacesFlowStarted {
-            spacesFlowStarted = true
-            spacesTabFlowCoordinator.start()
+        // Built fresh on every presentation: the split's sidebar/detail coordinators are torn down
+        // on sheet dismissal, and the flow's state machine is one-shot, so a reused instance would
+        // re-present an empty split from the second tap onwards.
+        let navigationSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
+        let coordinator = SpacesTabFlowCoordinator(navigationSplitCoordinator: navigationSplitCoordinator,
+                                                   flowParameters: flowParameters)
+        
+        coordinator.actionsPublisher
+            .sink { [weak self] action in
+                guard let self else { return }
+                switch action {
+                case .presentCallScreen(let roomProxy, let isVoiceCall):
+                    presentCallScreen(roomProxy: roomProxy, voiceOnly: isVoiceCall)
+                case .verifyUser(let userID):
+                    presentSessionVerificationScreen(flow: .userInitiator(userID: userID))
+                case .showSettings:
+                    stateMachine.tryEvent(.showSettingsScreen)
+                }
+            }
+            .store(in: &cancellables)
+        
+        spacesTabFlowCoordinator = coordinator
+        coordinator.start()
+        
+        navigationTabCoordinator.setSheetCoordinator(navigationSplitCoordinator) { [weak self] in
+            self?.spacesTabFlowCoordinator = nil
         }
-        navigationTabCoordinator.setSheetCoordinator(spacesSplitCoordinator)
     }
     
     // MARK: - Settings

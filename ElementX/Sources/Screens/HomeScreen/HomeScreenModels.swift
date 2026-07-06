@@ -130,6 +130,9 @@ struct HomeScreenViewState: BindableState {
     var selectedSpaceFilter: SpaceServiceFilter?
     /// User-customised order of the 道 chips (space room IDs) — see `sortSpaceFilters(_:byOrder:)`.
     var spaceFilterOrder: [String] = []
+    /// Whether the user has an unseen invite to a 道 (Space) not in `availableSpaceFilters`
+    /// (the SDK's space graph only surfaces joined spaces) — badges the "全部" chip.
+    var hasPendingSpaceInvites = false
     
     var topLevelSpaceFilters: [SpaceServiceFilter] {
         sortSpaceFilters(availableSpaceFilters.filter { $0.level == 0 }, byOrder: spaceFilterOrder)

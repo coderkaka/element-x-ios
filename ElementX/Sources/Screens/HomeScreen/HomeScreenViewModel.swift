@@ -484,6 +484,12 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         let rest = rooms.filter { $0.pendingChoiceCount == 0 && $0.activeTaskCount == 0 }
         state.rooms = pending + active + rest
         
+        // The space graph behind `spaceFilterPublisher` only surfaces joined spaces, so an invited
+        // 道 never gets a chip — badge the "全部" chip instead so the invite isn't invisible.
+        state.hasPendingSpaceInvites = roomSummaries.contains {
+            $0.isSpace && $0.joinRequestType?.isInvite == true && !seenInvites.contains($0.id)
+        }
+        
         // Cross-room pending-choices strip/sheet: joins ALL pending choices (not just ones whose room
         // is currently in the provider's list — a choice can outlive pagination/filtering), 道-filtered
         // when a space is selected. Room name lookup is best-effort and degrades to nil.

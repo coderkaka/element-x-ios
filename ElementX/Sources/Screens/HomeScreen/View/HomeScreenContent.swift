@@ -119,6 +119,7 @@ struct HomeScreenContent: View {
                 if context.viewState.shouldShowSpaceTabBar {
                     SpaceTabBarView(filters: context.viewState.topLevelSpaceFilters,
                                     selectedFilter: context.viewState.selectedSpaceFilter,
+                                    hasPendingSpaceInvites: context.viewState.hasPendingSpaceInvites,
                                     mediaProvider: context.mediaProvider) { filter in
                         context.send(viewAction: .selectSpaceFilter(filter))
                     } onManageTapped: {

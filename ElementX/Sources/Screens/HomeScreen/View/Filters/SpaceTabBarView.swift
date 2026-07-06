@@ -12,6 +12,7 @@ import SwiftUI
 struct SpaceTabBarView: View {
     let filters: [SpaceServiceFilter]
     let selectedFilter: SpaceServiceFilter?
+    let hasPendingSpaceInvites: Bool
     let mediaProvider: MediaProviderProtocol!
     let action: (SpaceServiceFilter?) -> Void
     let onManageTapped: () -> Void
@@ -27,6 +28,7 @@ struct SpaceTabBarView: View {
                                      mediaProvider: mediaProvider) {
                         action(nil)
                     }
+                    .overlayBadge(10, isBadged: hasPendingSpaceInvites)
                     
                     ForEach(Array(filters.enumerated()), id: \.element.id) { index, filter in
                         SpaceTabChipView(name: filter.room.name,
@@ -121,18 +123,28 @@ struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
         VStack(spacing: 0) {
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: nil,
+                            hasPendingSpaceInvites: false,
                             mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
             
             Divider()
             
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: mockFilters.first,
+                            hasPendingSpaceInvites: false,
                             mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
             
             Divider()
             
             SpaceTabBarView(filters: [],
                             selectedFilter: nil,
+                            hasPendingSpaceInvites: false,
+                            mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
+            
+            Divider()
+            
+            SpaceTabBarView(filters: mockFilters,
+                            selectedFilter: nil,
+                            hasPendingSpaceInvites: true,
                             mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
         }
         .background(Color.compound.bgCanvasDefault)
