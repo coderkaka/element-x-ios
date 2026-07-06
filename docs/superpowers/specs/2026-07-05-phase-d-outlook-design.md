@@ -62,12 +62,20 @@ Status: **设计级草案,非实施 spec。** D 的多数决策依赖 C 上线�
     `success_metrics` 展示为只读清单(不做可勾选组件,标的完成与否权威来源是
     `status` 字段);`exit_options` 也只读展示,真正的阶段决策仍走已有的
     `choice_request` 卡片,不为标的单独发明新交互组件。
-  - 政事堂案卡片(跨房间列表):副标题取**优先级最高的 `active` 标的标题**;
-    >1 个 `active` 标的时标题后加计数(如「可行性验证 · 共 2 个标的进行中」);
-    没有任何 `active` 标的(旧协议房间/尚未立标的)时卡片退回现状,只显示差事 x/y。
-  - **待办**:`priority` 字段(int)协议文档没写清楚数字方向(越大越优先,还是
-    越小越优先),需要跟 hermes/AgentOS 对齐写回协议文档,否则客户端和服务端各自
-    猜方向,排序会"看起来随机错乱"但不报错——跟协议自己列的"已知坑"是同一种隐蔽 bug。
+  - 政事堂案卡片(跨房间列表)—— **07-06 修正:不挑单一标的做标题**。原方案是取
+    `priority` 最高的 `active` 标的标题当副标题,但 `priority` 的方向连协议文档自己
+    都没写清楚(见下),挑出来的"代表"本质是随机的,会给用户一个"这案子现在只干这一件
+    事"的假单线叙事。改成按数量分两种情况诚实呈现:
+    - 恰好 1 个 `active` 标的 → 直接显示它的标题(无歧义,该显示)
+    - ≥2 个 `active` 标的 → 不挑标题,只显示中性提示,如「2 个标的并行推进」,具体是
+      哪两个留给点进案卷面板看分组明细
+    - 没有任何 `active` 标的(旧协议房间/尚未立标的)→ 卡片退回现状,只显示差事 x/y
+  - **`priority` 方向待办,但不再阻塞上面这条**:协议文档没写清楚 `priority`(int)
+    数字方向(越大越优先,还是越小越优先),需要跟 hermes/AgentOS 对齐写回协议文档,
+    否则客户端和服务端各自猜方向,排序会"看起来随机错乱"但不报错——跟协议自己列的
+    "已知坑"是同一种隐蔽 bug。**建议**:凡是能用 `updated_at`(时间戳,方向天然无歧义)
+    替代的排序场景(如案卷面板内标的 section 顺序,取"最近有动静的排前面"),优先用
+    `updated_at` 不用 `priority`,减少对这条未对齐字段的依赖面。
 - 一旦 Phase D 要做标的消费,会是**第三个**"debounce 订阅 roomListPublisher → 逐房间
   fetch state → parse → publish sorted list"的索引服务,跟下面 D-5 的合并诉求是同一件事,
   优先级因此更高——不要在合并之前先加第三份重复实现。
@@ -79,7 +87,8 @@ PII 日志统一清理(AgentTasksScreen/AgentTaskPanelScreen 只打 case 名,**�
 messagesRoomSummaryProvider 后有现成先例)、rebuildIndex cancel-previous(**已修**,
 07-06 本地会话)、AgentTaskIndexService 与 AgentProjectIndexService 合并(**优先级
 提升**,见上 D-6——第三个同构索引服务即将出现)、上游 SDK PR(四 + C-2 一共五个 fork
-commit,现为六个,新增今天的 required_state 一行 + x86_64 target 精简两个 commit)。
+commit,07-06 新增 objective required_state 一行 + x86_64 target 精简两个 commit,
+现为七个)。
 
 ## 不做(诚实的边界)
 
