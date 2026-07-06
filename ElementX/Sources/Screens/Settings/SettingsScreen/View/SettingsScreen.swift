@@ -139,10 +139,6 @@ struct SettingsScreen: View {
     
     private var generalSection: some View {
         Section {
-            ListRow(label: .plain(title: UntranslatedL10n.screenSettingsTerminologyTitle),
-                    kind: .picker(selection: $context.terminologyScenario,
-                                  items: TerminologyScenario.allCases.map { (title: $0.settingsName, tag: $0) }))
-            
             ListRow(label: .default(title: L10n.commonAdvancedSettings,
                                     icon: \.settings),
                     kind: .navigationLink {
@@ -180,6 +176,11 @@ struct SettingsScreen: View {
                         })
                         .accessibilityIdentifier(A11yIdentifiers.settingsScreen.analytics)
             }
+            
+            ListRow(label: .default(title: UntranslatedL10n.screenSettingsTerminologyTitle,
+                                    icon: \.translate),
+                    kind: .picker(selection: $context.terminologyScenario,
+                                  items: TerminologyScenario.allCases.map { (title: $0.settingsName, tag: $0) }))
         }
     }
     
