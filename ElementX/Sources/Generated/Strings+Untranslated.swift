@@ -90,6 +90,12 @@ internal nonisolated enum UntranslatedL10n {
   internal static func screenSearchNoResultsMessage(_ p1: Any) -> String {
     return UntranslatedL10n.tr("Untranslated", "screen_search_no_results_message", String(describing: p1))
   }
+  /// 御案体
+  internal static var screenSettingsTerminologyImperial: String { return UntranslatedL10n.tr("Untranslated", "screen_settings_terminology_imperial") }
+  /// 通俗版
+  internal static var screenSettingsTerminologyPlain: String { return UntranslatedL10n.tr("Untranslated", "screen_settings_terminology_plain") }
+  /// 御案体语言
+  internal static var screenSettingsTerminologyTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_settings_terminology_title") }
   /// 本案暂无差事
   internal static var screenTaskPanelEmpty: String { return UntranslatedL10n.tr("Untranslated", "screen_task_panel_empty") }
   /// 在办

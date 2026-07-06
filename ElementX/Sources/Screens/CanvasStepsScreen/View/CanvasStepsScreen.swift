@@ -21,7 +21,7 @@ struct CanvasStepsScreen: View {
             
             if context.viewState.threadRootEventID != nil {
                 Section {
-                    ListRow(label: .default(title: UntranslatedL10n.screenCanvasStepsViewThread, icon: \.threads),
+                    ListRow(label: .default(title: context.viewState.terminology.viewThread, icon: \.threads),
                             kind: .button {
                                 context.send(viewAction: .viewThread)
                             })
@@ -109,6 +109,7 @@ struct CanvasStepsScreen_Previews: PreviewProvider, TestablePreview {
                                    steps: steps,
                                    taskID: "task-preview",
                                    threadRootEventID: threadRootEventID,
-                                   roomProxy: JoinedRoomProxyMock(.init(id: "1")))
+                                   roomProxy: JoinedRoomProxyMock(.init(id: "1")),
+                                   appSettings: .volatile())
     }
 }

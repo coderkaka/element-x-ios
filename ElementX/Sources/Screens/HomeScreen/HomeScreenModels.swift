@@ -134,6 +134,9 @@ struct HomeScreenViewState: BindableState {
     /// (the SDK's space graph only surfaces joined spaces) — badges the "全部" chip.
     var hasPendingSpaceInvites = false
     
+    /// Current 御案体/通俗版 vocabulary — see `AppTerminology`.
+    var terminology = AppTerminology(scenario: .imperial)
+    
     var topLevelSpaceFilters: [SpaceServiceFilter] {
         sortSpaceFilters(availableSpaceFilters.filter { $0.level == 0 }, byOrder: spaceFilterOrder)
     }

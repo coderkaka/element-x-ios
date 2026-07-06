@@ -14,7 +14,7 @@ struct AgentTaskPanelScreen: View {
     
     var body: some View {
         content
-            .navigationTitle(UntranslatedL10n.screenTaskPanelTitle)
+            .navigationTitle(context.viewState.terminology.taskPanelTitle)
             .navigationBarTitleDisplayMode(.inline)
     }
     
@@ -38,7 +38,7 @@ struct AgentTaskPanelScreen: View {
                                 })
                     }
                 } header: {
-                    Text(UntranslatedL10n.screenTaskPanelSectionPending)
+                    Text(context.viewState.terminology.sectionPending)
                         .compoundListSectionHeader()
                 }
             }
@@ -49,7 +49,7 @@ struct AgentTaskPanelScreen: View {
                         taskRow(task)
                     }
                 } header: {
-                    Text(UntranslatedL10n.screenTaskPanelSectionActive)
+                    Text(context.viewState.terminology.sectionActive)
                         .compoundListSectionHeader()
                 }
             }
@@ -61,7 +61,7 @@ struct AgentTaskPanelScreen: View {
                             taskRow(task)
                         }
                     } label: {
-                        Text(UntranslatedL10n.screenTaskPanelSectionDone)
+                        Text(context.viewState.terminology.sectionDone)
                             .font(.compound.bodyLG)
                             .foregroundColor(.compound.textPrimary)
                     }
@@ -84,7 +84,7 @@ struct AgentTaskPanelScreen: View {
             CompoundIcon(\.polls, size: .medium, relativeTo: .compound.bodyLG)
                 .foregroundColor(.compound.iconSecondary)
                 .accessibilityHidden(true)
-            Text(UntranslatedL10n.screenTaskPanelEmpty)
+            Text(context.viewState.terminology.taskPanelEmpty)
                 .font(.compound.bodyLG)
                 .foregroundColor(.compound.textSecondary)
                 .multilineTextAlignment(.center)
@@ -159,6 +159,6 @@ struct AgentTaskPanelScreen_Previews: PreviewProvider, TestablePreview {
     }
     
     static func makeViewModel(summary: RoomTaskSummary) -> AgentTaskPanelScreenViewModel {
-        AgentTaskPanelScreenViewModel(summaryPublisher: CurrentValueSubject<RoomTaskSummary, Never>(summary).asCurrentValuePublisher())
+        AgentTaskPanelScreenViewModel(summaryPublisher: CurrentValueSubject<RoomTaskSummary, Never>(summary).asCurrentValuePublisher(), appSettings: .volatile())
     }
 }

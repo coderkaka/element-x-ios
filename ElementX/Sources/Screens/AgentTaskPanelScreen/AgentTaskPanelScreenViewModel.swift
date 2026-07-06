@@ -16,8 +16,8 @@ class AgentTaskPanelScreenViewModel: AgentTaskPanelScreenViewModelType, AgentTas
         actionsSubject.eraseToAnyPublisher()
     }
     
-    init(summaryPublisher: CurrentValuePublisher<RoomTaskSummary, Never>) {
-        super.init(initialViewState: AgentTaskPanelScreenViewState())
+    init(summaryPublisher: CurrentValuePublisher<RoomTaskSummary, Never>, appSettings: AppSettings) {
+        super.init(initialViewState: AgentTaskPanelScreenViewState(terminology: .init(scenario: appSettings.terminologyScenario)))
         
         // No queue hop: the timeline publishes on the main actor and the synchronous
         // initial emission populates state before the first render (previews rely on this).
@@ -27,6 +27,12 @@ class AgentTaskPanelScreenViewModel: AgentTaskPanelScreenViewModelType, AgentTas
                 state.pendingChoices = summary.pendingChoices
                 state.activeTasks = summary.activeTasks
                 state.doneTasks = summary.doneTasks
+            }
+            .store(in: &cancellables)
+        
+        appSettings.terminologyScenarioPublisher
+            .sink { [weak self] scenario in
+                self?.state.terminology = .init(scenario: scenario)
             }
             .store(in: &cancellables)
     }

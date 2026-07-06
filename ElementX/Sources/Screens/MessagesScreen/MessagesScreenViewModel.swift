@@ -23,12 +23,18 @@ class MessagesScreenViewModel: MessagesScreenViewModelType, MessagesScreenViewMo
         self.roomSummaryProvider = roomSummaryProvider
         self.appSettings = appSettings
         
-        super.init(initialViewState: MessagesScreenViewState(), mediaProvider: mediaProvider)
+        super.init(initialViewState: MessagesScreenViewState(terminology: .init(scenario: appSettings.terminologyScenario)), mediaProvider: mediaProvider)
         
         roomSummaryProvider.roomListPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] summaries in
                 self?.updateRooms(with: summaries)
+            }
+            .store(in: &cancellables)
+        
+        appSettings.terminologyScenarioPublisher
+            .sink { [weak self] scenario in
+                self?.state.terminology = .init(scenario: scenario)
             }
             .store(in: &cancellables)
     }

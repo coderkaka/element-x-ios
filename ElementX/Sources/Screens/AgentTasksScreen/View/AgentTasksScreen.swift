@@ -19,7 +19,7 @@ struct AgentTasksScreen: View {
                 taskList
             }
         }
-        .navigationTitle(UntranslatedL10n.screenHomeTabTasks)
+        .navigationTitle(context.viewState.terminology.tabTasks)
     }
     
     private var taskList: some View {
@@ -30,7 +30,7 @@ struct AgentTasksScreen: View {
                         taskRow(task)
                     }
                 } header: {
-                    Text(UntranslatedL10n.screenAgentTasksSectionActive)
+                    Text(context.viewState.terminology.sectionActive)
                         .compoundListSectionHeader()
                 }
             }
@@ -41,7 +41,7 @@ struct AgentTasksScreen: View {
                         taskRow(task)
                     }
                 } header: {
-                    Text(UntranslatedL10n.screenAgentTasksSectionDone)
+                    Text(context.viewState.terminology.sectionDone)
                         .compoundListSectionHeader()
                 }
             }
@@ -63,7 +63,7 @@ struct AgentTasksScreen: View {
             CompoundIcon(\.polls, size: .medium, relativeTo: .compound.bodyLG)
                 .foregroundColor(.compound.iconSecondary)
                 .accessibilityHidden(true)
-            Text(UntranslatedL10n.screenAgentTasksEmpty)
+            Text(context.viewState.terminology.agentTasksEmpty)
                 .font(.compound.bodyLG)
                 .foregroundColor(.compound.textSecondary)
                 .multilineTextAlignment(.center)
@@ -131,6 +131,6 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
     static func makeViewModel(tasks: [AgentTaskSummary]) -> AgentTasksScreenViewModel {
         let indexService = AgentTaskIndexServiceMock()
         indexService.underlyingTasksPublisher = .init(tasks)
-        return AgentTasksScreenViewModel(agentTaskIndexService: indexService)
+        return AgentTasksScreenViewModel(agentTaskIndexService: indexService, appSettings: .volatile())
     }
 }

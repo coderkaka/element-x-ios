@@ -16,6 +16,7 @@ struct HomeScreenRoomCell: View {
     
     let room: HomeScreenRoom
     var roomListActivityVisibility: RoomListActivityVisibility = .current
+    var terminology: AppTerminology = .init(scenario: .imperial)
     let isSelected: Bool
     let mediaProvider: MediaProviderProtocol!
     let action: (HomeScreenViewAction) -> Void
@@ -134,11 +135,11 @@ struct HomeScreenRoomCell: View {
                 if room.pendingChoiceCount > 0 {
                     CompoundIcon(\.error, size: .xSmall, relativeTo: .compound.bodySM)
                         .foregroundColor(.compound.iconCriticalPrimary)
-                        .accessibilityLabel(UntranslatedL10n.screenTaskPanelSectionPending)
+                        .accessibilityLabel(terminology.sectionPending)
                 }
                 
                 if room.totalTaskCount > 0 {
-                    Text(UntranslatedL10n.screenHomeRoomTaskProgress(String(room.doneTaskCount), String(room.totalTaskCount)))
+                    Text(terminology.roomTaskProgress(done: String(room.doneTaskCount), total: String(room.totalTaskCount)))
                         .font(.compound.bodyXS)
                         .foregroundColor(.compound.textSecondary)
                 }

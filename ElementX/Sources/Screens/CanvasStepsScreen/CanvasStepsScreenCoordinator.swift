@@ -14,6 +14,7 @@ struct CanvasStepsScreenCoordinatorParameters {
     let taskID: String
     let threadRootEventID: String?
     let roomProxy: JoinedRoomProxyProtocol
+    let appSettings: AppSettings
 }
 
 enum CanvasStepsScreenCoordinatorAction {
@@ -38,7 +39,8 @@ final class CanvasStepsScreenCoordinator: CoordinatorProtocol {
                                                steps: parameters.steps,
                                                taskID: parameters.taskID,
                                                threadRootEventID: parameters.threadRootEventID,
-                                               roomProxy: parameters.roomProxy)
+                                               roomProxy: parameters.roomProxy,
+                                               appSettings: parameters.appSettings)
     }
     
     func start() {

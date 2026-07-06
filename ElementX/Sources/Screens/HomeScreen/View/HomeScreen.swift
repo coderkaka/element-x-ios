@@ -22,7 +22,7 @@ struct HomeScreen: View {
             .alert(item: $context.leaveRoomAlertItem,
                    actions: leaveRoomAlertActions,
                    message: leaveRoomAlertMessage)
-            .navigationTitle(UntranslatedL10n.screenHomeTitle)
+            .navigationTitle(context.viewState.terminology.homeTitle)
             .toolbar { toolbar }
             .background(Color.compound.bgCanvasDefault.ignoresSafeArea())
             .track(screen: .Home)
@@ -38,7 +38,7 @@ struct HomeScreen: View {
             Form {
                 Section {
                     ForEach(context.viewState.pendingChoices) { pendingChoice in
-                        ListRow(label: .plain(title: pendingChoice.question ?? UntranslatedL10n.screenHomePendingChoicesSheetTitle,
+                        ListRow(label: .plain(title: pendingChoice.question ?? context.viewState.terminology.pendingChoicesSheetTitle,
                                               description: pendingChoice.roomName),
                                 kind: .button {
                                     context.send(viewAction: .selectPendingChoice(roomID: pendingChoice.roomID))
@@ -47,7 +47,7 @@ struct HomeScreen: View {
                 }
             }
             .compoundList()
-            .navigationTitle(UntranslatedL10n.screenHomePendingChoicesSheetTitle)
+            .navigationTitle(context.viewState.terminology.pendingChoicesSheetTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {

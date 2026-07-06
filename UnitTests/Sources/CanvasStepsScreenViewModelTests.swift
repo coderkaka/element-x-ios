@@ -51,6 +51,7 @@ struct CanvasStepsScreenViewModelTests {
                                    steps: [CanvasStep(id: "s1", label: "Read existing code", status: .done)],
                                    taskID: "task-1",
                                    threadRootEventID: threadRootEventID,
-                                   roomProxy: JoinedRoomProxyMock(.init(id: "1")))
+                                   roomProxy: JoinedRoomProxyMock(.init(id: "1")),
+                                   appSettings: .volatile())
     }
 }

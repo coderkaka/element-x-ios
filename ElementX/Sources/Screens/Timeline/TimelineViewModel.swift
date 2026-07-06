@@ -118,11 +118,18 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
                                                        jumpToReadMarkerEnabled: appSettings.jumpToReadMarkerEnabled,
                                                        hasPredecessor: roomProxy.predecessorRoom != nil,
                                                        pinnedEventIDs: roomProxy.infoPublisher.value.pinnedEventIDs,
+                                                       terminology: .init(scenario: appSettings.terminologyScenario),
                                                        emojiProvider: emojiProvider,
                                                        linkMetadataProvider: hideTimelineMedia ? nil : linkMetadataProvider,
                                                        mapTilerSettings: appSettings.mapTilerSettings.publisher.value,
                                                        bindings: .init(reactionsCollapsed: [:])),
                    mediaProvider: userSession.mediaProvider)
+        
+        appSettings.terminologyScenarioPublisher
+            .sink { [weak self] scenario in
+                self?.state.terminology = .init(scenario: scenario)
+            }
+            .store(in: &cancellables)
         
         if focussedEventID != nil {
             // The timeline controller will start loading a detached timeline.

@@ -11,6 +11,7 @@ struct AgentTaskPanelScreenViewState: BindableState {
     var pendingChoices: [RoomTaskSummary.PendingChoice] = []
     var activeTasks: [RoomTaskSummary.Task] = []
     var doneTasks: [RoomTaskSummary.Task] = []
+    var terminology = AppTerminology(scenario: .imperial)
     
     var isEmpty: Bool {
         pendingChoices.isEmpty && activeTasks.isEmpty && doneTasks.isEmpty

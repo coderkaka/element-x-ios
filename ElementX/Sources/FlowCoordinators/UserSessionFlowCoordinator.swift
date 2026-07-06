@@ -102,13 +102,13 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                                                           agentTaskIndexService: agentTaskIndexService,
                                                           agentProjectIndexService: agentProjectIndexService,
                                                           flowParameters: flowParameters)
-        chatsTabDetails = .init(tag: HomeTab.chats, title: UntranslatedL10n.screenHomeTabProjects, icon: \.chat, selectedIcon: \.chatSolid)
+        chatsTabDetails = .init(tag: HomeTab.chats, title: AppTerminology(scenario: flowParameters.appSettings.terminologyScenario).tabProjects, icon: \.chat, selectedIcon: \.chatSolid)
         chatsTabDetails.navigationSplitCoordinator = chatsSplitCoordinator
         
         let tasksSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
-        agentTasksScreenCoordinator = AgentTasksScreenCoordinator(parameters: .init(agentTaskIndexService: agentTaskIndexService))
+        agentTasksScreenCoordinator = AgentTasksScreenCoordinator(parameters: .init(agentTaskIndexService: agentTaskIndexService, appSettings: flowParameters.appSettings))
         tasksSplitCoordinator.setSidebarCoordinator(agentTasksScreenCoordinator)
-        tasksTabDetails = .init(tag: HomeTab.tasks, title: UntranslatedL10n.screenHomeTabTasks, icon: \.listBulleted, selectedIcon: \.listBulleted)
+        tasksTabDetails = .init(tag: HomeTab.tasks, title: AppTerminology(scenario: flowParameters.appSettings.terminologyScenario).tabTasks, icon: \.listBulleted, selectedIcon: \.listBulleted)
         tasksTabDetails.navigationSplitCoordinator = tasksSplitCoordinator
         
         let messagesSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
@@ -116,7 +116,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                                                                                 appSettings: flowParameters.appSettings,
                                                                                 mediaProvider: flowParameters.userSession.mediaProvider))
         messagesSplitCoordinator.setSidebarCoordinator(messagesScreenCoordinator)
-        messagesTabDetails = .init(tag: HomeTab.messages, title: UntranslatedL10n.screenHomeTabMessages, icon: \.userProfile, selectedIcon: \.userProfileSolid)
+        messagesTabDetails = .init(tag: HomeTab.messages, title: AppTerminology(scenario: flowParameters.appSettings.terminologyScenario).tabMessages, icon: \.userProfile, selectedIcon: \.userProfileSolid)
         messagesTabDetails.navigationSplitCoordinator = messagesSplitCoordinator
         
         if flowParameters.appSettings.globalSearchEnabled, #available(iOS 26.0, *) {
@@ -127,7 +127,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
             
             searchScreenCoordinator = searchCoordinator
             searchTabNavigationStackCoordinator = searchStackCoordinator
-            searchTabDetails = .init(tag: HomeTab.search, title: UntranslatedL10n.screenHomeTabSearch, icon: \.search, selectedIcon: \.search, isSearch: true)
+            searchTabDetails = .init(tag: HomeTab.search, title: AppTerminology(scenario: flowParameters.appSettings.terminologyScenario).tabSearch, icon: \.search, selectedIcon: \.search, isSearch: true)
         } else {
             searchScreenCoordinator = nil
             searchTabNavigationStackCoordinator = nil
@@ -246,6 +246,17 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     }
     
     private func setupObservers() {
+        flowParameters.appSettings.terminologyScenarioPublisher
+            .sink { [weak self] scenario in
+                guard let self else { return }
+                let terminology = AppTerminology(scenario: scenario)
+                chatsTabDetails.title = terminology.tabProjects
+                tasksTabDetails.title = terminology.tabTasks
+                messagesTabDetails.title = terminology.tabMessages
+                searchTabDetails?.title = terminology.tabSearch
+            }
+            .store(in: &cancellables)
+        
         searchScreenCoordinator?.actionsPublisher
             .sink { [weak self] action in
                 guard let self else { return }

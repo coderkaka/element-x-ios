@@ -16,8 +16,8 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         actionsSubject.eraseToAnyPublisher()
     }
     
-    init(agentTaskIndexService: AgentTaskIndexServiceProtocol) {
-        super.init(initialViewState: AgentTasksScreenViewState())
+    init(agentTaskIndexService: AgentTaskIndexServiceProtocol, appSettings: AppSettings) {
+        super.init(initialViewState: AgentTasksScreenViewState(terminology: .init(scenario: appSettings.terminologyScenario)))
         
         // No queue hop: the service publishes on the main actor and the synchronous
         // initial emission populates state before the first render (previews rely on this).
@@ -26,6 +26,12 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
                 guard let self else { return }
                 state.unresolvedTasks = tasks.filter { !$0.isResolved }
                 state.resolvedTasks = tasks.filter(\.isResolved)
+            }
+            .store(in: &cancellables)
+        
+        appSettings.terminologyScenarioPublisher
+            .sink { [weak self] scenario in
+                self?.state.terminology = .init(scenario: scenario)
             }
             .store(in: &cancellables)
     }

@@ -15,6 +15,7 @@ struct CanvasStepsScreenViewState: BindableState {
     var steps: [CanvasStep]
     /// The task's work thread, when it has one — shows the 查看实录 row.
     let threadRootEventID: String?
+    var terminology = AppTerminology(scenario: .imperial)
 }
 
 enum CanvasStepsScreenViewAction {

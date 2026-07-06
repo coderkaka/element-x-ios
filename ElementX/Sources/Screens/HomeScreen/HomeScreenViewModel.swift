@@ -60,6 +60,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         
         super.init(initialViewState: .init(userID: userSession.clientProxy.userID,
                                            spaceFilterOrder: appSettings.spaceFilterOrder,
+                                           terminology: .init(scenario: appSettings.terminologyScenario),
                                            bindings: .init(filtersState: .init(appSettings: appSettings))),
                    mediaProvider: userSession.mediaProvider)
         
@@ -139,6 +140,12 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             .sink { [weak self] value in
                 self?.state.roomListActivityVisibility = value
                 self?.updateRooms()
+            }
+            .store(in: &cancellables)
+        
+        appSettings.terminologyScenarioPublisher
+            .sink { [weak self] scenario in
+                self?.state.terminology = .init(scenario: scenario)
             }
             .store(in: &cancellables)
         

@@ -14,6 +14,7 @@ import SwiftUI
 /// there's more than one — see `HomeScreenViewModel.process(viewAction:)`.
 struct PendingChoicesStripView: View {
     let count: Int
+    let terminology: AppTerminology
     let onTap: () -> Void
     
     var body: some View {
@@ -22,7 +23,7 @@ struct PendingChoicesStripView: View {
                 CompoundIcon(\.error, size: .medium, relativeTo: .compound.bodyMDSemibold)
                     .foregroundColor(.compound.iconCriticalPrimary)
                     .accessibilityHidden(true)
-                Text(UntranslatedL10n.screenHomePendingChoicesStrip(String(count)))
+                Text(terminology.pendingChoicesStrip(count: String(count)))
                     .font(.compound.bodyMDSemibold)
                     .foregroundColor(.compound.textPrimary)
                 Spacer()
@@ -39,11 +40,11 @@ struct PendingChoicesStripView: View {
 
 struct PendingChoicesStripView_Previews: PreviewProvider, TestablePreview {
     static var previews: some View {
-        PendingChoicesStripView(count: 1) { }
+        PendingChoicesStripView(count: 1, terminology: .init(scenario: .imperial)) { }
             .previewLayout(.sizeThatFits)
             .previewDisplayName("Single pending")
         
-        PendingChoicesStripView(count: 3) { }
+        PendingChoicesStripView(count: 3, terminology: .init(scenario: .imperial)) { }
             .previewLayout(.sizeThatFits)
             .previewDisplayName("Multiple pending")
     }

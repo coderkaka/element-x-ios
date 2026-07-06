@@ -11,7 +11,7 @@ import SFSafeSymbols
 import SwiftUI
 
 struct SettingsScreen: View {
-    let context: SettingsScreenViewModel.Context
+    @Bindable var context: SettingsScreenViewModel.Context
     
     private var shouldHideManageAccountSection: Bool {
         context.viewState.accountProfileURL == nil &&
@@ -139,6 +139,10 @@ struct SettingsScreen: View {
     
     private var generalSection: some View {
         Section {
+            ListRow(label: .plain(title: UntranslatedL10n.screenSettingsTerminologyTitle),
+                    kind: .picker(selection: $context.terminologyScenario,
+                                  items: TerminologyScenario.allCases.map { (title: $0.settingsName, tag: $0) }))
+            
             ListRow(label: .default(title: L10n.commonAdvancedSettings,
                                     icon: \.settings),
                     kind: .navigationLink {
@@ -281,5 +285,14 @@ struct SettingsScreen_Previews: PreviewProvider, TestablePreview {
                                        appSettings: .volatile(),
                                        isBugReportServiceEnabled: isBugReportServiceEnabled,
                                        isInSecondaryWindow: false)
+    }
+}
+
+private extension TerminologyScenario {
+    var settingsName: String {
+        switch self {
+        case .imperial: UntranslatedL10n.screenSettingsTerminologyImperial
+        case .plain: UntranslatedL10n.screenSettingsTerminologyPlain
+        }
     }
 }

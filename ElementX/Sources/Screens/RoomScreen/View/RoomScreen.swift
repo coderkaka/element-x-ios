@@ -148,7 +148,7 @@ struct RoomScreen: View {
     }
     
     private var roomTaskProgressChip: some View {
-        RoomTaskProgressChipView(summary: timelineContext.viewState.roomTaskSummary) {
+        RoomTaskProgressChipView(summary: timelineContext.viewState.roomTaskSummary, terminology: timelineContext.viewState.terminology) {
             timelineContext.send(viewAction: .tappedRoomTaskChip)
         }
     }

@@ -13,6 +13,7 @@ struct SpaceTabBarView: View {
     let filters: [SpaceServiceFilter]
     let selectedFilter: SpaceServiceFilter?
     let hasPendingSpaceInvites: Bool
+    let terminology: AppTerminology
     let mediaProvider: MediaProviderProtocol!
     let action: (SpaceServiceFilter?) -> Void
     let onManageTapped: () -> Void
@@ -58,7 +59,7 @@ struct SpaceTabBarView: View {
                 CompoundIcon(\.settings, size: .small, relativeTo: .compound.bodyMD)
                     .foregroundColor(.compound.iconSecondary)
             }
-            .accessibilityLabel(UntranslatedL10n.actionManageSpaces)
+            .accessibilityLabel(terminology.manageSpaces)
             .padding(.trailing, 16)
         }
         .padding(.leading, 16)
@@ -124,6 +125,7 @@ struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: nil,
                             hasPendingSpaceInvites: false,
+                            terminology: .init(scenario: .imperial),
                             mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
             
             Divider()
@@ -131,6 +133,7 @@ struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: mockFilters.first,
                             hasPendingSpaceInvites: false,
+                            terminology: .init(scenario: .imperial),
                             mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
             
             Divider()
@@ -138,6 +141,7 @@ struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
             SpaceTabBarView(filters: [],
                             selectedFilter: nil,
                             hasPendingSpaceInvites: false,
+                            terminology: .init(scenario: .imperial),
                             mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
             
             Divider()
@@ -145,6 +149,7 @@ struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
             SpaceTabBarView(filters: mockFilters,
                             selectedFilter: nil,
                             hasPendingSpaceInvites: true,
+                            terminology: .init(scenario: .imperial),
                             mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
         }
         .background(Color.compound.bgCanvasDefault)

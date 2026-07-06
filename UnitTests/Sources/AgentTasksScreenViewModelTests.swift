@@ -72,6 +72,6 @@ struct AgentTasksScreenViewModelTests {
         let tasksSubject = CurrentValueSubject<[AgentTaskSummary], Never>(tasks)
         let indexService = AgentTaskIndexServiceMock()
         indexService.underlyingTasksPublisher = tasksSubject.asCurrentValuePublisher()
-        return (AgentTasksScreenViewModel(agentTaskIndexService: indexService), tasksSubject)
+        return (AgentTasksScreenViewModel(agentTaskIndexService: indexService, appSettings: .volatile()), tasksSubject)
     }
 }

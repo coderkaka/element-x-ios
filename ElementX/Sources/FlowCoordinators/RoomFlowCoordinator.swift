@@ -810,7 +810,8 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                                              steps: canvasItem.content.steps,
                                              taskID: taskID,
                                              threadRootEventID: nil,
-                                             roomProxy: roomProxy),
+                                             roomProxy: roomProxy,
+                                             appSettings: flowParameters.appSettings),
                            animated: animated)
     }
     
@@ -822,7 +823,8 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                                              steps: task.steps,
                                              taskID: task.taskID,
                                              threadRootEventID: task.threadRootEventID,
-                                             roomProxy: roomProxy),
+                                             roomProxy: roomProxy,
+                                             appSettings: flowParameters.appSettings),
                            animated: animated)
     }
     
@@ -853,7 +855,7 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
             return
         }
         
-        let coordinator = AgentTaskPanelScreenCoordinator(parameters: .init(summaryPublisher: roomScreenCoordinator.roomTaskSummaryPublisher))
+        let coordinator = AgentTaskPanelScreenCoordinator(parameters: .init(summaryPublisher: roomScreenCoordinator.roomTaskSummaryPublisher, appSettings: flowParameters.appSettings))
         
         coordinator.actionsPublisher.sink { [weak self] action in
             guard let self else { return }

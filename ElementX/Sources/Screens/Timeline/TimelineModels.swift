@@ -151,6 +151,9 @@ struct TimelineViewState: BindableState {
     /// in this timeline. Drives `RoomTaskProgressChipView`'s visibility in `RoomScreen`.
     var roomTaskSummary = RoomTaskSummary()
     
+    /// Current 御案体/通俗版 vocabulary — see `AppTerminology`.
+    var terminology = AppTerminology(scenario: .imperial)
+    
     /// A closure providing the associated audio player state for an item in the timeline.
     var audioPlayerStateProvider: (@MainActor (_ itemId: TimelineItemIdentifier) -> AudioPlayerState?)?
     

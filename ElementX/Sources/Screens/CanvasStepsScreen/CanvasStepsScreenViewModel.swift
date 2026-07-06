@@ -23,11 +23,14 @@ class CanvasStepsScreenViewModel: CanvasStepsScreenViewModelType, CanvasStepsScr
     /// current progress then comes from the task's room state event and is kept fresh while
     /// the screen is open (custom state event types aren't observable directly, so any room
     /// activity re-reads the state — same approach as `TimelineViewModel`).
-    init(title: String, steps: [CanvasStep], taskID: String, threadRootEventID: String?, roomProxy: JoinedRoomProxyProtocol) {
+    init(title: String, steps: [CanvasStep], taskID: String, threadRootEventID: String?, roomProxy: JoinedRoomProxyProtocol, appSettings: AppSettings) {
         self.taskID = taskID
         self.roomProxy = roomProxy
         
-        super.init(initialViewState: CanvasStepsScreenViewState(title: title, steps: steps, threadRootEventID: threadRootEventID))
+        super.init(initialViewState: CanvasStepsScreenViewState(title: title,
+                                                                steps: steps,
+                                                                threadRootEventID: threadRootEventID,
+                                                                terminology: .init(scenario: appSettings.terminologyScenario)))
         
         refreshSteps()
         
@@ -35,6 +38,12 @@ class CanvasStepsScreenViewModel: CanvasStepsScreenViewModelType, CanvasStepsScr
             .debounce(for: .seconds(0.3), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.refreshSteps()
+            }
+            .store(in: &cancellables)
+        
+        appSettings.terminologyScenarioPublisher
+            .sink { [weak self] scenario in
+                self?.state.terminology = .init(scenario: scenario)
             }
             .store(in: &cancellables)
     }

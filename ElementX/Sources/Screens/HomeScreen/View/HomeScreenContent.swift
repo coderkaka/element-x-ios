@@ -120,6 +120,7 @@ struct HomeScreenContent: View {
                     SpaceTabBarView(filters: context.viewState.topLevelSpaceFilters,
                                     selectedFilter: context.viewState.selectedSpaceFilter,
                                     hasPendingSpaceInvites: context.viewState.hasPendingSpaceInvites,
+                                    terminology: context.viewState.terminology,
                                     mediaProvider: context.mediaProvider) { filter in
                         context.send(viewAction: .selectSpaceFilter(filter))
                     } onManageTapped: {
@@ -131,7 +132,7 @@ struct HomeScreenContent: View {
                 }
                 
                 if !context.viewState.pendingChoices.isEmpty {
-                    PendingChoicesStripView(count: context.viewState.pendingChoices.count) {
+                    PendingChoicesStripView(count: context.viewState.pendingChoices.count, terminology: context.viewState.terminology) {
                         context.send(viewAction: .tappedPendingChoicesStrip)
                     }
                     Divider()

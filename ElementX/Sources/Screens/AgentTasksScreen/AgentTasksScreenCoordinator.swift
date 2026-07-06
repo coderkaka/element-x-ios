@@ -10,6 +10,7 @@ import SwiftUI
 
 struct AgentTasksScreenCoordinatorParameters {
     let agentTaskIndexService: AgentTaskIndexServiceProtocol
+    let appSettings: AppSettings
 }
 
 enum AgentTasksScreenCoordinatorAction {
@@ -29,7 +30,7 @@ final class AgentTasksScreenCoordinator: CoordinatorProtocol {
     
     init(parameters: AgentTasksScreenCoordinatorParameters) {
         self.parameters = parameters
-        viewModel = AgentTasksScreenViewModel(agentTaskIndexService: parameters.agentTaskIndexService)
+        viewModel = AgentTasksScreenViewModel(agentTaskIndexService: parameters.agentTaskIndexService, appSettings: parameters.appSettings)
     }
     
     func start() {

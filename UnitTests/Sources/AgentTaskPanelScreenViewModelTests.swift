@@ -96,6 +96,6 @@ struct AgentTaskPanelScreenViewModelTests {
     
     private func makeViewModel(summary: RoomTaskSummary) -> (AgentTaskPanelScreenViewModel, CurrentValueSubject<RoomTaskSummary, Never>) {
         let summarySubject = CurrentValueSubject<RoomTaskSummary, Never>(summary)
-        return (AgentTaskPanelScreenViewModel(summaryPublisher: summarySubject.asCurrentValuePublisher()), summarySubject)
+        return (AgentTaskPanelScreenViewModel(summaryPublisher: summarySubject.asCurrentValuePublisher(), appSettings: .volatile()), summarySubject)
     }
 }

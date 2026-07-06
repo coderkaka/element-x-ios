@@ -324,6 +324,11 @@ final nonisolated class AppSettings: @unchecked Sendable {
     @UserPreference(defaultValue: [String]())
     var spaceFilterOrder: [String]
     
+    /// Which vocabulary the agent UI speaks in (御案体 imperial-court terms, or plain terms).
+    /// Global for the whole app — see `AppTerminology`.
+    @UserPreference(defaultValue: TerminologyScenario.imperial)
+    var terminologyScenario: TerminologyScenario
+    
     // MARK: - Room Screen
     
     @UserPreference(defaultValue: AppBuildType.current == .debug)

@@ -19,13 +19,13 @@ struct MessagesScreen: View {
                 roomList
             }
         }
-        .navigationTitle(UntranslatedL10n.screenHomeTabMessages)
+        .navigationTitle(context.viewState.terminology.tabMessages)
     }
     
     private var roomList: some View {
         List {
             ForEach(context.viewState.rooms) { room in
-                HomeScreenRoomCell(room: room, isSelected: false, mediaProvider: context.mediaProvider) { action in
+                HomeScreenRoomCell(room: room, terminology: context.viewState.terminology, isSelected: false, mediaProvider: context.mediaProvider) { action in
                     if case .selectRoom(let roomIdentifier) = action {
                         context.send(viewAction: .selectRoom(roomIdentifier: roomIdentifier))
                     }
@@ -42,7 +42,7 @@ struct MessagesScreen: View {
             CompoundIcon(\.chat, size: .medium, relativeTo: .compound.bodyLG)
                 .foregroundColor(.compound.iconSecondary)
                 .accessibilityHidden(true)
-            Text(UntranslatedL10n.screenMessagesEmpty)
+            Text(context.viewState.terminology.messagesEmpty)
                 .font(.compound.bodyLG)
                 .foregroundColor(.compound.textSecondary)
                 .multilineTextAlignment(.center)

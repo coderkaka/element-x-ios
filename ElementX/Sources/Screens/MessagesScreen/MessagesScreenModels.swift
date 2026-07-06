@@ -9,6 +9,7 @@ import Foundation
 
 struct MessagesScreenViewState: BindableState {
     var rooms: [HomeScreenRoom] = []
+    var terminology = AppTerminology(scenario: .imperial)
 }
 
 enum MessagesScreenViewAction {

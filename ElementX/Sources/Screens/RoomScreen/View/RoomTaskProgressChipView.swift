@@ -21,6 +21,7 @@ extension RoomTaskSummary {
 /// counts of active tasks and pending choices. Tapping opens the task panel.
 struct RoomTaskProgressChipView: View {
     let summary: RoomTaskSummary
+    var terminology: AppTerminology = .init(scenario: .imperial)
     let onTap: () -> Void
     
     var body: some View {
@@ -67,12 +68,12 @@ struct RoomTaskProgressChipView: View {
         
         // Pending-only rooms skip the "0 件差事在办" segment — a bare pending count reads naturally.
         if summary.activeTasks.isEmpty {
-            return UntranslatedL10n.screenRoomTaskChipPendingOnly(String(summary.pendingChoices.count))
+            return terminology.roomTaskChipPendingOnly(count: String(summary.pendingChoices.count))
         }
         
-        var title = UntranslatedL10n.screenRoomTaskChipMulti(String(summary.activeTasks.count))
+        var title = terminology.roomTaskChipMulti(count: String(summary.activeTasks.count))
         if !summary.pendingChoices.isEmpty {
-            title += UntranslatedL10n.screenRoomTaskChipPendingSuffix(String(summary.pendingChoices.count))
+            title += terminology.roomTaskChipPendingSuffix(count: String(summary.pendingChoices.count))
         }
         return title
     }

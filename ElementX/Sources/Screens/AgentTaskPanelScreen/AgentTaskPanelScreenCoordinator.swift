@@ -10,6 +10,7 @@ import SwiftUI
 
 struct AgentTaskPanelScreenCoordinatorParameters {
     let summaryPublisher: CurrentValuePublisher<RoomTaskSummary, Never>
+    let appSettings: AppSettings
 }
 
 enum AgentTaskPanelScreenCoordinatorAction {
@@ -30,7 +31,7 @@ final class AgentTaskPanelScreenCoordinator: CoordinatorProtocol {
     
     init(parameters: AgentTaskPanelScreenCoordinatorParameters) {
         self.parameters = parameters
-        viewModel = AgentTaskPanelScreenViewModel(summaryPublisher: parameters.summaryPublisher)
+        viewModel = AgentTaskPanelScreenViewModel(summaryPublisher: parameters.summaryPublisher, appSettings: parameters.appSettings)
     }
     
     func start() {
