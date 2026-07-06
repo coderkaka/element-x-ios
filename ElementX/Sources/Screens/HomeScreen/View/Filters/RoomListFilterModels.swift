@@ -64,9 +64,15 @@ enum RoomListFilter: Int, CaseIterable, Identifiable {
     var rustFilter: RoomListEntriesDynamicFilterKind {
         switch self {
         case .people:
-            return .all(filters: [.category(expect: .people), .joined])
+            // Same fix as `.rooms` below: `.joined` alone would exclude a pending DM invite
+            // outright — 书信 should still surface an unaccepted DM invite, not just accepted ones.
+            return .all(filters: [.category(expect: .people), .any(filters: [.joined, .invite])])
         case .rooms:
-            return .all(filters: [.category(expect: .group), .joined])
+            // `.joined` alone would exclude ANY invited-but-not-yet-joined group room or 道
+            // (Space) outright — a Space's category already resolves to `.group` (only DMs
+            // resolve to `.people`), so `.any([.joined, .invite])` covers both joined rooms and
+            // pending invites (room or space) without re-admitting DMs or left rooms.
+            return .all(filters: [.category(expect: .group), .any(filters: [.joined, .invite])])
         case .unreads:
             return .all(filters: [.unread, .joined])
         case .favourites:

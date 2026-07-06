@@ -22,6 +22,10 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     private let userIndicatorController: UserIndicatorControllerProtocol
     
     private let roomSummaryProvider: RoomSummaryProviderProtocol?
+    /// Unfiltered (can't be filtered) room list, used specifically for detecting pending 道
+    /// invites — `roomSummaryProvider`'s list is scoped to whichever 道 filter chip is currently
+    /// selected, so a newly-invited unrelated 道 would never show up in it until "全部" is tapped.
+    private let staticRoomSummaryProvider: StaticRoomSummaryProviderProtocol?
     
     private let agentTaskIndexService: AgentTaskIndexServiceProtocol
     private let agentProjectIndexService: AgentProjectIndexServiceProtocol
@@ -57,6 +61,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         spaceFilterSubject = CurrentValueSubject<SpaceServiceFilter?, Never>(nil)
         
         roomSummaryProvider = userSession.clientProxy.roomSummaryProvider
+        staticRoomSummaryProvider = userSession.clientProxy.staticRoomSummaryProvider
         
         super.init(initialViewState: .init(userID: userSession.clientProxy.userID,
                                            spaceFilterOrder: appSettings.spaceFilterOrder,
@@ -153,6 +158,14 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             .removeDuplicates()
             .sink { [weak self] _ in
                 self?.updateRooms()
+                self?.updatePendingSpaceInvites()
+            }
+            .store(in: &cancellables)
+        
+        staticRoomSummaryProvider?.roomListPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updatePendingSpaceInvites()
             }
             .store(in: &cancellables)
         
@@ -232,6 +245,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         setupRoomListSubscriptions()
         
         updateRooms()
+        updatePendingSpaceInvites()
     }
     
     // MARK: - Public
@@ -491,12 +505,6 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         let rest = rooms.filter { $0.pendingChoiceCount == 0 && $0.activeTaskCount == 0 }
         state.rooms = pending + active + rest
         
-        // The space graph behind `spaceFilterPublisher` only surfaces joined spaces, so an invited
-        // 道 never gets a chip — badge the "全部" chip instead so the invite isn't invisible.
-        state.hasPendingSpaceInvites = roomSummaries.contains {
-            $0.isSpace && $0.joinRequestType?.isInvite == true && !seenInvites.contains($0.id)
-        }
-        
         // Cross-room pending-choices strip/sheet: joins ALL pending choices (not just ones whose room
         // is currently in the provider's list — a choice can outlive pagination/filtering), 道-filtered
         // when a space is selected. Room name lookup is best-effort and degrades to nil.
@@ -511,6 +519,20 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                                     eventID: pendingChoice.eventID,
                                     question: pendingChoice.question,
                                     roomName: roomNamesByID[pendingChoice.roomID])
+        }
+    }
+    
+    /// The space graph behind `spaceFilterPublisher` only surfaces joined spaces, so an invited
+    /// 道 never gets a chip — badge the "全部" chip instead so the invite isn't invisible. Deliberately
+    /// reads `staticRoomSummaryProvider` (never filtered) rather than `roomSummaryProvider` (scoped to
+    /// whichever 道 is currently selected) — an invite to an unrelated 道 must still badge "全部" even
+    /// while some other 道's filter is active, not just when "全部" itself is already selected.
+    private func updatePendingSpaceInvites() {
+        guard let staticRoomSummaryProvider else { return }
+        
+        let seenInvites = appSettings.seenInvites
+        state.hasPendingSpaceInvites = staticRoomSummaryProvider.roomListPublisher.value.contains {
+            $0.isSpace && $0.joinRequestType?.isInvite == true && !seenInvites.contains($0.id)
         }
     }
     
