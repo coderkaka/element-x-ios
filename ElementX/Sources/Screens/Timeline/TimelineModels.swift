@@ -82,7 +82,7 @@ enum TimelineViewAction {
     /// `roomTaskSummary` when it already knows about this task, falling back to `itemID`'s own
     /// event ID (and, downstream, the message payload) otherwise.
     case tappedAgentTaskCard(itemID: TimelineItemIdentifier, taskID: String)
-
+    
     /// Reads a room state event and stores its raw JSON in `TimelineViewState.fetchedStateEvents`,
     /// keyed by `StateEventKey(eventType:stateKey:)`, for a view to read back once fetched.
     case fetchStateEvent(eventType: String, stateKey: String)

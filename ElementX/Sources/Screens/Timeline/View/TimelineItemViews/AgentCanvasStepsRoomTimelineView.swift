@@ -11,17 +11,17 @@ import SwiftUI
 
 struct AgentCanvasStepsRoomTimelineView: View {
     let timelineItem: AgentCanvasStepsRoomTimelineItem
-
+    
     @EnvironmentObject private var context: TimelineViewModel.Context
-
+    
     private var content: AgentCanvasStepsRoomTimelineItemContent {
         timelineItem.content
     }
-
+    
     private var title: String {
         content.title.isEmpty ? content.body : content.title
     }
-
+    
     var body: some View {
         TimelineStyler(timelineItem: timelineItem) {
             HStack(spacing: 4) {
