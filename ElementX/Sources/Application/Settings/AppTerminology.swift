@@ -135,4 +135,11 @@ nonisolated struct AppTerminology {
     var metricViewA11yLabel: String {
         pick("查看指标趋势", "查看指标趋势")
     }
+    
+    /// The 政事堂案卡片's副标题 when a room has 2+ concurrent active 标的 — no single one is
+    /// picked as "the" title (that would misrepresent multiple parallel efforts as one), just a
+    /// neutral count. Tapping into the room's 案卷面板 shows which ones.
+    func objectivesInProgress(count: String) -> String {
+        pick("\(count) 个标的并行推进", "\(count) 个目标并行推进")
+    }
 }

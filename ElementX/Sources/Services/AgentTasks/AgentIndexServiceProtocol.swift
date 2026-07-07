@@ -13,6 +13,7 @@ protocol AgentIndexServiceProtocol {
     var tasksPublisher: CurrentValuePublisher<[AgentTaskSummary], Never> { get }
     var projectsPublisher: CurrentValuePublisher<[AgentProjectSummary], Never> { get }
     var pendingChoicesPublisher: CurrentValuePublisher<[AgentPendingChoiceSummary], Never> { get }
+    var objectivesPublisher: CurrentValuePublisher<[AgentObjectiveSummary], Never> { get }
     func start()
     
     /// Fetches a task's `metric` value-over-time history, oldest first, by paginating its

@@ -138,7 +138,16 @@ struct HomeScreenRoomCell: View {
                         .accessibilityLabel(terminology.sectionPending)
                 }
                 
-                if room.totalTaskCount > 0 {
+                if let objectiveDisplayText {
+                    // A room's active 标的(s) take priority over the plain 差事 progress
+                    // caption — see `AppTerminology.objectivesInProgress` and
+                    // `element-agent-protocol.md` §3.4. Falls back to 差事 progress below when
+                    // the room has no active objective (old-protocol rooms, or none set up yet).
+                    Text(objectiveDisplayText)
+                        .font(.compound.bodyXS)
+                        .foregroundColor(.compound.textSecondary)
+                        .lineLimit(1)
+                } else if room.totalTaskCount > 0 {
                     if terminology.prefersProgressBar {
                         taskProgressBar
                     } else {
@@ -174,6 +183,20 @@ struct HomeScreenRoomCell: View {
                 }
             }
             .foregroundColor(room.isHighlighted ? .compound.iconAccentTertiary : .compound.iconQuaternary)
+        }
+    }
+    
+    /// 1 active 标的 → show its title (unambiguous). 2+ → a neutral count, not a single picked
+    /// title — picking one would misrepresent parallel efforts as a single storyline. 0 → nil,
+    /// caller falls back to plain 差事 progress.
+    private var objectiveDisplayText: String? {
+        switch room.activeObjectiveTitles.count {
+        case 0:
+            nil
+        case 1:
+            room.activeObjectiveTitles[0]
+        default:
+            terminology.objectivesInProgress(count: String(room.activeObjectiveTitles.count))
         }
     }
     
@@ -252,6 +275,10 @@ struct HomeScreenRoomCell_Previews: PreviewProvider, TestablePreview {
     static let projectRoomWithTasks = makeAgentRoom(name: "Foundation Archive", isProject: true, activeTaskCount: 2, doneTaskCount: 3)
     static let roomWithPendingChoice = makeAgentRoom(name: "Second Foundation Council", pendingChoiceCount: 1)
     static let plainRoom = makeAgentRoom(name: "Casual Chat")
+    static let roomWithSingleObjective = makeAgentRoom(name: "Foundation Archive", isProject: true, activeTaskCount: 2, doneTaskCount: 3,
+                                                       activeObjectiveTitles: ["验证指标趋势图在真实数据下可用"])
+    static let roomWithMultipleObjectives = makeAgentRoom(name: "Foundation Archive", isProject: true, activeTaskCount: 2, doneTaskCount: 3,
+                                                          activeObjectiveTitles: ["验证指标趋势图在真实数据下可用", "补齐标的的跨房间聚合视图"])
     
     static var previews: some View {
         VStack(spacing: 0) {
@@ -284,6 +311,8 @@ struct HomeScreenRoomCell_Previews: PreviewProvider, TestablePreview {
             HomeScreenRoomCell(room: projectRoomWithTasks, isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
             HomeScreenRoomCell(room: roomWithPendingChoice, isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
             HomeScreenRoomCell(room: plainRoom, isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
+            HomeScreenRoomCell(room: roomWithSingleObjective, isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
+            HomeScreenRoomCell(room: roomWithMultipleObjectives, isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
         }
         .previewLayout(.sizeThatFits)
         .previewDisplayName("Agent Cards")
@@ -305,12 +334,14 @@ struct HomeScreenRoomCell_Previews: PreviewProvider, TestablePreview {
                               isProject: Bool = false,
                               activeTaskCount: Int = 0,
                               doneTaskCount: Int = 0,
-                              pendingChoiceCount: Int = 0) -> HomeScreenRoom {
+                              pendingChoiceCount: Int = 0,
+                              activeObjectiveTitles: [String] = []) -> HomeScreenRoom {
         var room = HomeScreenRoom(summary: .mock(id: UUID().uuidString, name: name))
         room.isProject = isProject
         room.activeTaskCount = activeTaskCount
         room.doneTaskCount = doneTaskCount
         room.pendingChoiceCount = pendingChoiceCount
+        room.activeObjectiveTitles = activeObjectiveTitles
         return room
     }
     

@@ -30,6 +30,11 @@ nonisolated class AgentIndexServiceMock: AgentIndexServiceProtocol, @unchecked S
         set(value) { underlyingPendingChoicesPublisher = value }
     }
     nonisolated(unsafe) var underlyingPendingChoicesPublisher: CurrentValuePublisher<[AgentPendingChoiceSummary], Never>!
+    var objectivesPublisher: CurrentValuePublisher<[AgentObjectiveSummary], Never> {
+        get { return underlyingObjectivesPublisher }
+        set(value) { underlyingObjectivesPublisher = value }
+    }
+    nonisolated(unsafe) var underlyingObjectivesPublisher: CurrentValuePublisher<[AgentObjectiveSummary], Never>!
 
     //MARK: - start
 

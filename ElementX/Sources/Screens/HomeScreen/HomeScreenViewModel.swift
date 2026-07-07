@@ -31,6 +31,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     private var latestTaskSummaries: [AgentTaskSummary] = []
     private var latestProjects: [AgentProjectSummary] = []
     private var latestPendingChoices: [AgentPendingChoiceSummary] = []
+    private var latestObjectives: [AgentObjectiveSummary] = []
     /// One-shot guard so the persisted 道 filter is only ever restored on the first non-empty
     /// `availableSpaceFilters` emission, never again after the user explicitly returns to 全部.
     private var hasRestoredSpaceFilter = false
@@ -235,6 +236,15 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             .sink { [weak self] pendingChoices in
                 guard let self else { return }
                 latestPendingChoices = pendingChoices
+                updateRooms()
+            }
+            .store(in: &cancellables)
+        
+        agentIndexService.objectivesPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] objectives in
+                guard let self else { return }
+                latestObjectives = objectives
                 updateRooms()
             }
             .store(in: &cancellables)
@@ -479,6 +489,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         let tasksByRoom = Dictionary(grouping: latestTaskSummaries, by: \.roomID)
         let projectRoomIDs = Set(latestProjects.map(\.roomID))
         let pendingByRoom = Dictionary(grouping: latestPendingChoices, by: \.roomID)
+        let activeObjectivesByRoom = Dictionary(grouping: latestObjectives.filter { $0.status == .active }, by: \.roomID)
         let roomSummaries = roomSummaryProvider.roomListPublisher.value
         
         for summary in roomSummaries {
@@ -491,6 +502,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 room.activeTaskCount = tasks.count(where: { !$0.isResolved })
                 room.doneTaskCount = tasks.count(where: \.isResolved)
                 room.pendingChoiceCount = pendingByRoom[roomID]?.count ?? 0
+                room.activeObjectiveTitles = (activeObjectivesByRoom[roomID] ?? []).map(\.title)
             }
             rooms.append(room)
         }

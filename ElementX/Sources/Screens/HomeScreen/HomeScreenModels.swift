@@ -302,6 +302,10 @@ struct HomeScreenRoom: Identifiable, Equatable {
     var doneTaskCount = 0
     /// Outstanding `AgentPendingChoiceSummary` count for this room (待批).
     var pendingChoiceCount = 0
+    /// Titles of this room's `active` 标的(`AgentObjectiveSummary`), if any. Empty for rooms
+    /// with no objectives (old-protocol rooms, or ones that haven't set one up yet) — the card
+    /// falls back to plain 差事 progress in that case.
+    var activeObjectiveTitles: [String] = []
     
     var totalTaskCount: Int {
         activeTaskCount + doneTaskCount

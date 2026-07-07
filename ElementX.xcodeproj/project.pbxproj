@@ -1103,6 +1103,7 @@
 		AC69B6DF15FC451AB2945036 /* UserSessionStoreProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBA759D1347CFFB3D84ED1F /* UserSessionStoreProtocol.swift */; };
 		AC7AA215D60FBC307F984028 /* Consumable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127A57D053CE8C87B5EFB089 /* Consumable.swift */; };
 		AC90434798E7894370E80E66 /* SecureBackupScreenViewModelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = D79BB714D28C9F588DD69353 /* SecureBackupScreenViewModelProtocol.swift */; };
+		AD0B768D4585FBFFFBA28F23 /* AgentObjectiveSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = B91A84E0BD9C8165E407D7B4 /* AgentObjectiveSummary.swift */; };
 		AD2A81B65A9F6163012086F1 /* MXLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111B698739E3410E2CDB7144 /* MXLog.swift */; };
 		AD55E245FE686D7DB4C86406 /* RoomTimelineItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90F2F8998E5632668B0AD848 /* RoomTimelineItemView.swift */; };
 		ADC820847A91C9939E269B24 /* TrackedUserDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10D751743B20B314D84D79FE /* TrackedUserDefaults.swift */; };
@@ -2797,6 +2798,7 @@
 		B8A3B7637DDBD6AA97AC2545 /* CameraPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
 		B8F28602AC7AC881AED37EBA /* NavigationCoordinators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinators.swift; sourceTree = "<group>"; };
 		B902EA6CD3296B0E10EE432B /* HomeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreen.swift; sourceTree = "<group>"; };
+		B91A84E0BD9C8165E407D7B4 /* AgentObjectiveSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentObjectiveSummary.swift; sourceTree = "<group>"; };
 		B91AD590B0B40718A0AA0C61 /* DeferredFulfillment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeferredFulfillment.swift; sourceTree = "<group>"; };
 		B9406BD5F99685C5ABDEDD93 /* LocationShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationShareSheet.swift; sourceTree = "<group>"; };
 		B94A6A57FE7E71F7605070AA /* NotificationToneManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationToneManager.swift; sourceTree = "<group>"; };
@@ -3698,6 +3700,7 @@
 			children = (
 				E0DC27F00AB37D1C6403A321 /* AgentIndexService.swift */,
 				8098C366FC78F3C1F4A5F938 /* AgentIndexServiceProtocol.swift */,
+				B91A84E0BD9C8165E407D7B4 /* AgentObjectiveSummary.swift */,
 				E564ED2025515BE6385B5523 /* AgentProjectSummary.swift */,
 				8B754637D3609884F996EFAD /* AgentTaskSummary.swift */,
 			);
@@ -8433,6 +8436,7 @@
 				1B02C13F67CE452E81D932D9 /* AgentIndexService.swift in Sources */,
 				92F73C6D1654E8728A6BE9A1 /* AgentIndexServiceMock.swift in Sources */,
 				59E7F538135E519C27B14BCF /* AgentIndexServiceProtocol.swift in Sources */,
+				AD0B768D4585FBFFFBA28F23 /* AgentObjectiveSummary.swift in Sources */,
 				8725BF808F38C834E8F18C27 /* AgentProjectSummary.swift in Sources */,
 				2310B07B2A97C9C25D694052 /* AgentTaskPanelScreen.swift in Sources */,
 				793DA4E9082AF5073FBB58EB /* AgentTaskPanelScreenCoordinator.swift in Sources */,

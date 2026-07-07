@@ -424,6 +424,29 @@ final class HomeScreenViewModelTests {
     }
     
     @Test
+    func activeObjectivesJoinRoomsAndDoneOnesAreExcluded() async throws {
+        let objectives = [
+            AgentObjectiveSummary(roomID: "2", objectiveID: "obj-1", title: "验证A", status: .active,
+                                  successMetrics: [], exitOptions: [], priority: 0, updatedAt: .now),
+            AgentObjectiveSummary(roomID: "2", objectiveID: "obj-2", title: "已放弃的旧标的", status: .abandoned,
+                                  successMetrics: [], exitOptions: [], priority: 0, updatedAt: .now)
+        ]
+        
+        setupViewModel(objectives: objectives)
+        
+        let deferred = deferFulfillment(context.$viewState) { state in
+            state.rooms.first { $0.roomID == "2" }?.activeObjectiveTitles.isEmpty == false
+        }
+        try await deferred.fulfill()
+        
+        let room2 = try #require(context.viewState.rooms.first { $0.roomID == "2" })
+        #expect(room2.activeObjectiveTitles == ["验证A"])
+        
+        let room1 = try #require(context.viewState.rooms.first { $0.roomID == "1" })
+        #expect(room1.activeObjectiveTitles.isEmpty)
+    }
+    
+    @Test
     func agentPrioritySortingPutsPendingFirstThenActiveThenRestPreservingProviderOrder() async throws {
         // Provider order for group rooms (DMs "5"/"6" excluded by the .rooms filter) is: 1, 2, 3, 4, 7, 0.
         // Room "4" is last in that order but carries a pending choice, so it must sort first.
@@ -659,6 +682,7 @@ final class HomeScreenViewModelTests {
                                 tasks: [AgentTaskSummary] = [],
                                 projects: [AgentProjectSummary] = [],
                                 pendingChoices: [AgentPendingChoiceSummary] = [],
+                                objectives: [AgentObjectiveSummary] = [],
                                 spaceFilterSubject: CurrentValueSubject<[SpaceServiceFilter], Never>? = nil) {
         cancellables.removeAll()
         
@@ -709,7 +733,7 @@ final class HomeScreenViewModelTests {
         
         notificationManager = NotificationManagerMock()
         
-        agentIndexService = AgentIndexServiceMock(.init(tasks: tasks, projects: projects, pendingChoices: pendingChoices))
+        agentIndexService = AgentIndexServiceMock(.init(tasks: tasks, projects: projects, pendingChoices: pendingChoices, objectives: objectives))
         
         viewModel = HomeScreenViewModel(userSession: userSession,
                                         selectedRoomPublisher: CurrentValueSubject<String?, Never>(nil).asCurrentValuePublisher(),

@@ -39,6 +39,9 @@ nonisolated struct AgentTaskSummary: Identifiable, Equatable {
     let doneStepCount: Int
     let totalStepCount: Int
     var metric: AgentTaskMetric?
+    /// The 标的(`AgentObjectiveSummary.objectiveID`) this task belongs to, if any — optional
+    /// back-reference per `element-agent-protocol.md` §3.4; most tasks don't carry one.
+    var objectiveID: String?
     
     var id: String {
         "\(roomID)|\(taskID)"
@@ -56,6 +59,7 @@ nonisolated struct AgentTaskStateEvent: Decodable {
     let doneStepCount: Int
     let totalStepCount: Int
     let metric: AgentTaskMetric?
+    let objectiveID: String?
     
     private enum EventKeys: String, CodingKey {
         case stateKey = "state_key"
@@ -67,6 +71,15 @@ nonisolated struct AgentTaskStateEvent: Decodable {
         let status: String
         let steps: [CanvasStep]?
         let metric: AgentTaskMetric?
+        let objectiveID: String?
+        
+        private enum CodingKeys: String, CodingKey {
+            case title
+            case status
+            case steps
+            case metric
+            case objectiveID = "objective_id"
+        }
     }
     
     init(from decoder: Decoder) throws {
@@ -79,6 +92,7 @@ nonisolated struct AgentTaskStateEvent: Decodable {
         doneStepCount = steps.count { $0.status == .done }
         totalStepCount = steps.count
         metric = content.metric
+        objectiveID = content.objectiveID
     }
     
     init?(parsingFrom rawStateEventJSON: String) {

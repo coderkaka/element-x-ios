@@ -9,11 +9,10 @@
 import Combine
 import Foundation
 
-/// Indexes 差事(tasks)/案(projects)/请旨(pending choices) across every joined room in one pass —
-/// merged from what used to be two near-identical services, each independently doing the same
-/// "debounce room list → fetch state per room → parse → publish" dance for a different state
-/// event type. A future 标的(objective) index (D-6) belongs here too, as a fourth publisher —
-/// not as a third duplicate service.
+/// Indexes 差事(tasks)/案(projects)/请旨(pending choices)/标的(objectives) across every joined
+/// room in one pass — merged from what used to be two near-identical services, each
+/// independently doing the same "debounce room list → fetch state per room → parse → publish"
+/// dance for a different state event type.
 class AgentIndexService: AgentIndexServiceProtocol {
     private let clientProxy: ClientProxyProtocol
     private let roomSummaryProvider: RoomSummaryProviderProtocol
@@ -35,6 +34,11 @@ class AgentIndexService: AgentIndexServiceProtocol {
     private let pendingChoicesSubject = CurrentValueSubject<[AgentPendingChoiceSummary], Never>([])
     var pendingChoicesPublisher: CurrentValuePublisher<[AgentPendingChoiceSummary], Never> {
         pendingChoicesSubject.asCurrentValuePublisher()
+    }
+    
+    private let objectivesSubject = CurrentValueSubject<[AgentObjectiveSummary], Never>([])
+    var objectivesPublisher: CurrentValuePublisher<[AgentObjectiveSummary], Never> {
+        objectivesSubject.asCurrentValuePublisher()
     }
     
     init(clientProxy: ClientProxyProtocol, roomSummaryProvider: RoomSummaryProviderProtocol) {
@@ -59,15 +63,17 @@ class AgentIndexService: AgentIndexServiceProtocol {
             var tasks = [AgentTaskSummary]()
             var projects = [AgentProjectSummary]()
             var pendingChoices = [AgentPendingChoiceSummary]()
+            var objectives = [AgentObjectiveSummary]()
             
             for summary in summaries {
                 guard !Task.isCancelled else { return }
                 
-                // The 3 event types are fetched and handled independently — one type failing
+                // The 4 event types are fetched and handled independently — one type failing
                 // for a room must not hide data this room already has for the others.
                 let taskEventsResult = await clientProxy.getRoomStateEventsRaw(roomID: summary.id, eventType: AgentTaskStateEvent.eventType)
                 let goalEventsResult = await clientProxy.getRoomStateEventsRaw(roomID: summary.id, eventType: AgentGoalStateEvent.eventType)
                 let choiceEventsResult = await clientProxy.getRoomStateEventsRaw(roomID: summary.id, eventType: AgentChoiceStateIndexEvent.eventType)
+                let objectiveEventsResult = await clientProxy.getRoomStateEventsRaw(roomID: summary.id, eventType: AgentObjectiveStateEvent.eventType)
                 
                 switch taskEventsResult {
                 case .success(let rawEvents):
@@ -83,7 +89,8 @@ class AgentIndexService: AgentIndexServiceProtocol {
                                                       isResolved: stateEvent.isResolved,
                                                       doneStepCount: stateEvent.doneStepCount,
                                                       totalStepCount: stateEvent.totalStepCount,
-                                                      metric: stateEvent.metric))
+                                                      metric: stateEvent.metric,
+                                                      objectiveID: stateEvent.objectiveID))
                     }
                 case .failure(let error):
                     MXLog.error("Skipping room \(summary.id) tasks, failed to fetch \(AgentTaskStateEvent.eventType) state events: \(error)")
@@ -116,6 +123,26 @@ class AgentIndexService: AgentIndexServiceProtocol {
                 case .failure(let error):
                     MXLog.error("Skipping room \(summary.id) pending choices, failed to fetch \(AgentChoiceStateIndexEvent.eventType) state events: \(error)")
                 }
+                
+                switch objectiveEventsResult {
+                case .success(let objectiveEvents):
+                    for rawEvent in objectiveEvents {
+                        guard let objectiveEvent = AgentObjectiveStateEvent(parsingFrom: rawEvent) else {
+                            MXLog.error("Skipping unparseable agent objective state event in room \(summary.id)")
+                            continue
+                        }
+                        objectives.append(AgentObjectiveSummary(roomID: summary.id,
+                                                                objectiveID: objectiveEvent.objectiveID,
+                                                                title: objectiveEvent.title,
+                                                                status: objectiveEvent.status,
+                                                                successMetrics: objectiveEvent.successMetrics,
+                                                                exitOptions: objectiveEvent.exitOptions,
+                                                                priority: objectiveEvent.priority,
+                                                                updatedAt: objectiveEvent.updatedAt))
+                    }
+                case .failure(let error):
+                    MXLog.error("Skipping room \(summary.id) objectives, failed to fetch \(AgentObjectiveStateEvent.eventType) state events: \(error)")
+                }
             }
             
             guard !Task.isCancelled else { return }
@@ -125,6 +152,7 @@ class AgentIndexService: AgentIndexServiceProtocol {
             tasksSubject.send(unresolvedTasks + resolvedTasks)
             projectsSubject.send(projects.sorted { $0.roomID < $1.roomID })
             pendingChoicesSubject.send(pendingChoices.sorted { $0.roomID < $1.roomID })
+            objectivesSubject.send(objectives.sorted { $0.roomID < $1.roomID })
         }
     }
     

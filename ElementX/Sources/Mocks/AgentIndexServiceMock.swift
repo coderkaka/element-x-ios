@@ -11,6 +11,7 @@ extension AgentIndexServiceMock {
         var tasks: [AgentTaskSummary] = []
         var projects: [AgentProjectSummary] = []
         var pendingChoices: [AgentPendingChoiceSummary] = []
+        var objectives: [AgentObjectiveSummary] = []
     }
     
     convenience init(_ configuration: Configuration) {
@@ -19,5 +20,6 @@ extension AgentIndexServiceMock {
         underlyingTasksPublisher = CurrentValuePublisher(configuration.tasks)
         underlyingProjectsPublisher = CurrentValuePublisher(configuration.projects)
         underlyingPendingChoicesPublisher = CurrentValuePublisher(configuration.pendingChoices)
+        underlyingObjectivesPublisher = CurrentValuePublisher(configuration.objectives)
     }
 }
