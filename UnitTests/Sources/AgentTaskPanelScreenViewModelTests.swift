@@ -100,6 +100,18 @@ struct AgentTaskPanelScreenViewModelTests {
         #expect(viewModel.context.viewState.ungroupedActiveTasks.map(\.taskID) == ["t2", "t3"])
     }
     
+    @Test
+    func objectiveSectionsSortByUpdatedAtThenIDForDeterminism() {
+        let epoch = Date(timeIntervalSince1970: 0)
+        let (viewModel, _) = makeViewModel(summary: RoomTaskSummary(objectives: [
+            Self.objective(id: "b-older", updatedAt: epoch),
+            Self.objective(id: "a-older", updatedAt: epoch), // equal timestamp → tie-break on id
+            Self.objective(id: "z-newest", updatedAt: epoch.addingTimeInterval(100))
+        ]))
+        // Newest first; equal timestamps ordered by objectiveID ascending.
+        #expect(viewModel.context.viewState.objectiveSections.map(\.id) == ["z-newest", "a-older", "b-older"])
+    }
+    
     // MARK: - Helpers
     
     private static let activeTask = RoomTaskSummary.Task(eventID: "$task-1",
@@ -134,8 +146,8 @@ struct AgentTaskPanelScreenViewModelTests {
                              doneStepCount: 0, totalStepCount: 1, steps: [], threadRootEventID: nil, updatedAt: nil, objectiveID: objectiveID)
     }
     
-    private static func objective(id: String, status: AgentObjectiveStatus = .active) -> RoomTaskSummary.Objective {
-        RoomTaskSummary.Objective(objectiveID: id, title: id, status: status, successMetrics: [], exitOptions: [], priority: 0, updatedAt: .now)
+    private static func objective(id: String, status: AgentObjectiveStatus = .active, updatedAt: Date = .now) -> RoomTaskSummary.Objective {
+        RoomTaskSummary.Objective(objectiveID: id, title: id, status: status, successMetrics: [], exitOptions: [], priority: 0, updatedAt: updatedAt)
     }
     
     private func makeViewModel(summary: RoomTaskSummary) -> (AgentTaskPanelScreenViewModel, CurrentValueSubject<RoomTaskSummary, Never>) {

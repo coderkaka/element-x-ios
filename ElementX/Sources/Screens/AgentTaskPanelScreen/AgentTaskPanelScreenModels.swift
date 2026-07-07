@@ -36,7 +36,11 @@ struct AgentTaskPanelScreenViewState: BindableState {
             .mapValues { $0.map(\.1) }
         return objectives
             .filter { $0.status == .active }
-            .sorted { $0.updatedAt > $1.updatedAt }
+            // updatedAt desc, tie-broken by objectiveID so equal/missing timestamps (both
+            // .distantPast) don't reorder sections between renders.
+            .sorted { lhs, rhs in
+                lhs.updatedAt == rhs.updatedAt ? lhs.objectiveID < rhs.objectiveID : lhs.updatedAt > rhs.updatedAt
+            }
             .map { AgentTaskPanelObjectiveSection(objective: $0, tasks: tasksByObjectiveID[$0.objectiveID] ?? []) }
     }
     

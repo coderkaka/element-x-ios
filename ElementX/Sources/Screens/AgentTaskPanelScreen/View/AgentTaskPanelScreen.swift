@@ -28,7 +28,9 @@ struct AgentTaskPanelScreen: View {
     }
     
     private var panelList: some View {
-        Form {
+        // Computed once — `objectiveSections` rebuilds a Dictionary(grouping:) each access.
+        let objectiveSections = context.viewState.objectiveSections
+        return Form {
             if !context.viewState.pendingChoices.isEmpty {
                 Section {
                     ForEach(context.viewState.pendingChoices) { choice in
@@ -43,7 +45,7 @@ struct AgentTaskPanelScreen: View {
                 }
             }
             
-            ForEach(context.viewState.objectiveSections) { section in
+            ForEach(objectiveSections) { section in
                 objectiveSection(section)
             }
             
@@ -55,7 +57,7 @@ struct AgentTaskPanelScreen: View {
                 } header: {
                     // Only call it out as "ungrouped" when there are objective sections to
                     // contrast against; otherwise it's just the ordinary 在办 list.
-                    Text(context.viewState.objectiveSections.isEmpty ? context.viewState.terminology.sectionActive : context.viewState.terminology.objectiveUngrouped)
+                    Text(objectiveSections.isEmpty ? context.viewState.terminology.sectionActive : context.viewState.terminology.objectiveUngrouped)
                         .compoundListSectionHeader()
                 }
             }
