@@ -106,7 +106,9 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         chatsTabDetails.navigationSplitCoordinator = chatsSplitCoordinator
         
         let tasksSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
-        agentTasksScreenCoordinator = AgentTasksScreenCoordinator(parameters: .init(agentTaskIndexService: agentTaskIndexService, appSettings: flowParameters.appSettings))
+        agentTasksScreenCoordinator = AgentTasksScreenCoordinator(parameters: .init(agentTaskIndexService: agentTaskIndexService,
+                                                                                    spaceService: flowParameters.userSession.clientProxy.spaceService,
+                                                                                    appSettings: flowParameters.appSettings))
         tasksSplitCoordinator.setSidebarCoordinator(agentTasksScreenCoordinator)
         tasksTabDetails = .init(tag: HomeTab.tasks, title: AppTerminology(scenario: flowParameters.appSettings.terminologyScenario).tabTasks, icon: \.listBulleted, selectedIcon: \.listBulleted)
         tasksTabDetails.navigationSplitCoordinator = tasksSplitCoordinator

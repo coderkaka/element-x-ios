@@ -50,6 +50,31 @@ struct AgentTasksScreenViewModelTests {
         try await deferred.fulfill()
     }
     
+    @Test
+    func toggleViewModePersistsToAppSettings() {
+        let appSettings: AppSettings = .volatile()
+        let (viewModel, _) = makeViewModel(tasks: [], appSettings: appSettings)
+        
+        #expect(!viewModel.context.viewState.isKanbanViewEnabled)
+        viewModel.context.send(viewAction: .toggleViewMode)
+        #expect(viewModel.context.viewState.isKanbanViewEnabled)
+        #expect(appSettings.agentTasksKanbanViewEnabled)
+    }
+    
+    @Test
+    func kanbanColumnsGroupTasksBySpaceAndFallBackForUnassignedRooms() {
+        let spaceService = SpaceServiceProxyMock()
+        spaceService.underlyingSpaceFilterPublisher = .init([
+            .init(room: .mock(id: "!space:example.com", name: "工程院", isSpace: true), level: 0, descendants: [Self.unresolvedTask.roomID])
+        ])
+        let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask, Self.resolvedTask], spaceService: spaceService)
+        
+        #expect(viewModel.context.viewState.kanbanColumns.count == 2)
+        #expect(viewModel.context.viewState.kanbanColumns[0].title == "工程院")
+        #expect(viewModel.context.viewState.kanbanColumns[0].tasks == [Self.unresolvedTask])
+        #expect(viewModel.context.viewState.kanbanColumns[1].tasks == [Self.resolvedTask])
+    }
+    
     // MARK: - Helpers
     
     private static let unresolvedTask = AgentTaskSummary(roomID: "!a:example.com",
@@ -68,10 +93,22 @@ struct AgentTasksScreenViewModelTests {
                                                        doneStepCount: 2,
                                                        totalStepCount: 2)
     
-    private func makeViewModel(tasks: [AgentTaskSummary]) -> (AgentTasksScreenViewModel, CurrentValueSubject<[AgentTaskSummary], Never>) {
+    private func makeViewModel(tasks: [AgentTaskSummary],
+                               spaceService: SpaceServiceProxyProtocol? = nil,
+                               appSettings: AppSettings = .volatile()) -> (AgentTasksScreenViewModel, CurrentValueSubject<[AgentTaskSummary], Never>) {
         let tasksSubject = CurrentValueSubject<[AgentTaskSummary], Never>(tasks)
         let indexService = AgentTaskIndexServiceMock()
         indexService.underlyingTasksPublisher = tasksSubject.asCurrentValuePublisher()
-        return (AgentTasksScreenViewModel(agentTaskIndexService: indexService, appSettings: .volatile()), tasksSubject)
+        
+        let resolvedSpaceService: SpaceServiceProxyProtocol
+        if let spaceService {
+            resolvedSpaceService = spaceService
+        } else {
+            let mock = SpaceServiceProxyMock()
+            mock.underlyingSpaceFilterPublisher = .init([])
+            resolvedSpaceService = mock
+        }
+        
+        return (AgentTasksScreenViewModel(agentTaskIndexService: indexService, spaceService: resolvedSpaceService, appSettings: appSettings), tasksSubject)
     }
 }

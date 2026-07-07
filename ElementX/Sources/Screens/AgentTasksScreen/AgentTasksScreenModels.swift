@@ -7,9 +7,19 @@
 
 import Foundation
 
+/// One column of the 差事 tab's kanban view — all tasks whose room sits under `spaceID`
+/// (or the `nil`-ID fallback column for rooms not under any joined 道).
+struct AgentTasksKanbanColumn: Identifiable, Equatable {
+    let id: String
+    let title: String
+    let tasks: [AgentTaskSummary]
+}
+
 struct AgentTasksScreenViewState: BindableState {
     var unresolvedTasks: [AgentTaskSummary] = []
     var resolvedTasks: [AgentTaskSummary] = []
+    var kanbanColumns: [AgentTasksKanbanColumn] = []
+    var isKanbanViewEnabled = false
     var terminology = AppTerminology(scenario: .imperial)
     
     var isEmpty: Bool {
@@ -19,10 +29,12 @@ struct AgentTasksScreenViewState: BindableState {
 
 enum AgentTasksScreenViewAction: CustomStringConvertible {
     case taskTapped(AgentTaskSummary)
+    case toggleViewMode
     
     var description: String {
         switch self {
         case .taskTapped: "taskTapped"
+        case .toggleViewMode: "toggleViewMode"
         }
     }
 }

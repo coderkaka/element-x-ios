@@ -117,4 +117,18 @@ nonisolated struct AppTerminology {
     func roomTaskChipPendingSuffix(count: String) -> String {
         pick(" · \(count) 件请旨待批", " · \(count) 件待办事项")
     }
+    
+    /// The 差事 tab's kanban column for tasks whose room isn't under any joined 道 — same
+    /// wording in both scenarios since it's a fallback bucket, not a piece of vocabulary.
+    var kanbanUnassignedColumn: String {
+        "其他"
+    }
+    
+    var kanbanViewA11yLabel: String {
+        pick("按道分列查看", "按分组查看")
+    }
+    
+    var listViewA11yLabel: String {
+        pick("查看清单", "查看列表")
+    }
 }

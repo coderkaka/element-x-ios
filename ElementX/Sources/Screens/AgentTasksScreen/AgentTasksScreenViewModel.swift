@@ -16,22 +16,31 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         actionsSubject.eraseToAnyPublisher()
     }
     
-    init(agentTaskIndexService: AgentTaskIndexServiceProtocol, appSettings: AppSettings) {
-        super.init(initialViewState: AgentTasksScreenViewState(terminology: .init(scenario: appSettings.terminologyScenario)))
+    private let appSettings: AppSettings
+    
+    init(agentTaskIndexService: AgentTaskIndexServiceProtocol, spaceService: SpaceServiceProxyProtocol, appSettings: AppSettings) {
+        self.appSettings = appSettings
+        super.init(initialViewState: AgentTasksScreenViewState(isKanbanViewEnabled: appSettings.agentTasksKanbanViewEnabled,
+                                                               terminology: .init(scenario: appSettings.terminologyScenario)))
         
-        // No queue hop: the service publishes on the main actor and the synchronous
+        // No queue hop: the services publish on the main actor and the synchronous
         // initial emission populates state before the first render (previews rely on this).
-        agentTaskIndexService.tasksPublisher
-            .sink { [weak self] tasks in
+        Publishers.CombineLatest(agentTaskIndexService.tasksPublisher, spaceService.spaceFilterPublisher)
+            .sink { [weak self] tasks, spaceFilters in
                 guard let self else { return }
                 state.unresolvedTasks = tasks.filter { !$0.isResolved }
                 state.resolvedTasks = tasks.filter(\.isResolved)
+                state.kanbanColumns = Self.makeKanbanColumns(tasks: tasks, spaceFilters: spaceFilters, terminology: state.terminology)
             }
             .store(in: &cancellables)
         
         appSettings.terminologyScenarioPublisher
             .sink { [weak self] scenario in
-                self?.state.terminology = .init(scenario: scenario)
+                guard let self else { return }
+                state.terminology = .init(scenario: scenario)
+                state.kanbanColumns = Self.makeKanbanColumns(tasks: state.unresolvedTasks + state.resolvedTasks,
+                                                             spaceFilters: spaceService.spaceFilterPublisher.value,
+                                                             terminology: state.terminology)
             }
             .store(in: &cancellables)
     }
@@ -44,6 +53,33 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         switch viewAction {
         case .taskTapped(let task):
             actionsSubject.send(.presentCanvasSteps(roomID: task.roomID, taskID: task.taskID))
+        case .toggleViewMode:
+            appSettings.agentTasksKanbanViewEnabled.toggle()
+            state.isKanbanViewEnabled = appSettings.agentTasksKanbanViewEnabled
         }
+    }
+    
+    // MARK: - Private
+    
+    /// Groups tasks by the 道 (space) their room sits under, in the same order as
+    /// `spaceFilters` (mirroring the order the 道 chips use elsewhere). A room can have
+    /// multiple parent spaces, so a task may legitimately appear in more than one column.
+    /// Tasks whose room isn't under any joined 道 land in a trailing fallback column.
+    private static func makeKanbanColumns(tasks: [AgentTaskSummary],
+                                          spaceFilters: [SpaceServiceFilter],
+                                          terminology: AppTerminology) -> [AgentTasksKanbanColumn] {
+        var columns = spaceFilters.map { filter in
+            AgentTasksKanbanColumn(id: filter.room.id,
+                                   title: filter.room.name,
+                                   tasks: tasks.filter { filter.descendants.contains($0.roomID) })
+        }
+        columns.removeAll { $0.tasks.isEmpty }
+        
+        let unassignedTasks = tasks.filter { task in !spaceFilters.contains { $0.descendants.contains(task.roomID) } }
+        if !unassignedTasks.isEmpty {
+            columns.append(AgentTasksKanbanColumn(id: "unassigned", title: terminology.kanbanUnassignedColumn, tasks: unassignedTasks))
+        }
+        
+        return columns
     }
 }
