@@ -9,13 +9,14 @@ import Combine
 import SwiftUI
 
 struct MessagesScreenCoordinatorParameters {
+    let userSession: UserSessionProtocol
     let roomSummaryProvider: RoomSummaryProviderProtocol
     let appSettings: AppSettings
-    let mediaProvider: MediaProviderProtocol
 }
 
 enum MessagesScreenCoordinatorAction {
     case presentRoom(roomID: String)
+    case showSettings
 }
 
 final class MessagesScreenCoordinator: CoordinatorProtocol {
@@ -31,9 +32,9 @@ final class MessagesScreenCoordinator: CoordinatorProtocol {
     
     init(parameters: MessagesScreenCoordinatorParameters) {
         self.parameters = parameters
-        viewModel = MessagesScreenViewModel(roomSummaryProvider: parameters.roomSummaryProvider,
-                                            appSettings: parameters.appSettings,
-                                            mediaProvider: parameters.mediaProvider)
+        viewModel = MessagesScreenViewModel(userSession: parameters.userSession,
+                                            roomSummaryProvider: parameters.roomSummaryProvider,
+                                            appSettings: parameters.appSettings)
     }
     
     func start() {
@@ -42,6 +43,8 @@ final class MessagesScreenCoordinator: CoordinatorProtocol {
             switch action {
             case .presentRoom(let roomID):
                 actionsSubject.send(.presentRoom(roomID: roomID))
+            case .showSettings:
+                actionsSubject.send(.showSettings)
             }
         }
         .store(in: &cancellables)

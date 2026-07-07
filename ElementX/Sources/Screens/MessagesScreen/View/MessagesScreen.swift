@@ -20,6 +20,26 @@ struct MessagesScreen: View {
             }
         }
         .navigationTitle(context.viewState.terminology.tabMessages)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                settingsButton
+            }
+        }
+    }
+    
+    private var settingsButton: some View {
+        Button {
+            context.send(viewAction: .showSettings)
+        } label: {
+            LoadableAvatarImage(url: context.viewState.userAvatarURL,
+                                name: context.viewState.userDisplayName,
+                                contentID: context.viewState.userID,
+                                avatarSize: .user(on: .chats),
+                                mediaProvider: context.mediaProvider)
+                .clipShape(.circle)
+                .compositingGroup()
+        }
+        .accessibilityLabel(L10n.commonSettings)
     }
     
     private var roomList: some View {
@@ -73,8 +93,9 @@ struct MessagesScreen_Previews: PreviewProvider, TestablePreview {
     
     static func makeViewModel(rooms: [RoomSummary]) -> MessagesScreenViewModel {
         let roomSummaryProvider = RoomSummaryProviderMock(.init(state: .loaded(rooms)))
-        return MessagesScreenViewModel(roomSummaryProvider: roomSummaryProvider,
-                                       appSettings: .volatile(),
-                                       mediaProvider: MediaProviderMock(.init()))
+        let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
+        return MessagesScreenViewModel(userSession: userSession,
+                                       roomSummaryProvider: roomSummaryProvider,
+                                       appSettings: .volatile())
     }
 }

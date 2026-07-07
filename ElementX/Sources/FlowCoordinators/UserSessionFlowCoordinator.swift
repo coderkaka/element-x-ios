@@ -115,9 +115,9 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         tasksTabDetails.navigationSplitCoordinator = tasksSplitCoordinator
         
         let messagesSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
-        messagesScreenCoordinator = MessagesScreenCoordinator(parameters: .init(roomSummaryProvider: flowParameters.userSession.clientProxy.messagesRoomSummaryProvider,
-                                                                                appSettings: flowParameters.appSettings,
-                                                                                mediaProvider: flowParameters.userSession.mediaProvider))
+        messagesScreenCoordinator = MessagesScreenCoordinator(parameters: .init(userSession: flowParameters.userSession,
+                                                                                roomSummaryProvider: flowParameters.userSession.clientProxy.messagesRoomSummaryProvider,
+                                                                                appSettings: flowParameters.appSettings))
         messagesSplitCoordinator.setSidebarCoordinator(messagesScreenCoordinator)
         messagesTabDetails = .init(tag: HomeTab.messages, title: AppTerminology(scenario: flowParameters.appSettings.terminologyScenario).tabMessages, icon: \.userProfile, selectedIcon: \.userProfileSolid)
         messagesTabDetails.navigationSplitCoordinator = messagesSplitCoordinator
@@ -291,6 +291,8 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                 switch action {
                 case .presentRoom(let roomID):
                     handleAppRoute(.room(roomID: roomID, via: []), animated: true)
+                case .showSettings:
+                    handleAppRoute(.settings, animated: true)
                 }
             }
             .store(in: &cancellables)

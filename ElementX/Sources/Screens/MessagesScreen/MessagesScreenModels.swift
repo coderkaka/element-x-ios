@@ -8,14 +8,20 @@
 import Foundation
 
 struct MessagesScreenViewState: BindableState {
+    let userID: String
+    var userDisplayName: String?
+    var userAvatarURL: URL?
+    
     var rooms: [HomeScreenRoom] = []
     var terminology = AppTerminology(scenario: .imperial)
 }
 
 enum MessagesScreenViewAction {
     case selectRoom(roomIdentifier: String)
+    case showSettings
 }
 
 enum MessagesScreenViewModelAction: Equatable {
     case presentRoom(roomID: String)
+    case showSettings
 }

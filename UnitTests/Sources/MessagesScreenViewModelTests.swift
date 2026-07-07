@@ -33,6 +33,15 @@ struct MessagesScreenViewModelTests {
         try await deferred.fulfill()
     }
     
+    @Test
+    func showSettingsForwardsTheAction() async throws {
+        let (viewModel, _) = makeViewModel(rooms: [])
+        
+        let deferred = deferFulfillment(viewModel.actionsPublisher) { $0 == .showSettings }
+        viewModel.context.send(viewAction: .showSettings)
+        try await deferred.fulfill()
+    }
+    
     // MARK: - Helpers
     
     private static let roomA = RoomSummary.mock(id: "!a:example.com", name: "Alice")
@@ -42,9 +51,10 @@ struct MessagesScreenViewModelTests {
         let roomsSubject = CurrentValueSubject<[RoomSummary], Never>(rooms)
         let roomSummaryProvider = RoomSummaryProviderMock(.init())
         roomSummaryProvider.underlyingRoomListPublisher = roomsSubject.asCurrentValuePublisher()
-        let viewModel = MessagesScreenViewModel(roomSummaryProvider: roomSummaryProvider,
-                                                appSettings: .volatile(),
-                                                mediaProvider: MediaProviderMock(.init()))
+        let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
+        let viewModel = MessagesScreenViewModel(userSession: userSession,
+                                                roomSummaryProvider: roomSummaryProvider,
+                                                appSettings: .volatile())
         return (viewModel, roomsSubject)
     }
 }

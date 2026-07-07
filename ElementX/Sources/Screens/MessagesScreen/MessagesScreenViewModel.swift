@@ -19,11 +19,23 @@ class MessagesScreenViewModel: MessagesScreenViewModelType, MessagesScreenViewMo
         actionsSubject.eraseToAnyPublisher()
     }
     
-    init(roomSummaryProvider: RoomSummaryProviderProtocol, appSettings: AppSettings, mediaProvider: MediaProviderProtocol) {
+    init(userSession: UserSessionProtocol, roomSummaryProvider: RoomSummaryProviderProtocol, appSettings: AppSettings) {
         self.roomSummaryProvider = roomSummaryProvider
         self.appSettings = appSettings
         
-        super.init(initialViewState: MessagesScreenViewState(terminology: .init(scenario: appSettings.terminologyScenario)), mediaProvider: mediaProvider)
+        super.init(initialViewState: MessagesScreenViewState(userID: userSession.clientProxy.userID,
+                                                             terminology: .init(scenario: appSettings.terminologyScenario)),
+                   mediaProvider: userSession.mediaProvider)
+        
+        userSession.clientProxy.userAvatarURLPublisher
+            .receive(on: DispatchQueue.main)
+            .weakAssign(to: \.state.userAvatarURL, on: self)
+            .store(in: &cancellables)
+        
+        userSession.clientProxy.userDisplayNamePublisher
+            .receive(on: DispatchQueue.main)
+            .weakAssign(to: \.state.userDisplayName, on: self)
+            .store(in: &cancellables)
         
         roomSummaryProvider.roomListPublisher
             .receive(on: DispatchQueue.main)
@@ -47,6 +59,8 @@ class MessagesScreenViewModel: MessagesScreenViewModelType, MessagesScreenViewMo
         switch viewAction {
         case .selectRoom(let roomIdentifier):
             actionsSubject.send(.presentRoom(roomID: roomIdentifier))
+        case .showSettings:
+            actionsSubject.send(.showSettings)
         }
     }
     
