@@ -128,7 +128,9 @@ struct AgentTasksScreen: View {
     }
     
     private var kanbanBoard: some View {
-        ScrollView(.horizontal) {
+        // Scroll both axes: horizontal across 道 columns, vertical so a column taller than the
+        // screen is still reachable (a horizontal-only ScrollView left overflow stuck off-screen).
+        ScrollView([.horizontal, .vertical]) {
             HStack(alignment: .top, spacing: 12) {
                 ForEach(context.viewState.kanbanColumns) { column in
                     kanbanColumn(column)
