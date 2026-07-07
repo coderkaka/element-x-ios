@@ -692,6 +692,18 @@ class ClientProxy: ClientProxyProtocol {
         }
     }
     
+    func getRoomStateEventHistoryRaw(roomID: String, eventType: String, stateKey: String, limit: UInt32) async -> Result<[String], ClientProxyError> {
+        do {
+            guard let room = try client.getRoom(roomId: roomID) else {
+                return .success([])
+            }
+            return try await .success(room.getStateEventHistoryRaw(eventType: eventType, stateKey: stateKey, limit: limit))
+        } catch {
+            MXLog.error("Failed reading state event history eventType: \(eventType) stateKey: \(stateKey) roomID: \(roomID) with error: \(error)")
+            return .failure(.sdkError(error))
+        }
+    }
+    
     func loadUserDisplayName() async -> Result<Void, ClientProxyError> {
         do {
             let displayName = try await client.displayName()

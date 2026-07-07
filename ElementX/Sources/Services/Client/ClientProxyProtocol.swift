@@ -220,6 +220,13 @@ protocol ClientProxyProtocol: AnyObject {
     /// a live timeline, far too heavy for iterating every joined room.
     func getRoomStateEventsRaw(roomID: String, eventType: String) async -> Result<[String], ClientProxyError>
     
+    /// Reads past revisions of one specific state event (by type + state key), most-recent-first,
+    /// by paginating the room's timeline — the local state store only ever holds the latest
+    /// revision (that's inherent to Matrix's `/state` semantics), so this is the only way to
+    /// recover history for a repeatedly-overwritten state event (e.g. `canvas.steps`' `metric`
+    /// field). Can be slower than `getRoomStateEventsRaw` since it may page live from the server.
+    func getRoomStateEventHistoryRaw(roomID: String, eventType: String, stateKey: String, limit: UInt32) async -> Result<[String], ClientProxyError>
+    
     @discardableResult func loadUserDisplayName() async -> Result<Void, ClientProxyError>
     
     func setUserDisplayName(_ name: String) async -> Result<Void, ClientProxyError>

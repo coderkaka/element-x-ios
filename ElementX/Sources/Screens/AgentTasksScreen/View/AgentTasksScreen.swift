@@ -5,6 +5,7 @@
 // Please see LICENSE files in the repository root for full details.
 //
 
+import Charts
 import Compound
 import SwiftUI
 
@@ -15,14 +16,16 @@ struct AgentTasksScreen: View {
         Group {
             if context.viewState.isEmpty {
                 emptyState
-            } else if context.viewState.isKanbanViewEnabled {
-                kanbanBoard
             } else {
-                taskList
+                switch context.viewState.viewMode {
+                case .list: taskList
+                case .kanban: kanbanBoard
+                case .metric: metricDashboard
+                }
             }
         }
         .navigationTitle(context.viewState.terminology.tabTasks)
-        // Kanban's horizontal ScrollView and the list's Form don't drive the large-title
+        // Kanban/metric's ScrollViews and the list's Form don't drive the large-title
         // collapse the same way, which made the title intermittently vanish when toggling
         // between them — inline mode sidesteps that scroll-offset-dependent chrome entirely.
         .navigationBarTitleDisplayMode(.inline)
@@ -32,7 +35,7 @@ struct AgentTasksScreen: View {
             }
             if !context.viewState.isEmpty {
                 ToolbarItem(placement: .primaryAction) {
-                    viewModeButton
+                    viewModeMenu
                 }
             }
         }
@@ -53,13 +56,43 @@ struct AgentTasksScreen: View {
         .accessibilityLabel(L10n.commonSettings)
     }
     
-    private var viewModeButton: some View {
-        Button {
-            context.send(viewAction: .toggleViewMode)
+    private var viewModeMenu: some View {
+        Menu {
+            Button {
+                context.send(viewAction: .setViewMode(.list))
+            } label: {
+                Label(context.viewState.terminology.listViewA11yLabel, icon: \.listView)
+            }
+            Button {
+                context.send(viewAction: .setViewMode(.kanban))
+            } label: {
+                Label(context.viewState.terminology.kanbanViewA11yLabel, icon: \.grid)
+            }
+            Button {
+                context.send(viewAction: .setViewMode(.metric))
+            } label: {
+                Label(context.viewState.terminology.metricViewA11yLabel, icon: \.chart)
+            }
         } label: {
-            CompoundIcon(context.viewState.isKanbanViewEnabled ? \.listView : \.grid)
+            CompoundIcon(viewModeIcon)
         }
-        .accessibilityLabel(context.viewState.isKanbanViewEnabled ? context.viewState.terminology.listViewA11yLabel : context.viewState.terminology.kanbanViewA11yLabel)
+        .accessibilityLabel(currentViewModeA11yLabel)
+    }
+    
+    private var viewModeIcon: KeyPath<CompoundIcons, Image> {
+        switch context.viewState.viewMode {
+        case .list: \.listView
+        case .kanban: \.grid
+        case .metric: \.chart
+        }
+    }
+    
+    private var currentViewModeA11yLabel: String {
+        switch context.viewState.viewMode {
+        case .list: context.viewState.terminology.listViewA11yLabel
+        case .kanban: context.viewState.terminology.kanbanViewA11yLabel
+        case .metric: context.viewState.terminology.metricViewA11yLabel
+        }
     }
     
     private var taskList: some View {
@@ -171,6 +204,67 @@ struct AgentTasksScreen: View {
         }
     }
     
+    private var metricDashboard: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(context.viewState.metricTasks) { task in
+                    metricCard(task)
+                }
+            }
+            .padding(16)
+        }
+        .background(Color.compound.bgCanvasDefault.ignoresSafeArea())
+    }
+    
+    private func metricCard(_ task: AgentTaskSummary) -> some View {
+        Button {
+            context.send(viewAction: .taskTapped(task))
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(task.title ?? task.taskID)
+                    .font(.compound.bodyMDSemibold)
+                    .foregroundColor(.compound.textPrimary)
+                    .lineLimit(2)
+                Text(task.roomName)
+                    .font(.compound.bodySM)
+                    .foregroundColor(.compound.textSecondary)
+                    .lineLimit(1)
+                
+                if let metric = task.metric {
+                    Text("\(metric.formattedCurrent)/\(metric.formattedTarget) \(metric.unit)")
+                        .font(.compound.bodyXS)
+                        .foregroundColor(.compound.textSecondary)
+                }
+                
+                metricChart(history: context.viewState.metricHistories[task.id])
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Color.compound.bgSubtleSecondary))
+        }
+        .buttonStyle(.plain)
+        .task {
+            context.send(viewAction: .loadMetricHistory(task))
+        }
+    }
+    
+    @ViewBuilder
+    private func metricChart(history: [AgentTaskMetricHistoryPoint]?) -> some View {
+        switch history {
+        case .none:
+            ProgressView()
+                .frame(height: 60)
+                .frame(maxWidth: .infinity)
+        case .some(let points) where points.count > 1:
+            Chart(points, id: \.date) { point in
+                LineMark(x: .value("date", point.date), y: .value("value", point.metric.current))
+            }
+            .frame(height: 60)
+        case .some:
+            EmptyView()
+        }
+    }
+    
     private var emptyState: some View {
         VStack(spacing: 8) {
             CompoundIcon(\.polls, size: .medium, relativeTo: .compound.bodyLG)
@@ -233,7 +327,22 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
     ], spaceFilters: [
         .init(room: .mock(id: "!a:example.com", name: "工程院", isSpace: true), level: 0, descendants: ["!a:example.com"]),
         .init(room: .mock(id: "!d:example.com", name: "上林苑", isSpace: true), level: 0, descendants: ["!d:example.com"])
-    ], isKanbanViewEnabled: true)
+    ], viewMode: .kanban)
+    static let metricTaskWithHistory = AgentTaskSummary(roomID: "!a:example.com", roomName: "Hermes案", taskID: "task-1", title: "内存占用瘦身",
+                                                        isResolved: false, doneStepCount: 2, totalStepCount: 3,
+                                                        metric: .init(current: 310, target: 300, unit: "MB"))
+    static let metricViewModel = makeViewModel(tasks: [
+        metricTaskWithHistory,
+        .init(roomID: "!f:example.com", roomName: "无历史记录的差事", taskID: "task-6", title: "刚起步的指标任务",
+              isResolved: false, doneStepCount: 0, totalStepCount: 1,
+              metric: .init(current: 1, target: 10, unit: "件"))
+    ], viewMode: .metric, metricHistory: [
+        metricTaskWithHistory.id: [
+            .init(metric: .init(current: 420, target: 300, unit: "MB"), date: Date(timeIntervalSince1970: 1_751_000_000)),
+            .init(metric: .init(current: 360, target: 300, unit: "MB"), date: Date(timeIntervalSince1970: 1_751_050_000)),
+            .init(metric: .init(current: 310, target: 300, unit: "MB"), date: Date(timeIntervalSince1970: 1_751_100_000))
+        ]
+    ])
     
     static var previews: some View {
         ElementNavigationStack {
@@ -255,17 +364,26 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
             AgentTasksScreen(context: kanbanViewModel.context)
         }
         .previewDisplayName("Kanban")
+        
+        ElementNavigationStack {
+            AgentTasksScreen(context: metricViewModel.context)
+        }
+        .previewDisplayName("Metric")
     }
     
     static func makeViewModel(tasks: [AgentTaskSummary],
                               spaceFilters: [SpaceServiceFilter] = [],
-                              isKanbanViewEnabled: Bool = false) -> AgentTasksScreenViewModel {
+                              viewMode: AgentTasksViewMode = .list,
+                              metricHistory: [String: [AgentTaskMetricHistoryPoint]] = [:]) -> AgentTasksScreenViewModel {
         let indexService = AgentTaskIndexServiceMock()
         indexService.underlyingTasksPublisher = .init(tasks)
+        indexService.metricHistoryRoomIDTaskIDLimitClosure = { roomID, taskID, _ in
+            metricHistory["\(roomID)|\(taskID)"] ?? []
+        }
         let spaceService = SpaceServiceProxyMock()
         spaceService.underlyingSpaceFilterPublisher = .init(spaceFilters)
         let appSettings: AppSettings = .volatile()
-        appSettings.agentTasksKanbanViewEnabled = isKanbanViewEnabled
+        appSettings.agentTasksViewMode = viewMode
         let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
         return AgentTasksScreenViewModel(userSession: userSession,
                                          agentTaskIndexService: indexService,

@@ -12,4 +12,11 @@ import Combine
 protocol AgentTaskIndexServiceProtocol {
     var tasksPublisher: CurrentValuePublisher<[AgentTaskSummary], Never> { get }
     func start()
+    
+    /// Fetches a task's `metric` value-over-time history, oldest first, by paginating its
+    /// room's timeline — bounded to `limit` revisions. Not part of the reactive task index:
+    /// this is a one-shot, on-demand fetch (only called when the user opens the metric
+    /// dashboard), since scanning timeline history is heavier than the index's own local-store
+    /// read and isn't needed for every task on every launch.
+    func metricHistory(roomID: String, taskID: String, limit: UInt32) async -> [AgentTaskMetricHistoryPoint]
 }

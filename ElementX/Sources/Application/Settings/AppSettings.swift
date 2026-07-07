@@ -329,9 +329,9 @@ final nonisolated class AppSettings: @unchecked Sendable {
     @UserPreference(defaultValue: TerminologyScenario.imperial)
     var terminologyScenario: TerminologyScenario
     
-    /// Whether the 差事 tab shows its 看板 (kanban, grouped by 道) view instead of the flat list.
-    @UserPreference(defaultValue: false)
-    var agentTasksKanbanViewEnabled: Bool
+    /// Which of the 差事 tab's 3 view modes (列表/看板/指标) is currently shown.
+    @UserPreference(defaultValue: AgentTasksViewMode.list)
+    var agentTasksViewMode: AgentTasksViewMode
     
     // MARK: - Room Screen
     

@@ -61,7 +61,8 @@ class AgentTaskIndexService: AgentTaskIndexServiceProtocol {
                                                   title: stateEvent.title,
                                                   isResolved: stateEvent.isResolved,
                                                   doneStepCount: stateEvent.doneStepCount,
-                                                  totalStepCount: stateEvent.totalStepCount))
+                                                  totalStepCount: stateEvent.totalStepCount,
+                                                  metric: stateEvent.metric))
                 }
             }
             
@@ -71,5 +72,16 @@ class AgentTaskIndexService: AgentTaskIndexServiceProtocol {
             let resolved = tasks.filter(\.isResolved)
             tasksSubject.send(unresolved + resolved)
         }
+    }
+    
+    func metricHistory(roomID: String, taskID: String, limit: UInt32) async -> [AgentTaskMetricHistoryPoint] {
+        guard case let .success(rawEvents) = await clientProxy.getRoomStateEventHistoryRaw(roomID: roomID,
+                                                                                           eventType: AgentTaskStateEvent.eventType,
+                                                                                           stateKey: taskID,
+                                                                                           limit: limit) else {
+            return []
+        }
+        
+        return rawEvents.compactMap(AgentTaskMetricHistoryPoint.init(parsingFrom:)).sorted { $0.date < $1.date }
     }
 }

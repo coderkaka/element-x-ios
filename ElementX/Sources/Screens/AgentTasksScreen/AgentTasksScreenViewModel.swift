@@ -17,14 +17,16 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
     }
     
     private let appSettings: AppSettings
+    private let agentTaskIndexService: AgentTaskIndexServiceProtocol
     
     init(userSession: UserSessionProtocol,
          agentTaskIndexService: AgentTaskIndexServiceProtocol,
          spaceService: SpaceServiceProxyProtocol,
          appSettings: AppSettings) {
         self.appSettings = appSettings
+        self.agentTaskIndexService = agentTaskIndexService
         super.init(initialViewState: AgentTasksScreenViewState(userID: userSession.clientProxy.userID,
-                                                               isKanbanViewEnabled: appSettings.agentTasksKanbanViewEnabled,
+                                                               viewMode: appSettings.agentTasksViewMode,
                                                                terminology: .init(scenario: appSettings.terminologyScenario)),
                    mediaProvider: userSession.mediaProvider)
         
@@ -46,6 +48,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
                 state.unresolvedTasks = tasks.filter { !$0.isResolved }
                 state.resolvedTasks = tasks.filter(\.isResolved)
                 state.kanbanColumns = Self.makeKanbanColumns(tasks: tasks, spaceFilters: spaceFilters, terminology: state.terminology)
+                state.metricTasks = tasks.filter { $0.metric != nil }
             }
             .store(in: &cancellables)
         
@@ -68,9 +71,11 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         switch viewAction {
         case .taskTapped(let task):
             actionsSubject.send(.presentCanvasSteps(roomID: task.roomID, taskID: task.taskID))
-        case .toggleViewMode:
-            appSettings.agentTasksKanbanViewEnabled.toggle()
-            state.isKanbanViewEnabled = appSettings.agentTasksKanbanViewEnabled
+        case .setViewMode(let mode):
+            appSettings.agentTasksViewMode = mode
+            state.viewMode = mode
+        case .loadMetricHistory(let task):
+            loadMetricHistory(for: task)
         case .showSettings:
             actionsSubject.send(.showSettings)
         }
@@ -98,5 +103,19 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         }
         
         return columns
+    }
+    
+    private func loadMetricHistory(for task: AgentTaskSummary) {
+        guard state.metricHistories[task.id] == nil, !state.loadingMetricTaskIDs.contains(task.id) else {
+            return
+        }
+        state.loadingMetricTaskIDs.insert(task.id)
+        
+        Task { [weak self] in
+            guard let self else { return }
+            let points = await agentTaskIndexService.metricHistory(roomID: task.roomID, taskID: task.taskID, limit: 20)
+            state.loadingMetricTaskIDs.remove(task.id)
+            state.metricHistories[task.id] = points
+        }
     }
 }

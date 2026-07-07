@@ -596,6 +596,7 @@
 		5FA1DCE55973862632961D7C /* PhotoLibraryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7495E1119753B06FF2C2279 /* PhotoLibraryManager.swift */; };
 		5FCD8AFA364206EE32B909A3 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = B050A6B233D95807A09289E7 /* Settings.bundle */; };
 		601AB75BD52B0B4276CEB84A /* SessionVerificationScreenStateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161CD412E75F4086F422AE39 /* SessionVerificationScreenStateMachine.swift */; };
+		609C9B4B00AFC50AC457FC68 /* AgentTasksViewMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3678025AF4EECAC254BBDBC9 /* AgentTasksViewMode.swift */; };
 		60A02A6FCE475B7F0A070836 /* MatrixClientWellKnownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2216751513D9DC0A855D657C /* MatrixClientWellKnownTests.swift */; };
 		60ED66E63A169E47489348A8 /* Collections in Frameworks */ = {isa = PBXBuildFile; productRef = A20EA00CCB9DBE0FFB17DD09 /* Collections */; };
 		611BEE29B8B622204E1E6B04 /* SecurityAndPrivacyScreenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F2F6B6E56055EF173A2DD3 /* SecurityAndPrivacyScreenCoordinator.swift */; };
@@ -967,6 +968,7 @@
 		9696ECAFB4F0C079C5C2A526 /* AppLockSetupPINScreenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FAF8C2226A57B9AB7446B31 /* AppLockSetupPINScreenCoordinator.swift */; };
 		96B3606E30F824095B1DD022 /* NetworkMonitorMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DA1E8F287680C8ED25EDBAC /* NetworkMonitorMock.swift */; };
 		9707AF8D41667FA9B35E8953 /* UserToInvite.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED25719E19B205B668FDACFF /* UserToInvite.swift */; };
+		9713FA4956787B816DF6C483 /* AgentTasksViewMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3678025AF4EECAC254BBDBC9 /* AgentTasksViewMode.swift */; };
 		97189E495F0E47805D1868DB /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = 2B43F2AF7456567FE37270A7 /* KeychainAccess */; };
 		973C48F9E4EFB808F61BE401 /* LocationRoomTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED49073BB1C1FC649DAC2CCD /* LocationRoomTimelineView.swift */; };
 		97550ECE8A1D28FEF74FBACC /* HomeserverCapabilitiesProxyProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85E8591F06B2DAA284181308 /* HomeserverCapabilitiesProxyProtocol.swift */; };
@@ -977,6 +979,7 @@
 		983896D611ABF52A5C37498D /* RoomSummaryProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDB3227C7A74B734924942E9 /* RoomSummaryProvider.swift */; };
 		9847B056C1A216C314D21E68 /* AuthenticationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A1AB5A84D843B6AC8D5F1E /* AuthenticationService.swift */; };
 		988BA75A182738150894A23F /* UserIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8AE4B3273BA189FDCD4055C /* UserIndicator.swift */; };
+		98B898C5196D9B6E90035C26 /* AgentTasksViewMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3678025AF4EECAC254BBDBC9 /* AgentTasksViewMode.swift */; };
 		98EE4259A4A49BC757BA442C /* TimelineViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97B2ACA28A854E41AE3AC9AD /* TimelineViewModel.swift */; };
 		9905C1B1C6EFE38F3A6533F3 /* Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = C33B3F17996DFDF5F0181512 /* Data.swift */; };
 		9912F9EB2D6589141A2957B4 /* AppLockScreenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C44BBC892499BE45B074F89 /* AppLockScreenCoordinator.swift */; };
@@ -2029,6 +2032,7 @@
 		358528B29FA72ACFD0D9644B /* SpacesScreenCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesScreenCoordinator.swift; sourceTree = "<group>"; };
 		35A057BA9BE0F079784CD061 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		35AFCF4C05DEED04E3DB1A16 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		3678025AF4EECAC254BBDBC9 /* AgentTasksViewMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentTasksViewMode.swift; sourceTree = "<group>"; };
 		36DA824791172B9821EACBED /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		36FD673E24FBFCFDF398716A /* RoomMemberProxyMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomMemberProxyMock.swift; sourceTree = "<group>"; };
 		3747C96188856006F784BF49 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = ko; path = ko.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
@@ -6832,6 +6836,7 @@
 		D64E20C9E4C486D5C764D7F3 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				3678025AF4EECAC254BBDBC9 /* AgentTasksViewMode.swift */,
 				FA2397174D0DC3918A7A8A7B /* AnalyticsConfiguration.swift */,
 				353024006CB726E9F9187B3A /* AnalyticsConsentState.swift */,
 				0FD22AEFFA20065494ED2333 /* AppAppearance.swift */,
@@ -8088,6 +8093,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				609C9B4B00AFC50AC457FC68 /* AgentTasksViewMode.swift in Sources */,
 				CA2BFC5504AD91A028CFA45B /* AnalyticsConfiguration.swift in Sources */,
 				4E9ED3E6E979C6C7FEC1D011 /* AnalyticsConsentState.swift in Sources */,
 				68C3AF257678F6E7BB238C3F /* AppAppearance.swift in Sources */,
@@ -8353,6 +8359,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9713FA4956787B816DF6C483 /* AgentTasksViewMode.swift in Sources */,
 				C6AC34B731F4F853E9D15146 /* AnalyticsConfiguration.swift in Sources */,
 				585DCA0487A0A6F4E59EF5CA /* AnalyticsConsentState.swift in Sources */,
 				88887E40301FF0543ED5B59F /* AppAppearance.swift in Sources */,
@@ -8454,6 +8461,7 @@
 				92B3BEAF5BA95200731AC1DC /* AgentTasksScreenModels.swift in Sources */,
 				22D9A75A57B15B1BB0F342E3 /* AgentTasksScreenViewModel.swift in Sources */,
 				1AB049BA1C7048BA69AA21E2 /* AgentTasksScreenViewModelProtocol.swift in Sources */,
+				98B898C5196D9B6E90035C26 /* AgentTasksViewMode.swift in Sources */,
 				091545819C8D3E60B89C1AC5 /* AgentTurnRoomTimelineItem.swift in Sources */,
 				A053533303F3AD05C91774D3 /* AgentTurnRoomTimelineItemContent.swift in Sources */,
 				C35FA4484F4BA0291885B798 /* AgentTurnRoomTimelineView.swift in Sources */,

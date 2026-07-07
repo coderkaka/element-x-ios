@@ -131,4 +131,8 @@ nonisolated struct AppTerminology {
     var listViewA11yLabel: String {
         pick("查看清单", "查看列表")
     }
+    
+    var metricViewA11yLabel: String {
+        pick("查看指标趋势", "查看指标趋势")
+    }
 }

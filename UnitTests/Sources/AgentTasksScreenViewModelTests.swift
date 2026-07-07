@@ -60,14 +60,48 @@ struct AgentTasksScreenViewModelTests {
     }
     
     @Test
-    func toggleViewModePersistsToAppSettings() {
+    func setViewModePersistsToAppSettings() {
         let appSettings: AppSettings = .volatile()
         let (viewModel, _) = makeViewModel(tasks: [], appSettings: appSettings)
         
-        #expect(!viewModel.context.viewState.isKanbanViewEnabled)
-        viewModel.context.send(viewAction: .toggleViewMode)
-        #expect(viewModel.context.viewState.isKanbanViewEnabled)
-        #expect(appSettings.agentTasksKanbanViewEnabled)
+        #expect(viewModel.context.viewState.viewMode == .list)
+        viewModel.context.send(viewAction: .setViewMode(.metric))
+        #expect(viewModel.context.viewState.viewMode == .metric)
+        #expect(appSettings.agentTasksViewMode == .metric)
+    }
+    
+    @Test
+    func metricTasksFiltersToTasksWithAMetric() {
+        let taskWithMetric = AgentTaskSummary(roomID: "!c:example.com", roomName: "Room C", taskID: "task-3",
+                                              title: "Score improvement", isResolved: false, doneStepCount: 0, totalStepCount: 1,
+                                              metric: .init(current: 100, target: 130, unit: "分"))
+        let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask, taskWithMetric])
+        
+        #expect(viewModel.context.viewState.metricTasks == [taskWithMetric])
+    }
+    
+    @Test
+    func loadMetricHistoryFetchesAndCachesPoints() async throws {
+        let taskWithMetric = AgentTaskSummary(roomID: "!c:example.com", roomName: "Room C", taskID: "task-3",
+                                              title: "Score improvement", isResolved: false, doneStepCount: 0, totalStepCount: 1,
+                                              metric: .init(current: 100, target: 130, unit: "分"))
+        let points = [AgentTaskMetricHistoryPoint(metric: .init(current: 90, target: 130, unit: "分"), date: .now)]
+        let indexService = AgentTaskIndexServiceMock()
+        indexService.underlyingTasksPublisher = .init([taskWithMetric])
+        indexService.metricHistoryRoomIDTaskIDLimitClosure = { _, _, _ in points }
+        let spaceService = SpaceServiceProxyMock()
+        spaceService.underlyingSpaceFilterPublisher = .init([])
+        let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
+        let viewModel = AgentTasksScreenViewModel(userSession: userSession,
+                                                  agentTaskIndexService: indexService,
+                                                  spaceService: spaceService,
+                                                  appSettings: .volatile())
+        
+        let deferred = deferFulfillment(viewModel.context.observe(\.viewState.metricHistories)) { !$0.isEmpty }
+        viewModel.context.send(viewAction: .loadMetricHistory(taskWithMetric))
+        try await deferred.fulfill()
+        
+        #expect(viewModel.context.viewState.metricHistories[taskWithMetric.id] == points)
     }
     
     @Test

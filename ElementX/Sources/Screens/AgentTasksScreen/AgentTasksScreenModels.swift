@@ -23,7 +23,14 @@ struct AgentTasksScreenViewState: BindableState {
     var unresolvedTasks: [AgentTaskSummary] = []
     var resolvedTasks: [AgentTaskSummary] = []
     var kanbanColumns: [AgentTasksKanbanColumn] = []
-    var isKanbanViewEnabled = false
+    /// Tasks that carry a `metric` field, for the 指标 view mode.
+    var metricTasks: [AgentTaskSummary] = []
+    /// Keyed by `AgentTaskSummary.id`, populated on-demand as the 指标 view mode's cards
+    /// appear — fetching history for every metric task eagerly isn't worth it since most
+    /// launches never open this view mode.
+    var metricHistories: [String: [AgentTaskMetricHistoryPoint]] = [:]
+    var loadingMetricTaskIDs: Set<String> = []
+    var viewMode = AgentTasksViewMode.list
     var terminology = AppTerminology(scenario: .imperial)
     
     var isEmpty: Bool {
@@ -33,13 +40,15 @@ struct AgentTasksScreenViewState: BindableState {
 
 enum AgentTasksScreenViewAction: CustomStringConvertible {
     case taskTapped(AgentTaskSummary)
-    case toggleViewMode
+    case setViewMode(AgentTasksViewMode)
+    case loadMetricHistory(AgentTaskSummary)
     case showSettings
     
     var description: String {
         switch self {
         case .taskTapped: "taskTapped"
-        case .toggleViewMode: "toggleViewMode"
+        case .setViewMode(let mode): "setViewMode(\(mode.rawValue))"
+        case .loadMetricHistory: "loadMetricHistory"
         case .showSettings: "showSettings"
         }
     }
