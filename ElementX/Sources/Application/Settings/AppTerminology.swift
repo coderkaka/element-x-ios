@@ -90,6 +90,14 @@ nonisolated struct AppTerminology {
         pick("请旨待批", "待办事项")
     }
     
+    /// D-2's "案卡片重点字段" split: 御案体 keeps the "差事 x/y" caption text; 通俗版 shows a
+    /// percentage progress bar instead. Both read the exact same done/total counts — this is a
+    /// rendering choice, not a wording one, which is why it's a `Bool` rather than another
+    /// `pick(_:_:)` string pair.
+    var prefersProgressBar: Bool {
+        scenario == .plain
+    }
+    
     func roomTaskProgress(done: String, total: String) -> String {
         pick("差事 \(done)/\(total)", "任务 \(done)/\(total)")
     }

@@ -139,9 +139,13 @@ struct HomeScreenRoomCell: View {
                 }
                 
                 if room.totalTaskCount > 0 {
-                    Text(terminology.roomTaskProgress(done: String(room.doneTaskCount), total: String(room.totalTaskCount)))
-                        .font(.compound.bodyXS)
-                        .foregroundColor(.compound.textSecondary)
+                    if terminology.prefersProgressBar {
+                        taskProgressBar
+                    } else {
+                        Text(terminology.roomTaskProgress(done: String(room.doneTaskCount), total: String(room.totalTaskCount)))
+                            .font(.compound.bodyXS)
+                            .foregroundColor(.compound.textSecondary)
+                    }
                 }
                 
                 if room.badges.callBadgeType == .voice {
@@ -170,6 +174,20 @@ struct HomeScreenRoomCell: View {
                 }
             }
             .foregroundColor(room.isHighlighted ? .compound.iconAccentTertiary : .compound.iconQuaternary)
+        }
+    }
+    
+    /// 通俗版's stand-in for the "差事 x/y" caption — same done/total counts, rendered as a
+    /// percentage bar instead of a fraction, per D-2's "案卡片重点字段" split.
+    private var taskProgressBar: some View {
+        let progress = Double(room.doneTaskCount) / Double(room.totalTaskCount)
+        return HStack(spacing: 4) {
+            ProgressView(value: progress)
+                .frame(width: 40)
+                .tint(.compound.iconAccentTertiary)
+            Text("\(Int((progress * 100).rounded()))%")
+                .font(.compound.bodyXS)
+                .foregroundColor(.compound.textSecondary)
         }
     }
     
@@ -269,6 +287,13 @@ struct HomeScreenRoomCell_Previews: PreviewProvider, TestablePreview {
         }
         .previewLayout(.sizeThatFits)
         .previewDisplayName("Agent Cards")
+        
+        VStack(spacing: 0) {
+            HomeScreenRoomCell(room: projectRoomWithTasks, terminology: .init(scenario: .plain), isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
+            HomeScreenRoomCell(room: roomWithPendingChoice, terminology: .init(scenario: .plain), isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
+        }
+        .previewLayout(.sizeThatFits)
+        .previewDisplayName("Agent Cards (通俗版 progress bar)")
     }
     
     static func mockRoom(summary: RoomSummary) -> HomeScreenRoom? {
