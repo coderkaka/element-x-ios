@@ -90,7 +90,12 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
     private static func makeKanbanColumns(tasks: [AgentTaskSummary],
                                           spaceFilters: [SpaceServiceFilter],
                                           terminology: AppTerminology) -> [AgentTasksKanbanColumn] {
-        var columns = spaceFilters.map { filter in
+        // De-dupe by space id first: a space reachable via two parent paths in the 道 graph can
+        // appear twice, which would give `ForEach(kanbanColumns)` duplicate ids.
+        var seenSpaceIDs = Set<String>()
+        let uniqueFilters = spaceFilters.filter { seenSpaceIDs.insert($0.room.id).inserted }
+        
+        var columns = uniqueFilters.map { filter in
             AgentTasksKanbanColumn(id: filter.room.id,
                                    title: filter.room.name,
                                    tasks: tasks.filter { filter.descendants.contains($0.roomID) })

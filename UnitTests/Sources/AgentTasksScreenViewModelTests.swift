@@ -118,6 +118,22 @@ struct AgentTasksScreenViewModelTests {
         #expect(viewModel.context.viewState.kanbanColumns[1].tasks == [Self.resolvedTask])
     }
     
+    @Test
+    func kanbanColumnsDeDupeSpacesReachableViaMultipleParents() {
+        // The same space listed twice (two parent paths in the 道 graph) must not produce two
+        // columns with the same id — that would give ForEach duplicate ids.
+        let spaceService = SpaceServiceProxyMock()
+        spaceService.underlyingSpaceFilterPublisher = .init([
+            .init(room: .mock(id: "!space:example.com", name: "工程院", isSpace: true), level: 0, descendants: [Self.unresolvedTask.roomID]),
+            .init(room: .mock(id: "!space:example.com", name: "工程院", isSpace: true), level: 1, descendants: [Self.unresolvedTask.roomID])
+        ])
+        let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask], spaceService: spaceService)
+        
+        let ids = viewModel.context.viewState.kanbanColumns.map(\.id)
+        #expect(ids == ["!space:example.com"])
+        #expect(Set(ids).count == ids.count)
+    }
+    
     // MARK: - Helpers
     
     private static let unresolvedTask = AgentTaskSummary(roomID: "!a:example.com",

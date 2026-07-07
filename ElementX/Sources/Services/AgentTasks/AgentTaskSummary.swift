@@ -80,6 +80,18 @@ nonisolated struct AgentTaskStateEvent: Decodable {
             case metric
             case objectiveID = "objective_id"
         }
+        
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            title = try container.decodeIfPresent(String.self, forKey: .title)
+            status = try container.decode(String.self, forKey: .status)
+            steps = try container.decodeIfPresent([CanvasStep].self, forKey: .steps)
+            // `metric`/`objectiveID` are optional add-ons: a malformed value for either must
+            // degrade to nil, not throw and drop the whole task from the index (a bad `metric`
+            // shouldn't make a task vanish while the room's own panel still shows it).
+            metric = (try? container.decodeIfPresent(AgentTaskMetric.self, forKey: .metric)) ?? nil
+            objectiveID = (try? container.decodeIfPresent(String.self, forKey: .objectiveID)) ?? nil
+        }
     }
     
     init(from decoder: Decoder) throws {

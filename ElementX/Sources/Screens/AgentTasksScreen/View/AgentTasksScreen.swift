@@ -256,7 +256,9 @@ struct AgentTasksScreen: View {
                 .frame(height: 60)
                 .frame(maxWidth: .infinity)
         case .some(let points) where points.count > 1:
-            Chart(points, id: \.date) { point in
+            // id by offset, not `\.date`: two revisions can share an origin_server_ts (batch
+            // writes / same-ms edits), and `id: \.date` would collapse them and drop a point.
+            Chart(Array(points.enumerated()), id: \.offset) { _, point in
                 LineMark(x: .value("date", point.date), y: .value("value", point.metric.current))
             }
             .frame(height: 60)

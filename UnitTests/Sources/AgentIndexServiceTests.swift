@@ -56,6 +56,37 @@ struct AgentIndexServiceTests {
         #expect(AgentTaskStateEvent(parsingFrom: #"{"content":{"status":"done"}}"#) == nil)
     }
     
+    @Test
+    func malformedMetricDegradesToNilWithoutDroppingTheTask() {
+        // A malformed `metric` (present but the required `unit` is null) must not throw and drop
+        // the whole task — it degrades to nil, the task still parses and indexes.
+        let json = """
+        {"type":"io.element.agent.canvas.steps","state_key":"task-x","content":\
+        {"title":"提分","status":"in_progress","steps":[{"id":"s1","label":"读","status":"done"}],\
+        "metric":{"current":120,"target":130,"unit":null}}}
+        """
+        
+        let event = AgentTaskStateEvent(parsingFrom: json)
+        
+        #expect(event?.taskID == "task-x")
+        #expect(event?.title == "提分")
+        #expect(event?.doneStepCount == 1)
+        #expect(event?.metric == nil)
+    }
+    
+    @Test
+    func malformedObjectiveIDDegradesToNilWithoutDroppingTheTask() {
+        let json = """
+        {"type":"io.element.agent.canvas.steps","state_key":"task-y","content":\
+        {"status":"in_progress","objective_id":42}}
+        """
+        
+        let event = AgentTaskStateEvent(parsingFrom: json)
+        
+        #expect(event?.taskID == "task-y")
+        #expect(event?.objectiveID == nil)
+    }
+    
     // MARK: - Goal parsing
     
     @Test
