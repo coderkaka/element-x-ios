@@ -40,11 +40,11 @@ struct AgentTasksScreenViewModelTests {
     }
     
     @Test
-    func tappingTaskPresentsItsRoom() async throws {
+    func tappingTaskPresentsItsCanvasSteps() async throws {
         let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask])
         
         let deferred = deferFulfillment(viewModel.actionsPublisher) { action in
-            action == .presentRoom(roomID: Self.unresolvedTask.roomID)
+            action == .presentCanvasSteps(roomID: Self.unresolvedTask.roomID, taskID: Self.unresolvedTask.taskID)
         }
         viewModel.context.send(viewAction: .taskTapped(Self.unresolvedTask))
         try await deferred.fulfill()

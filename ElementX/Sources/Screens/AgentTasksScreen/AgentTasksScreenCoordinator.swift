@@ -14,7 +14,7 @@ struct AgentTasksScreenCoordinatorParameters {
 }
 
 enum AgentTasksScreenCoordinatorAction {
-    case presentRoom(roomID: String)
+    case presentCanvasSteps(roomID: String, taskID: String)
 }
 
 final class AgentTasksScreenCoordinator: CoordinatorProtocol {
@@ -37,8 +37,8 @@ final class AgentTasksScreenCoordinator: CoordinatorProtocol {
         viewModel.actionsPublisher.sink { [weak self] action in
             guard let self else { return }
             switch action {
-            case .presentRoom(let roomID):
-                actionsSubject.send(.presentRoom(roomID: roomID))
+            case .presentCanvasSteps(let roomID, let taskID):
+                actionsSubject.send(.presentCanvasSteps(roomID: roomID, taskID: taskID))
             }
         }
         .store(in: &cancellables)

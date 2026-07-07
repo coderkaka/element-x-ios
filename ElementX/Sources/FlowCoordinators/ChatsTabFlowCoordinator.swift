@@ -145,6 +145,8 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
                                       userInfo: .init(animated: animated))
         case .event(let eventID, let roomID, let via):
             stateMachine.processEvent(.selectRoom(roomID: roomID, via: via, entryPoint: .eventID(eventID)), userInfo: .init(animated: animated))
+        case .canvasSteps(let roomID, let taskID, let via):
+            stateMachine.processEvent(.selectRoom(roomID: roomID, via: via, entryPoint: .canvasSteps(taskID: taskID)), userInfo: .init(animated: animated))
         case .eventOnRoomAlias(let eventID, let alias):
             switch await userSession.clientProxy.resolveRoomAlias(alias) {
             case .success(let resolved): await asyncHandleAppRoute(.event(eventID: eventID, roomID: resolved.roomId, via: resolved.servers), animated: animated)
@@ -323,6 +325,7 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
             case .share(let payload): .share(payload)
             case .transferOwnership: .transferOwnership(roomID: roomID)
             case .thread(let rootEventID, let focusEventID): .thread(roomID: roomID, threadRootEventID: rootEventID, focusEventID: focusEventID)
+            case .canvasSteps(let taskID): .canvasSteps(roomID: roomID, taskID: taskID, via: via)
             }
             roomFlowCoordinator.handleAppRoute(route, animated: animated)
         } else {
@@ -579,6 +582,8 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
             coordinator.handleAppRoute(.transferOwnership(roomID: roomID), animated: animated)
         case .thread(let rootEventID, let focusEventID):
             coordinator.handleAppRoute(.thread(roomID: roomID, threadRootEventID: rootEventID, focusEventID: focusEventID), animated: animated)
+        case .canvasSteps(let taskID):
+            coordinator.handleAppRoute(.canvasSteps(roomID: roomID, taskID: taskID, via: via), animated: animated)
         }
         
         Task {

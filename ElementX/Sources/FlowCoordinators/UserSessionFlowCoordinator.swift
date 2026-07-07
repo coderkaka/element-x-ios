@@ -184,7 +184,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         case .roomList, .room, .roomAlias, .childRoom, .childRoomAlias,
              .roomDetails, .roomMemberDetails, .userProfile,
              .event, .eventOnRoomAlias, .childEvent, .childEventOnRoomAlias,
-             .share, .transferOwnership, .thread:
+             .share, .transferOwnership, .thread, .canvasSteps:
             clearPresentedSheets(animated: animated) // Make sure the presented route is visible.
             chatsTabFlowCoordinator.handleAppRoute(appRoute, animated: animated)
             if navigationTabCoordinator.selectedTab != .chats {
@@ -274,8 +274,8 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
             .sink { [weak self] action in
                 guard let self else { return }
                 switch action {
-                case .presentRoom(let roomID):
-                    handleAppRoute(.room(roomID: roomID, via: []), animated: true)
+                case .presentCanvasSteps(let roomID, let taskID):
+                    handleAppRoute(.canvasSteps(roomID: roomID, taskID: taskID, via: []), animated: true)
                 }
             }
             .store(in: &cancellables)

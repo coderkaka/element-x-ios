@@ -26,6 +26,9 @@ extension RoomFlowCoordinator {
         case eventFocus(FocusEvent)
         case share(ShareExtensionPayload)
         case thread(rootEventID: String, focusEvent: FocusEvent?)
+        /// Deep-linked from the cross-room 差事 tab, which only has `taskID` (no `eventID`) —
+        /// resolved against the room's own task summary once it's loaded, see `presentRoom`.
+        case canvasSteps(taskID: String)
         
         var focusedEvent: FocusEvent? {
             switch self {

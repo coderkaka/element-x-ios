@@ -28,5 +28,5 @@ enum AgentTasksScreenViewAction: CustomStringConvertible {
 }
 
 enum AgentTasksScreenViewModelAction: Equatable {
-    case presentRoom(roomID: String)
+    case presentCanvasSteps(roomID: String, taskID: String)
 }

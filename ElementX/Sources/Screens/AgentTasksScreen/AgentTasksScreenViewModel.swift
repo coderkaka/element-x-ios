@@ -43,7 +43,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         
         switch viewAction {
         case .taskTapped(let task):
-            actionsSubject.send(.presentRoom(roomID: task.roomID))
+            actionsSubject.send(.presentCanvasSteps(roomID: task.roomID, taskID: task.taskID))
         }
     }
 }

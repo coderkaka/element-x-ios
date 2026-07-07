@@ -54,6 +54,11 @@ enum AppRoute: Hashable {
     case transferOwnership(roomID: String)
     /// A thread within a room, only to be used to handle tap on notification for threaded events.
     case thread(roomID: String, threadRootEventID: String, focusEventID: String?)
+    /// A 差事(agent task)'s canvas-steps detail, reached from the cross-room 差事 tab list —
+    /// which only carries `taskID` (no `eventID`), matched once the room's own task summary
+    /// has loaded (mirroring the taskID-first fallback `RoomFlowCoordinator` already uses
+    /// internally for state-only tasks).
+    case canvasSteps(roomID: String, taskID: String, via: [String])
     /// The search screen
     case search
     

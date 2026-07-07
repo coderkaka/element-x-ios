@@ -46,6 +46,8 @@ enum RoomFlowCoordinatorEntryPoint: Hashable {
     case share(ShareExtensionPayload)
     /// The flow to change the the owner of the room
     case transferOwnership
+    /// The flow will start by showing the room, opening the canvas steps for the given task ID.
+    case canvasSteps(taskID: String)
     
     var isEventID: Bool {
         guard case .eventID = self else { return false }
@@ -191,6 +193,13 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                 await handleRoomRoute(roomID: roomID,
                                       via: via,
                                       presentationAction: .eventFocus(.init(eventID: eventID, shouldSetPin: false)),
+                                      animated: animated)
+            }
+        case .canvasSteps(let roomID, let taskID, let via):
+            Task {
+                await handleRoomRoute(roomID: roomID,
+                                      via: via,
+                                      presentationAction: .canvasSteps(taskID: taskID),
                                       animated: animated)
             }
         case .childEvent(let eventID, let roomID, let via):
@@ -625,6 +634,8 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                         }
                     }
                     stateMachine.tryEvent(.presentThread(threadRootEventID: rootEventID, focusEventID: focusEvent?.eventID))
+                case .canvasSteps(let taskID):
+                    presentCanvasSteps(taskID: taskID, animated: animated)
                 case .none:
                     break
                 }
@@ -661,6 +672,8 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                                   userInfo: EventUserInfo(animated: animated, timelineController: timelineController))
         case .thread(let rootEventID, let focusEvent):
             stateMachine.tryEvent(.presentThread(threadRootEventID: rootEventID, focusEventID: focusEvent?.eventID))
+        case .canvasSteps(let taskID):
+            presentCanvasSteps(taskID: taskID, animated: animated)
         case .share(.text), .eventFocus:
             break // These are both handled in the coordinator's init.
         case .none:
@@ -813,6 +826,30 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                                              roomProxy: roomProxy,
                                              appSettings: flowParameters.appSettings),
                            animated: animated)
+    }
+    
+    /// Deep-linked from the cross-room 差事 tab, which only carries `taskID` (no `eventID`).
+    /// Unlike `presentCanvasSteps(eventID:taskID:animated:)`, this can't fall back to a timeline
+    /// lookup (there's no eventID to match), and the room has *just* been presented so its task
+    /// summary may not have finished loading yet — so it waits (bounded) for the task to appear
+    /// instead of checking `roomTaskSummaryPublisher.value` once and giving up.
+    private func presentCanvasSteps(taskID: String, animated: Bool) {
+        guard let roomScreenCoordinator else { return }
+        
+        var didPresent = false
+        roomScreenCoordinator.roomTaskSummaryPublisher
+            .compactMap { summary in (summary.activeTasks + summary.doneTasks).first { $0.taskID == taskID } }
+            .first()
+            .timeout(.seconds(5), scheduler: DispatchQueue.main)
+            .sink(receiveCompletion: { _ in
+                if !didPresent {
+                    MXLog.error("Failed presenting canvas steps: task \(taskID) never appeared in the room's task summary")
+                }
+            }, receiveValue: { [weak self] task in
+                didPresent = true
+                self?.presentCanvasSteps(task: task, animated: animated)
+            })
+            .store(in: &cancellables)
     }
     
     /// Pushes the step list screen directly from the task panel's summary data — no timeline-item
@@ -1676,7 +1713,7 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
             coordinator.handleAppRoute(.share(payload), animated: true)
         case .transferOwnership:
             coordinator.handleAppRoute(.transferOwnership(roomID: roomID), animated: true)
-        case .thread:
+        case .thread, .canvasSteps:
             fatalError("This entry point is not allowed for child flows")
         }
     }
