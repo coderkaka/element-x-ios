@@ -16,6 +16,10 @@ struct AgentTasksKanbanColumn: Identifiable, Equatable {
 }
 
 struct AgentTasksScreenViewState: BindableState {
+    let userID: String
+    var userDisplayName: String?
+    var userAvatarURL: URL?
+    
     var unresolvedTasks: [AgentTaskSummary] = []
     var resolvedTasks: [AgentTaskSummary] = []
     var kanbanColumns: [AgentTasksKanbanColumn] = []
@@ -30,15 +34,18 @@ struct AgentTasksScreenViewState: BindableState {
 enum AgentTasksScreenViewAction: CustomStringConvertible {
     case taskTapped(AgentTaskSummary)
     case toggleViewMode
+    case showSettings
     
     var description: String {
         switch self {
         case .taskTapped: "taskTapped"
         case .toggleViewMode: "toggleViewMode"
+        case .showSettings: "showSettings"
         }
     }
 }
 
 enum AgentTasksScreenViewModelAction: Equatable {
     case presentCanvasSteps(roomID: String, taskID: String)
+    case showSettings
 }

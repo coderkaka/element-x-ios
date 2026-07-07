@@ -18,10 +18,25 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
     
     private let appSettings: AppSettings
     
-    init(agentTaskIndexService: AgentTaskIndexServiceProtocol, spaceService: SpaceServiceProxyProtocol, appSettings: AppSettings) {
+    init(userSession: UserSessionProtocol,
+         agentTaskIndexService: AgentTaskIndexServiceProtocol,
+         spaceService: SpaceServiceProxyProtocol,
+         appSettings: AppSettings) {
         self.appSettings = appSettings
-        super.init(initialViewState: AgentTasksScreenViewState(isKanbanViewEnabled: appSettings.agentTasksKanbanViewEnabled,
-                                                               terminology: .init(scenario: appSettings.terminologyScenario)))
+        super.init(initialViewState: AgentTasksScreenViewState(userID: userSession.clientProxy.userID,
+                                                               isKanbanViewEnabled: appSettings.agentTasksKanbanViewEnabled,
+                                                               terminology: .init(scenario: appSettings.terminologyScenario)),
+                   mediaProvider: userSession.mediaProvider)
+        
+        userSession.clientProxy.userAvatarURLPublisher
+            .receive(on: DispatchQueue.main)
+            .weakAssign(to: \.state.userAvatarURL, on: self)
+            .store(in: &cancellables)
+        
+        userSession.clientProxy.userDisplayNamePublisher
+            .receive(on: DispatchQueue.main)
+            .weakAssign(to: \.state.userDisplayName, on: self)
+            .store(in: &cancellables)
         
         // No queue hop: the services publish on the main actor and the synchronous
         // initial emission populates state before the first render (previews rely on this).
@@ -56,6 +71,8 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         case .toggleViewMode:
             appSettings.agentTasksKanbanViewEnabled.toggle()
             state.isKanbanViewEnabled = appSettings.agentTasksKanbanViewEnabled
+        case .showSettings:
+            actionsSubject.send(.showSettings)
         }
     }
     

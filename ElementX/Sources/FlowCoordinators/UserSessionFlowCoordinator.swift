@@ -106,7 +106,8 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         chatsTabDetails.navigationSplitCoordinator = chatsSplitCoordinator
         
         let tasksSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
-        agentTasksScreenCoordinator = AgentTasksScreenCoordinator(parameters: .init(agentTaskIndexService: agentTaskIndexService,
+        agentTasksScreenCoordinator = AgentTasksScreenCoordinator(parameters: .init(userSession: flowParameters.userSession,
+                                                                                    agentTaskIndexService: agentTaskIndexService,
                                                                                     spaceService: flowParameters.userSession.clientProxy.spaceService,
                                                                                     appSettings: flowParameters.appSettings))
         tasksSplitCoordinator.setSidebarCoordinator(agentTasksScreenCoordinator)
@@ -278,6 +279,8 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                 switch action {
                 case .presentCanvasSteps(let roomID, let taskID):
                     handleAppRoute(.canvasSteps(roomID: roomID, taskID: taskID, via: []), animated: true)
+                case .showSettings:
+                    handleAppRoute(.settings, animated: true)
                 }
             }
             .store(in: &cancellables)

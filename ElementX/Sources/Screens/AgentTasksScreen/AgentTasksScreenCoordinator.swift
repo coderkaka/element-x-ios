@@ -9,6 +9,7 @@ import Combine
 import SwiftUI
 
 struct AgentTasksScreenCoordinatorParameters {
+    let userSession: UserSessionProtocol
     let agentTaskIndexService: AgentTaskIndexServiceProtocol
     let spaceService: SpaceServiceProxyProtocol
     let appSettings: AppSettings
@@ -16,6 +17,7 @@ struct AgentTasksScreenCoordinatorParameters {
 
 enum AgentTasksScreenCoordinatorAction {
     case presentCanvasSteps(roomID: String, taskID: String)
+    case showSettings
 }
 
 final class AgentTasksScreenCoordinator: CoordinatorProtocol {
@@ -31,7 +33,8 @@ final class AgentTasksScreenCoordinator: CoordinatorProtocol {
     
     init(parameters: AgentTasksScreenCoordinatorParameters) {
         self.parameters = parameters
-        viewModel = AgentTasksScreenViewModel(agentTaskIndexService: parameters.agentTaskIndexService,
+        viewModel = AgentTasksScreenViewModel(userSession: parameters.userSession,
+                                              agentTaskIndexService: parameters.agentTaskIndexService,
                                               spaceService: parameters.spaceService,
                                               appSettings: parameters.appSettings)
     }
@@ -42,6 +45,8 @@ final class AgentTasksScreenCoordinator: CoordinatorProtocol {
             switch action {
             case .presentCanvasSteps(let roomID, let taskID):
                 actionsSubject.send(.presentCanvasSteps(roomID: roomID, taskID: taskID))
+            case .showSettings:
+                actionsSubject.send(.showSettings)
             }
         }
         .store(in: &cancellables)

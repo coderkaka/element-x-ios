@@ -22,13 +22,35 @@ struct AgentTasksScreen: View {
             }
         }
         .navigationTitle(context.viewState.terminology.tabTasks)
+        // Kanban's horizontal ScrollView and the list's Form don't drive the large-title
+        // collapse the same way, which made the title intermittently vanish when toggling
+        // between them — inline mode sidesteps that scroll-offset-dependent chrome entirely.
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                settingsButton
+            }
             if !context.viewState.isEmpty {
                 ToolbarItem(placement: .primaryAction) {
                     viewModeButton
                 }
             }
         }
+    }
+    
+    private var settingsButton: some View {
+        Button {
+            context.send(viewAction: .showSettings)
+        } label: {
+            LoadableAvatarImage(url: context.viewState.userAvatarURL,
+                                name: context.viewState.userDisplayName,
+                                contentID: context.viewState.userID,
+                                avatarSize: .user(on: .chats),
+                                mediaProvider: context.mediaProvider)
+                .clipShape(.circle)
+                .compositingGroup()
+        }
+        .accessibilityLabel(L10n.commonSettings)
     }
     
     private var viewModeButton: some View {
@@ -244,6 +266,10 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
         spaceService.underlyingSpaceFilterPublisher = .init(spaceFilters)
         let appSettings: AppSettings = .volatile()
         appSettings.agentTasksKanbanViewEnabled = isKanbanViewEnabled
-        return AgentTasksScreenViewModel(agentTaskIndexService: indexService, spaceService: spaceService, appSettings: appSettings)
+        let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
+        return AgentTasksScreenViewModel(userSession: userSession,
+                                         agentTaskIndexService: indexService,
+                                         spaceService: spaceService,
+                                         appSettings: appSettings)
     }
 }

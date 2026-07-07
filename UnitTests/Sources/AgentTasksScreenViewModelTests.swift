@@ -51,6 +51,15 @@ struct AgentTasksScreenViewModelTests {
     }
     
     @Test
+    func showSettingsForwardsTheAction() async throws {
+        let (viewModel, _) = makeViewModel(tasks: [])
+        
+        let deferred = deferFulfillment(viewModel.actionsPublisher) { $0 == .showSettings }
+        viewModel.context.send(viewAction: .showSettings)
+        try await deferred.fulfill()
+    }
+    
+    @Test
     func toggleViewModePersistsToAppSettings() {
         let appSettings: AppSettings = .volatile()
         let (viewModel, _) = makeViewModel(tasks: [], appSettings: appSettings)
@@ -109,6 +118,10 @@ struct AgentTasksScreenViewModelTests {
             resolvedSpaceService = mock
         }
         
-        return (AgentTasksScreenViewModel(agentTaskIndexService: indexService, spaceService: resolvedSpaceService, appSettings: appSettings), tasksSubject)
+        let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
+        return (AgentTasksScreenViewModel(userSession: userSession,
+                                          agentTaskIndexService: indexService,
+                                          spaceService: resolvedSpaceService,
+                                          appSettings: appSettings), tasksSubject)
     }
 }
