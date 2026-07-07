@@ -106,9 +106,11 @@ Status: **设计级草案,非实施 spec。** D 的多数决策依赖 C 上线�
     标的的人工排序提示,不是状态机字段。**建议**:凡是能用 `updated_at`(时间戳,方向天然
     无歧义)替代的排序场景(如案卷面板内标的 section 顺序,取"最近有动静的排前面"),
     优先用 `updated_at` 不用 `priority`,减少人为权重带来的解释成本。
-- 一旦 Phase D 要做标的消费,会是**第三个**"debounce 订阅 roomListPublisher → 逐房间
-  fetch state → parse → publish sorted list"的索引服务,跟下面 D-5 的合并诉求是同一件事,
-  优先级因此更高——不要在合并之前先加第三份重复实现。
+- **07-07 更新**:D-5 的合并已完成——`AgentTaskIndexService`/`AgentProjectIndexService`
+  合并为 `AgentIndexService`,标的索引可以作为第四个 publisher 加在上面,不再是"先加
+  第三份重复实现"的问题。**但 D-6 仍不建议现在做**:跟 D-2②的 metric 字段同理,
+  `io.element.agent.objective` 目前没有任何 agent 在真的写(查过 homelab,一个引用都
+  没有),建出消费管线也只是空索引。等真实数据出现再做。
 
 ## D-7 系统运维常设房间——统一入口(现有道 + 多 agent 房间,不是新屏幕、不归书信)
 
@@ -215,10 +217,11 @@ action 接线(Model/ViewModel/Coordinator 各加一小段),机械但不难。
 PII 日志统一清理(AgentTasksScreen/AgentTaskPanelScreen 只打 case 名,**已修**,07-06
 本地会话)、孤儿字符串 key、index 服务改独立 provider(C-1 落地
 messagesRoomSummaryProvider 后有现成先例)、rebuildIndex cancel-previous(**已修**,
-07-06 本地会话)、AgentTaskIndexService 与 AgentProjectIndexService 合并(**优先级
-提升**,见上 D-6——第三个同构索引服务即将出现)、上游 SDK PR(四 + C-2 一共五个 fork
-commit,07-06 新增 objective required_state 一行 + x86_64 target 精简两个 commit,
-现为七个)。
+07-06 本地会话)、AgentTaskIndexService 与 AgentProjectIndexService 合并(**已修**,
+07-07 本地会话,合并为 `AgentIndexService`;顺带把 goal/choice_request 的耦合失败语义
+改成三类 fetch 完全独立——之前一个失败会连累另一个已经拿到的数据,现在不会)、上游 SDK
+PR(四 + C-2 一共五个 fork commit,07-06 新增 objective required_state 一行 +
+x86_64 target 精简 + 新增 get_state_event_history_raw 三个 commit,现为八个)。
 
 ## 不做(诚实的边界)
 
