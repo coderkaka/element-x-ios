@@ -54,6 +54,9 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
     /// Every `io.element.agent.choice_request` state event the room currently has, pending or not —
     /// kept unfiltered so a resolution can override a timeline guess that's still pending.
     private var stateEnumeratedChoiceEvents = [AgentChoiceStateIndexEvent]()
+    /// Every `io.element.agent.objective` state event the room currently has — the 案卷面板 groups
+    /// tasks under the active ones.
+    private var stateEnumeratedObjectives = [RoomTaskSummary.Objective]()
     
     private var currentUserProxy: RoomMemberProxyProtocol?
     
@@ -989,7 +992,8 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
                                             totalStepCount: steps.count,
                                             steps: steps,
                                             threadRootEventID: stateContent?.threadRootEventID,
-                                            updatedAt: stateContent?.updatedAt)
+                                            updatedAt: stateContent?.updatedAt,
+                                            objectiveID: stateContent?.objectiveID)
             
             if task.isResolved {
                 timelineDoneTasks.append(task)
@@ -1019,7 +1023,8 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         
         state.roomTaskSummary = RoomTaskSummary(activeTasks: sortedByUpdatedAtDescendingNilsLast(mergedTasks.filter { !$0.isResolved }),
                                                 doneTasks: sortedByUpdatedAtDescendingNilsLast(mergedTasks.filter(\.isResolved)),
-                                                pendingChoices: pendingChoices)
+                                                pendingChoices: pendingChoices,
+                                                objectives: stateEnumeratedObjectives)
         
         // Mirror into the publisher feeding the task panel while it's pushed.
         if roomTaskSummarySubject.value != state.roomTaskSummary {
@@ -1090,6 +1095,13 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
                 MXLog.error("Failed enumerating \(AgentChoiceRequestRoomTimelineItemContent.msgType) state events with error: \(error)")
             }
             
+            switch await roomProxy.getStateEventsRaw(eventType: AgentObjectiveStateEvent.eventType) {
+            case .success(let rawStateEvents):
+                stateEnumeratedObjectives = rawStateEvents.compactMap(Self.parseObjectiveState)
+            case .failure(let error):
+                MXLog.error("Failed enumerating \(AgentObjectiveStateEvent.eventType) state events with error: \(error)")
+            }
+            
             updateRoomTaskSummary(timelineItems: timelineController.timelineItems)
         }
     }
@@ -1110,7 +1122,21 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
                                     totalStepCount: content.steps.count,
                                     steps: content.steps,
                                     threadRootEventID: content.threadRootEventID,
-                                    updatedAt: content.updatedAt)
+                                    updatedAt: content.updatedAt,
+                                    objectiveID: content.objectiveID)
+    }
+    
+    /// Builds an objective straight from one `io.element.agent.objective` state event's raw JSON,
+    /// reusing the same parser the cross-room index uses.
+    private static func parseObjectiveState(_ rawStateEventJSON: String) -> RoomTaskSummary.Objective? {
+        guard let event = AgentObjectiveStateEvent(parsingFrom: rawStateEventJSON) else { return nil }
+        return RoomTaskSummary.Objective(objectiveID: event.objectiveID,
+                                         title: event.title,
+                                         status: event.status,
+                                         successMetrics: event.successMetrics,
+                                         exitOptions: event.exitOptions,
+                                         priority: event.priority,
+                                         updatedAt: event.updatedAt)
     }
     
     private static func stateKey(from rawStateEventJSON: String) -> String? {

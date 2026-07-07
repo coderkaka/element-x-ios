@@ -7,6 +7,7 @@
 
 import Combine
 @testable import ElementX
+import Foundation
 import Testing
 
 @MainActor
@@ -65,6 +66,40 @@ struct AgentTaskPanelScreenViewModelTests {
         try await deferred.fulfill()
     }
     
+    // MARK: - Objective grouping
+    
+    @Test
+    func objectiveSectionsGroupActiveTasksAndKeepEmptyActiveObjectives() {
+        let taggedTask = Self.task(taskID: "t1", objectiveID: "obj-1")
+        let (viewModel, _) = makeViewModel(summary: RoomTaskSummary(activeTasks: [taggedTask],
+                                                                    objectives: [Self.objective(id: "obj-1"),
+                                                                                 Self.objective(id: "obj-empty")]))
+        let sections = viewModel.context.viewState.objectiveSections
+        #expect(sections.count == 2)
+        #expect(sections.first { $0.id == "obj-1" }?.tasks == [taggedTask])
+        #expect(sections.first { $0.id == "obj-empty" }?.tasks.isEmpty == true)
+    }
+    
+    @Test
+    func doneAndAbandonedObjectivesDoNotGetSections() {
+        let (viewModel, _) = makeViewModel(summary: RoomTaskSummary(objectives: [Self.objective(id: "a", status: .done),
+                                                                                 Self.objective(id: "b", status: .abandoned),
+                                                                                 Self.objective(id: "c", status: .active)]))
+        #expect(viewModel.context.viewState.objectiveSections.map(\.id) == ["c"])
+    }
+    
+    @Test
+    func ungroupedActiveTasksExcludeThoseUnderActiveObjectives() {
+        let underActive = Self.task(taskID: "t1", objectiveID: "obj-active")
+        let underDone = Self.task(taskID: "t2", objectiveID: "obj-done")
+        let unowned = Self.task(taskID: "t3", objectiveID: nil)
+        let (viewModel, _) = makeViewModel(summary: RoomTaskSummary(activeTasks: [underActive, underDone, unowned],
+                                                                    objectives: [Self.objective(id: "obj-active", status: .active),
+                                                                                 Self.objective(id: "obj-done", status: .done)]))
+        // Under a done objective → ungrouped (no section for it); unowned → ungrouped; under active → grouped only.
+        #expect(viewModel.context.viewState.ungroupedActiveTasks.map(\.taskID) == ["t2", "t3"])
+    }
+    
     // MARK: - Helpers
     
     private static let activeTask = RoomTaskSummary.Task(eventID: "$task-1",
@@ -93,6 +128,15 @@ struct AgentTaskPanelScreenViewModelTests {
     private static let mixedSummary = RoomTaskSummary(activeTasks: [activeTask],
                                                       doneTasks: [doneTask],
                                                       pendingChoices: [pendingChoice])
+    
+    private static func task(taskID: String, objectiveID: String?) -> RoomTaskSummary.Task {
+        RoomTaskSummary.Task(eventID: "$\(taskID)", taskID: taskID, title: taskID, isResolved: false,
+                             doneStepCount: 0, totalStepCount: 1, steps: [], threadRootEventID: nil, updatedAt: nil, objectiveID: objectiveID)
+    }
+    
+    private static func objective(id: String, status: AgentObjectiveStatus = .active) -> RoomTaskSummary.Objective {
+        RoomTaskSummary.Objective(objectiveID: id, title: id, status: status, successMetrics: [], exitOptions: [], priority: 0, updatedAt: .now)
+    }
     
     private func makeViewModel(summary: RoomTaskSummary) -> (AgentTaskPanelScreenViewModel, CurrentValueSubject<RoomTaskSummary, Never>) {
         let summarySubject = CurrentValueSubject<RoomTaskSummary, Never>(summary)

@@ -27,6 +27,7 @@ class AgentTaskPanelScreenViewModel: AgentTaskPanelScreenViewModelType, AgentTas
                 state.pendingChoices = summary.pendingChoices
                 state.activeTasks = summary.activeTasks
                 state.doneTasks = summary.doneTasks
+                state.objectives = summary.objectives
             }
             .store(in: &cancellables)
         

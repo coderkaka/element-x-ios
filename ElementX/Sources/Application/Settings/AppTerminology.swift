@@ -142,4 +142,17 @@ nonisolated struct AppTerminology {
     func objectivesInProgress(count: String) -> String {
         pick("\(count) 个标的并行推进", "\(count) 个目标并行推进")
     }
+    
+    var objectiveSuccessMetrics: String {
+        pick("成功标准", "成功标准")
+    }
+    
+    var objectiveExitOptions: String {
+        pick("退出选项", "退出选项")
+    }
+    
+    /// The 案卷面板's trailing section for 差事 not filed under any active 标的.
+    var objectiveUngrouped: String {
+        pick("未挂靠标的", "未分组")
+    }
 }

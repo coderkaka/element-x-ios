@@ -111,6 +111,9 @@ nonisolated struct AgentCanvasStepsStateContent: Decodable {
     let title: String?
     let threadRootEventID: String?
     let updatedAt: Date?
+    /// The 标的(objective) this task belongs to, if any — optional back-reference per
+    /// `element-agent-protocol.md` §3.4. Drives the 案卷面板's per-objective grouping.
+    let objectiveID: String?
     
     private enum CodingKeys: String, CodingKey {
         case status
@@ -118,6 +121,7 @@ nonisolated struct AgentCanvasStepsStateContent: Decodable {
         case title
         case threadRootEventID = "thread_root_id"
         case updatedAt = "updated_at"
+        case objectiveID = "objective_id"
     }
     
     init(from decoder: Decoder) throws {
@@ -130,6 +134,7 @@ nonisolated struct AgentCanvasStepsStateContent: Decodable {
         updatedAt = (try? container.decodeIfPresent(UInt64.self, forKey: .updatedAt))
             .flatMap { $0 }
             .map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
+        objectiveID = try? container.decodeIfPresent(String.self, forKey: .objectiveID)
     }
     
     /// - Parameter rawStateEventJSON: the full raw state event JSON string returned by

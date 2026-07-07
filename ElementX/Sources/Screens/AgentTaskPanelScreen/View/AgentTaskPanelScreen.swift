@@ -43,13 +43,19 @@ struct AgentTaskPanelScreen: View {
                 }
             }
             
-            if !context.viewState.activeTasks.isEmpty {
+            ForEach(context.viewState.objectiveSections) { section in
+                objectiveSection(section)
+            }
+            
+            if !context.viewState.ungroupedActiveTasks.isEmpty {
                 Section {
-                    ForEach(context.viewState.activeTasks) { task in
+                    ForEach(context.viewState.ungroupedActiveTasks) { task in
                         taskRow(task)
                     }
                 } header: {
-                    Text(context.viewState.terminology.sectionActive)
+                    // Only call it out as "ungrouped" when there are objective sections to
+                    // contrast against; otherwise it's just the ordinary 在办 list.
+                    Text(context.viewState.objectiveSections.isEmpty ? context.viewState.terminology.sectionActive : context.viewState.terminology.objectiveUngrouped)
                         .compoundListSectionHeader()
                 }
             }
@@ -69,6 +75,32 @@ struct AgentTaskPanelScreen: View {
             }
         }
         .compoundList()
+    }
+    
+    private func objectiveSection(_ section: AgentTaskPanelObjectiveSection) -> some View {
+        Section {
+            if !section.objective.successMetrics.isEmpty {
+                readOnlyList(title: context.viewState.terminology.objectiveSuccessMetrics, items: section.objective.successMetrics)
+            }
+            if !section.objective.exitOptions.isEmpty {
+                readOnlyList(title: context.viewState.terminology.objectiveExitOptions, items: section.objective.exitOptions)
+            }
+            ForEach(section.tasks) { task in
+                taskRow(task)
+            }
+        } header: {
+            Text(section.objective.title)
+                .compoundListSectionHeader()
+        }
+    }
+    
+    /// `success_metrics`/`exit_options` are read-only context (§3.4) — the authoritative
+    /// completion signal is the objective's `status`, and real decisions still go through the
+    /// existing choice_request cards, so these are never interactive.
+    private func readOnlyList(title: String, items: [String]) -> some View {
+        ListRow(label: .plain(title: title,
+                              description: items.map { "· \($0)" }.joined(separator: "\n")),
+                kind: .label)
     }
     
     private func taskRow(_ task: RoomTaskSummary.Task) -> some View {
@@ -103,6 +135,7 @@ struct AgentTaskPanelScreen_Previews: PreviewProvider, TestablePreview {
     static let pendingOnlyViewModel = makeViewModel(summary: RoomTaskSummary(pendingChoices: [
         .init(eventID: "$choice-1", question: "Deploy to staging first?")
     ]))
+    static let objectivesViewModel = makeViewModel(summary: objectivesSummary)
     
     static var previews: some View {
         ElementNavigationStack {
@@ -119,6 +152,11 @@ struct AgentTaskPanelScreen_Previews: PreviewProvider, TestablePreview {
             AgentTaskPanelScreen(context: pendingOnlyViewModel.context)
         }
         .previewDisplayName("Pending only")
+        
+        ElementNavigationStack {
+            AgentTaskPanelScreen(context: objectivesViewModel.context)
+        }
+        .previewDisplayName("Objectives")
     }
     
     static var mixedSummary: RoomTaskSummary {
@@ -155,6 +193,23 @@ struct AgentTaskPanelScreen_Previews: PreviewProvider, TestablePreview {
         ],
         pendingChoices: [
             .init(eventID: "$choice-1", question: "Deploy to staging first?")
+        ])
+    }
+    
+    static var objectivesSummary: RoomTaskSummary {
+        RoomTaskSummary(activeTasks: [
+            .init(eventID: "$task-1", taskID: "task-1", title: "验证真机趋势线", isResolved: false,
+                  doneStepCount: 1, totalStepCount: 3, steps: [], threadRootEventID: nil, updatedAt: nil, objectiveID: "obj-1"),
+            .init(eventID: "$task-2", taskID: "task-2", title: "补齐单元测试", isResolved: false,
+                  doneStepCount: 0, totalStepCount: 2, steps: [], threadRootEventID: nil, updatedAt: nil, objectiveID: "obj-1"),
+            .init(eventID: "$task-3", taskID: "task-3", title: "无挂靠的杂项差事", isResolved: false,
+                  doneStepCount: 0, totalStepCount: 1, steps: [], threadRootEventID: nil, updatedAt: nil, objectiveID: nil)
+        ],
+        objectives: [
+            .init(objectiveID: "obj-1", title: "验证指标趋势图在真实数据下可用", status: .active,
+                  successMetrics: ["真机上看到真实历史点渲染出趋势线", "连续切换视图模式不崩溃"],
+                  exitOptions: ["直接发布", "先收集一周真实数据再定稿", "放弃这个方向"],
+                  priority: 1, updatedAt: .now)
         ])
     }
     
