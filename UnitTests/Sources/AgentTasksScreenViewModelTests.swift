@@ -86,14 +86,14 @@ struct AgentTasksScreenViewModelTests {
                                               title: "Score improvement", isResolved: false, doneStepCount: 0, totalStepCount: 1,
                                               metric: .init(current: 100, target: 130, unit: "分"))
         let points = [AgentTaskMetricHistoryPoint(metric: .init(current: 90, target: 130, unit: "分"), date: .now)]
-        let indexService = AgentTaskIndexServiceMock()
+        let indexService = AgentIndexServiceMock()
         indexService.underlyingTasksPublisher = .init([taskWithMetric])
         indexService.metricHistoryRoomIDTaskIDLimitClosure = { _, _, _ in points }
         let spaceService = SpaceServiceProxyMock()
         spaceService.underlyingSpaceFilterPublisher = .init([])
         let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
         let viewModel = AgentTasksScreenViewModel(userSession: userSession,
-                                                  agentTaskIndexService: indexService,
+                                                  agentIndexService: indexService,
                                                   spaceService: spaceService,
                                                   appSettings: .volatile())
         
@@ -140,7 +140,7 @@ struct AgentTasksScreenViewModelTests {
                                spaceService: SpaceServiceProxyProtocol? = nil,
                                appSettings: AppSettings = .volatile()) -> (AgentTasksScreenViewModel, CurrentValueSubject<[AgentTaskSummary], Never>) {
         let tasksSubject = CurrentValueSubject<[AgentTaskSummary], Never>(tasks)
-        let indexService = AgentTaskIndexServiceMock()
+        let indexService = AgentIndexServiceMock()
         indexService.underlyingTasksPublisher = tasksSubject.asCurrentValuePublisher()
         
         let resolvedSpaceService: SpaceServiceProxyProtocol
@@ -154,7 +154,7 @@ struct AgentTasksScreenViewModelTests {
         
         let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
         return (AgentTasksScreenViewModel(userSession: userSession,
-                                          agentTaskIndexService: indexService,
+                                          agentIndexService: indexService,
                                           spaceService: resolvedSpaceService,
                                           appSettings: appSettings), tasksSubject)
     }

@@ -137,8 +137,7 @@ struct HomeScreenKnockedCell_Previews: PreviewProvider, TestablePreview {
                                    analyticsService: AnalyticsServiceMock(.init()),
                                    notificationManager: NotificationManagerMock(),
                                    userIndicatorController: UserIndicatorControllerMock(),
-                                   agentTaskIndexService: AgentTaskIndexServiceMock(.init()),
-                                   agentProjectIndexService: AgentProjectIndexServiceMock(.init()))
+                                   agentIndexService: AgentIndexServiceMock(.init()))
     }
 }
 

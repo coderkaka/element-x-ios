@@ -20,8 +20,7 @@ final class HomeScreenViewModelTests {
     var clientProxy: ClientProxyMock!
     var roomSummaryProvider: RoomSummaryProviderMock!
     var notificationManager: NotificationManagerMock!
-    var agentTaskIndexService: AgentTaskIndexServiceMock!
-    var agentProjectIndexService: AgentProjectIndexServiceMock!
+    var agentIndexService: AgentIndexServiceMock!
     private let appSettings: AppSettings
     
     var cancellables = Set<AnyCancellable>()
@@ -710,8 +709,7 @@ final class HomeScreenViewModelTests {
         
         notificationManager = NotificationManagerMock()
         
-        agentTaskIndexService = AgentTaskIndexServiceMock(.init(tasks: tasks))
-        agentProjectIndexService = AgentProjectIndexServiceMock(.init(projects: projects, pendingChoices: pendingChoices))
+        agentIndexService = AgentIndexServiceMock(.init(tasks: tasks, projects: projects, pendingChoices: pendingChoices))
         
         viewModel = HomeScreenViewModel(userSession: userSession,
                                         selectedRoomPublisher: CurrentValueSubject<String?, Never>(nil).asCurrentValuePublisher(),
@@ -719,8 +717,7 @@ final class HomeScreenViewModelTests {
                                         analyticsService: AnalyticsServiceMock(.init()),
                                         notificationManager: notificationManager,
                                         userIndicatorController: UserIndicatorControllerMock(),
-                                        agentTaskIndexService: agentTaskIndexService,
-                                        agentProjectIndexService: agentProjectIndexService)
+                                        agentIndexService: agentIndexService)
     }
     
     private static var levelZeroSpaceFilters: [SpaceServiceFilter] {

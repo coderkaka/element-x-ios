@@ -17,14 +17,14 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
     }
     
     private let appSettings: AppSettings
-    private let agentTaskIndexService: AgentTaskIndexServiceProtocol
+    private let agentIndexService: AgentIndexServiceProtocol
     
     init(userSession: UserSessionProtocol,
-         agentTaskIndexService: AgentTaskIndexServiceProtocol,
+         agentIndexService: AgentIndexServiceProtocol,
          spaceService: SpaceServiceProxyProtocol,
          appSettings: AppSettings) {
         self.appSettings = appSettings
-        self.agentTaskIndexService = agentTaskIndexService
+        self.agentIndexService = agentIndexService
         super.init(initialViewState: AgentTasksScreenViewState(userID: userSession.clientProxy.userID,
                                                                viewMode: appSettings.agentTasksViewMode,
                                                                terminology: .init(scenario: appSettings.terminologyScenario)),
@@ -42,7 +42,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         
         // No queue hop: the services publish on the main actor and the synchronous
         // initial emission populates state before the first render (previews rely on this).
-        Publishers.CombineLatest(agentTaskIndexService.tasksPublisher, spaceService.spaceFilterPublisher)
+        Publishers.CombineLatest(agentIndexService.tasksPublisher, spaceService.spaceFilterPublisher)
             .sink { [weak self] tasks, spaceFilters in
                 guard let self else { return }
                 state.unresolvedTasks = tasks.filter { !$0.isResolved }
@@ -113,7 +113,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         
         Task { [weak self] in
             guard let self else { return }
-            let points = await agentTaskIndexService.metricHistory(roomID: task.roomID, taskID: task.taskID, limit: 20)
+            let points = await agentIndexService.metricHistory(roomID: task.roomID, taskID: task.taskID, limit: 20)
             state.loadingMetricTaskIDs.remove(task.id)
             state.metricHistories[task.id] = points
         }

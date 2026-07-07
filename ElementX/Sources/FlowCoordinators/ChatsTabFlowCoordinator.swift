@@ -25,8 +25,7 @@ enum ChatsTabFlowCoordinatorAction {
 class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
     private let navigationSplitCoordinator: NavigationSplitCoordinator
     private let flowParameters: CommonFlowParameters
-    private let agentTaskIndexService: AgentTaskIndexServiceProtocol
-    private let agentProjectIndexService: AgentProjectIndexServiceProtocol
+    private let agentIndexService: AgentIndexServiceProtocol
     
     private var userSession: UserSessionProtocol {
         flowParameters.userSession
@@ -59,13 +58,11 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
     
     init(isNewLogin: Bool,
          navigationSplitCoordinator: NavigationSplitCoordinator,
-         agentTaskIndexService: AgentTaskIndexServiceProtocol,
-         agentProjectIndexService: AgentProjectIndexServiceProtocol,
+         agentIndexService: AgentIndexServiceProtocol,
          flowParameters: CommonFlowParameters) {
         stateMachine = flowParameters.stateMachineFactory.makeChatsTabFlowStateMachine()
         self.navigationSplitCoordinator = navigationSplitCoordinator
-        self.agentTaskIndexService = agentTaskIndexService
-        self.agentProjectIndexService = agentProjectIndexService
+        self.agentIndexService = agentIndexService
         self.flowParameters = flowParameters
         
         sidebarNavigationStackCoordinator = NavigationStackCoordinator(navigationSplitCoordinator: navigationSplitCoordinator)
@@ -399,8 +396,7 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
                                                          analyticsService: flowParameters.analytics,
                                                          notificationManager: flowParameters.notificationManager,
                                                          userIndicatorController: flowParameters.userIndicatorController,
-                                                         agentTaskIndexService: agentTaskIndexService,
-                                                         agentProjectIndexService: agentProjectIndexService)
+                                                         agentIndexService: agentIndexService)
         let coordinator = HomeScreenCoordinator(parameters: parameters)
         
         coordinator.actions

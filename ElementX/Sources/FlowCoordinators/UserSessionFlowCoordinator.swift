@@ -35,8 +35,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
     private let onboardingStackCoordinator: NavigationStackCoordinator
     private let chatsTabFlowCoordinator: ChatsTabFlowCoordinator
     private let chatsTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
-    private let agentTaskIndexService: AgentTaskIndexServiceProtocol
-    private let agentProjectIndexService: AgentProjectIndexServiceProtocol
+    private let agentIndexService: AgentIndexServiceProtocol
     private let agentTasksScreenCoordinator: AgentTasksScreenCoordinator
     private let tasksTabDetails: NavigationTabCoordinator<HomeTab>.TabDetails
     private let messagesScreenCoordinator: MessagesScreenCoordinator
@@ -89,25 +88,21 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         navigationTabCoordinator = NavigationTabCoordinator()
         navigationRootCoordinator.setRootCoordinator(navigationTabCoordinator)
         
-        agentTaskIndexService = AgentTaskIndexService(clientProxy: flowParameters.userSession.clientProxy,
-                                                      roomSummaryProvider: flowParameters.userSession.clientProxy.roomSummaryProvider)
-        agentTaskIndexService.start()
-        agentProjectIndexService = AgentProjectIndexService(clientProxy: flowParameters.userSession.clientProxy,
-                                                            roomSummaryProvider: flowParameters.userSession.clientProxy.roomSummaryProvider)
-        agentProjectIndexService.start()
+        agentIndexService = AgentIndexService(clientProxy: flowParameters.userSession.clientProxy,
+                                              roomSummaryProvider: flowParameters.userSession.clientProxy.roomSummaryProvider)
+        agentIndexService.start()
         
         let chatsSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
         chatsTabFlowCoordinator = ChatsTabFlowCoordinator(isNewLogin: isNewLogin,
                                                           navigationSplitCoordinator: chatsSplitCoordinator,
-                                                          agentTaskIndexService: agentTaskIndexService,
-                                                          agentProjectIndexService: agentProjectIndexService,
+                                                          agentIndexService: agentIndexService,
                                                           flowParameters: flowParameters)
         chatsTabDetails = .init(tag: HomeTab.chats, title: AppTerminology(scenario: flowParameters.appSettings.terminologyScenario).tabProjects, icon: \.chat, selectedIcon: \.chatSolid)
         chatsTabDetails.navigationSplitCoordinator = chatsSplitCoordinator
         
         let tasksSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))
         agentTasksScreenCoordinator = AgentTasksScreenCoordinator(parameters: .init(userSession: flowParameters.userSession,
-                                                                                    agentTaskIndexService: agentTaskIndexService,
+                                                                                    agentIndexService: agentIndexService,
                                                                                     spaceService: flowParameters.userSession.clientProxy.spaceService,
                                                                                     appSettings: flowParameters.appSettings))
         tasksSplitCoordinator.setSidebarCoordinator(agentTasksScreenCoordinator)

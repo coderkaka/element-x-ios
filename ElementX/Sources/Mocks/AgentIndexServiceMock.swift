@@ -6,14 +6,18 @@
 // Please see LICENSE files in the repository root for full details.
 //
 
-extension AgentTaskIndexServiceMock {
+extension AgentIndexServiceMock {
     struct Configuration {
         var tasks: [AgentTaskSummary] = []
+        var projects: [AgentProjectSummary] = []
+        var pendingChoices: [AgentPendingChoiceSummary] = []
     }
     
     convenience init(_ configuration: Configuration) {
         self.init()
         
         underlyingTasksPublisher = CurrentValuePublisher(configuration.tasks)
+        underlyingProjectsPublisher = CurrentValuePublisher(configuration.projects)
+        underlyingPendingChoicesPublisher = CurrentValuePublisher(configuration.pendingChoices)
     }
 }

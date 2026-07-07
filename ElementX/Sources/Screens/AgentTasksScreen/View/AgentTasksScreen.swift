@@ -375,7 +375,7 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
                               spaceFilters: [SpaceServiceFilter] = [],
                               viewMode: AgentTasksViewMode = .list,
                               metricHistory: [String: [AgentTaskMetricHistoryPoint]] = [:]) -> AgentTasksScreenViewModel {
-        let indexService = AgentTaskIndexServiceMock()
+        let indexService = AgentIndexServiceMock()
         indexService.underlyingTasksPublisher = .init(tasks)
         indexService.metricHistoryRoomIDTaskIDLimitClosure = { roomID, taskID, _ in
             metricHistory["\(roomID)|\(taskID)"] ?? []
@@ -386,7 +386,7 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
         appSettings.agentTasksViewMode = viewMode
         let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
         return AgentTasksScreenViewModel(userSession: userSession,
-                                         agentTaskIndexService: indexService,
+                                         agentIndexService: indexService,
                                          spaceService: spaceService,
                                          appSettings: appSettings)
     }

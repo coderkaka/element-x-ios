@@ -27,8 +27,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     /// selected, so a newly-invited unrelated 道 would never show up in it until "全部" is tapped.
     private let staticRoomSummaryProvider: StaticRoomSummaryProviderProtocol?
     
-    private let agentTaskIndexService: AgentTaskIndexServiceProtocol
-    private let agentProjectIndexService: AgentProjectIndexServiceProtocol
+    private let agentIndexService: AgentIndexServiceProtocol
     private var latestTaskSummaries: [AgentTaskSummary] = []
     private var latestProjects: [AgentProjectSummary] = []
     private var latestPendingChoices: [AgentPendingChoiceSummary] = []
@@ -48,15 +47,13 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
          analyticsService: AnalyticsServiceProtocol,
          notificationManager: NotificationManagerProtocol,
          userIndicatorController: UserIndicatorControllerProtocol,
-         agentTaskIndexService: AgentTaskIndexServiceProtocol,
-         agentProjectIndexService: AgentProjectIndexServiceProtocol) {
+         agentIndexService: AgentIndexServiceProtocol) {
         self.userSession = userSession
         self.analyticsService = analyticsService
         self.appSettings = appSettings
         self.notificationManager = notificationManager
         self.userIndicatorController = userIndicatorController
-        self.agentTaskIndexService = agentTaskIndexService
-        self.agentProjectIndexService = agentProjectIndexService
+        self.agentIndexService = agentIndexService
         
         spaceFilterSubject = CurrentValueSubject<SpaceServiceFilter?, Never>(nil)
         
@@ -215,7 +212,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
             .store(in: &cancellables)
         
-        agentTaskIndexService.tasksPublisher
+        agentIndexService.tasksPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] tasks in
                 guard let self else { return }
@@ -224,7 +221,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
             .store(in: &cancellables)
         
-        agentProjectIndexService.projectsPublisher
+        agentIndexService.projectsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] projects in
                 guard let self else { return }
@@ -233,7 +230,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
             .store(in: &cancellables)
         
-        agentProjectIndexService.pendingChoicesPublisher
+        agentIndexService.pendingChoicesPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] pendingChoices in
                 guard let self else { return }
