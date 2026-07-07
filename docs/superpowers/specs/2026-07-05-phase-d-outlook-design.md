@@ -42,11 +42,14 @@ Status: **设计级草案,非实施 spec。** D 的多数决策依赖 C 上线�
   维持"差事 x/y"文字,通俗版换成百分比进度条(`ProgressView` + 百分数),纯渲染差异不是
   文案差异,`AppTerminology.prefersProgressBar`。用现有数据(`doneTaskCount`/`totalTaskCount`),
   没有新协议依赖。`HomeScreenRoomCell.swift`。
-- **② 默认视图(看板 ↔ metric 趋势)—— 仍不做,理由是两边都卡在更底层的东西没到位**:
-  "看板"本身是 D-1 差事看板的产出,D-1 自己都还在"等真实反馈"阶段,现在做等于先把 D-1
-  整个建出来;"metric 趋势"需要 `metric{current,target,unit}` 字段的真实数据,目前没有任何
-  agent 在写这个字段,建出来只是个空图表。**等 D-1 看板落地 + hermes 开始写 metric 之后
-  再回来做这条切换**,不是遗漏。
+- **② 默认视图(看板 ↔ metric 趋势)—— 仍不做,两个前置条件之一刚解掉**:
+  "看板"本身是 D-1 差事看板的产出,D-1 已落地(07-07,①跨tab深链 + ②按道分列看板,
+  均已合并);"metric 趋势"仍卡在 `metric{current,target,unit}` 字段没有真实数据——
+  07-07 已把这个字段在 `element-agent-protocol.md` §3.2 从"预留"提升为量化任务的
+  强制书写义务(homelab 决策记录同步),但这是协议文档层面的推动,**要等真的有 agent
+  在真实任务里写出这个字段之后**,client 侧才有数据可渲染,不能靠文档更新就当作
+  完成。"创业者/学生"该怎么映射到现有 `terminologyScenario` 轴,也还没拍板,不是
+  只差 metric 数据这一件事。
 - 载体:app 级设置项(AppSettings),✅ 已用上述方式实现(比原设想的"+goal event scenario
   字段"更简单——那条按房间覆盖的路径明确没做)。
 - 前置:`metric {current,target,unit}` 字段(northstar §7 schema 演进表)先进协议
