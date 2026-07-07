@@ -25,10 +25,6 @@ struct AgentTasksScreen: View {
             }
         }
         .navigationTitle(context.viewState.terminology.tabTasks)
-        // Kanban/metric's ScrollViews and the list's Form don't drive the large-title
-        // collapse the same way, which made the title intermittently vanish when toggling
-        // between them — inline mode sidesteps that scroll-offset-dependent chrome entirely.
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 settingsButton

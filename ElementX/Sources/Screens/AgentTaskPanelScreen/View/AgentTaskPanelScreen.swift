@@ -11,6 +11,9 @@ import SwiftUI
 
 struct AgentTaskPanelScreen: View {
     @Bindable var context: AgentTaskPanelScreenViewModel.Context
+    /// Objective sections default to expanded; this tracks the ones the user has folded, so
+    /// the empty default means "all expanded" without seeding from async-arriving data.
+    @State private var collapsedObjectiveIDs: Set<String> = []
     
     var body: some View {
         content
@@ -81,19 +84,34 @@ struct AgentTaskPanelScreen: View {
     
     private func objectiveSection(_ section: AgentTaskPanelObjectiveSection) -> some View {
         Section {
-            if !section.objective.successMetrics.isEmpty {
-                readOnlyList(title: context.viewState.terminology.objectiveSuccessMetrics, items: section.objective.successMetrics)
+            DisclosureGroup(isExpanded: objectiveExpansion(section.id)) {
+                if !section.objective.successMetrics.isEmpty {
+                    readOnlyList(title: context.viewState.terminology.objectiveSuccessMetrics, items: section.objective.successMetrics)
+                }
+                if !section.objective.exitOptions.isEmpty {
+                    readOnlyList(title: context.viewState.terminology.objectiveExitOptions, items: section.objective.exitOptions)
+                }
+                ForEach(section.tasks) { task in
+                    taskRow(task)
+                }
+            } label: {
+                Text(section.objective.title)
+                    .font(.compound.bodyLG)
+                    .foregroundColor(.compound.textPrimary)
             }
-            if !section.objective.exitOptions.isEmpty {
-                readOnlyList(title: context.viewState.terminology.objectiveExitOptions, items: section.objective.exitOptions)
-            }
-            ForEach(section.tasks) { task in
-                taskRow(task)
-            }
-        } header: {
-            Text(section.objective.title)
-                .compoundListSectionHeader()
         }
+    }
+    
+    /// Default-expanded, collapse-tracked binding: absent from `collapsedObjectiveIDs` means expanded.
+    private func objectiveExpansion(_ objectiveID: String) -> Binding<Bool> {
+        Binding(get: { !collapsedObjectiveIDs.contains(objectiveID) },
+                set: { expanded in
+                    if expanded {
+                        collapsedObjectiveIDs.remove(objectiveID)
+                    } else {
+                        collapsedObjectiveIDs.insert(objectiveID)
+                    }
+                })
     }
     
     /// `success_metrics`/`exit_options` are read-only context (§3.4) — the authoritative
