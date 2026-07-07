@@ -107,10 +107,18 @@ Status: **设计级草案,非实施 spec。** D 的多数决策依赖 C 上线�
     无歧义)替代的排序场景(如案卷面板内标的 section 顺序,取"最近有动静的排前面"),
     优先用 `updated_at` 不用 `priority`,减少人为权重带来的解释成本。
 - **07-07 更新**:D-5 的合并已完成——`AgentTaskIndexService`/`AgentProjectIndexService`
-  合并为 `AgentIndexService`,标的索引可以作为第四个 publisher 加在上面,不再是"先加
-  第三份重复实现"的问题。**但 D-6 仍不建议现在做**:跟 D-2②的 metric 字段同理,
-  `io.element.agent.objective` 目前没有任何 agent 在真的写(查过 homelab,一个引用都
-  没有),建出消费管线也只是空索引。等真实数据出现再做。
+  合并为 `AgentIndexService`,标的索引作为第四个 publisher 加在上面。
+- **07-07 实现(用户明确要求"字段构造好直接开写")**:D-6 消费管线两半都已落地:
+  - 跨房间:`AgentObjectiveSummary`/`AgentObjectiveStateEvent` 解析 + `objectivesPublisher`;
+    政事堂案卡片副标题按"1 个标的显示标题 / ≥2 个显示中性计数 / 0 个退回现状"呈现。
+  - 房间内:案卷面板按 `objective_id` 分组差事(`AgentIndexService` 外,走 `RoomTaskSummary`
+    的房间内 state 枚举路径),active 标的作可折叠 section,`success_metrics`/`exit_options`
+    只读展示,未挂靠差事归兜底 section。
+  - 差事(canvas.steps)带可选 `objective_id` 反向引用;畸形 `metric`/`objective_id`
+    降级为 nil 不再丢整条差事(07-07 审查修复)。
+  - **仍悬空的前提**:没有真实 agent 在写 `objective`(查过 homelab 零引用),种子数据是
+    手工造的。真机只能验最顺的路径,真实边界(一个案多标的、objective_id 指向不存在的
+    标的、并发更新)未验。请旨(choice_request)的 `objective_id` 关联**未做**(切小片)。
 
 ## D-7 系统运维常设房间——统一入口(现有道 + 多 agent 房间,不是新屏幕、不归书信)
 
