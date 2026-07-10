@@ -84,13 +84,18 @@ nonisolated struct AgentChoiceStateIndexEvent: Decodable {
     let question: String?
     let resolvedSelection: [String]?
     
-    /// Old-protocol rooms only ever write this state once, at resolution time, always with a
-    /// non-empty `resolved_selection` — so they never appear pending. That asymmetry is by design.
+    /// The `status` field is authoritative when present: only `pending` is pending.
+    /// Server-side repairs (approval.state_repair) and expiry stamp terminal statuses
+    /// that must hide the card even when `resolved_selection` ends up empty.
     ///
-    /// A `cancelled` status (请旨撤销) is never pending either, even with an empty/missing
-    /// `resolved_selection` — cancellation is a terminal state, not an outstanding ask.
+    /// Old-protocol rooms wrote this state once, at resolution time, with no `status`
+    /// and a non-empty `resolved_selection` — for those legacy events the selection
+    /// heuristic still applies.
     var isPending: Bool {
-        (resolvedSelection ?? []).isEmpty && status != "cancelled"
+        guard let status, !status.isEmpty else {
+            return (resolvedSelection ?? []).isEmpty
+        }
+        return status == "pending"
     }
     
     private enum EventKeys: String, CodingKey {

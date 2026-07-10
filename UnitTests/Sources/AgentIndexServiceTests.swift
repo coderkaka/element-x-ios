@@ -50,6 +50,27 @@ struct AgentIndexServiceTests {
     }
     
     @Test
+    func choiceEventStatusIsAuthoritativeForPending() {
+        func isPending(_ contentJSON: String) -> Bool? {
+            let json = """
+            {"type":"io.element.agent.choice_request","state_key":"","content":\(contentJSON)}
+            """
+            return AgentChoiceStateIndexEvent(parsingFrom: json)?.isPending
+        }
+        
+        // status is authoritative when present — only "pending" is pending.
+        #expect(isPending(#"{"status":"pending","resolved_selection":[]}"#) == true)
+        #expect(isPending(#"{"status":"resolved","resolved_selection":[]}"#) == false) // server-repaired orphan
+        #expect(isPending(#"{"status":"expired","resolved_selection":[]}"#) == false)
+        #expect(isPending(#"{"status":"cancelled"}"#) == false)
+        #expect(isPending(#"{"status":"resolved","resolved_selection":["approve"]}"#) == false)
+        
+        // legacy events without a status fall back to the selection heuristic.
+        #expect(isPending(#"{"resolved_selection":["approve"]}"#) == false)
+        #expect(isPending(#"{"question":"legacy"}"#) == true)
+    }
+    
+    @Test
     func taskStateEventParsingFailures() {
         #expect(AgentTaskStateEvent(parsingFrom: "not json at all") == nil)
         #expect(AgentTaskStateEvent(parsingFrom: #"{"state_key":"task-3"}"#) == nil)
