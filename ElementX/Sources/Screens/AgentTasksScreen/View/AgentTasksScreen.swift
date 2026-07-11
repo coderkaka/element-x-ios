@@ -13,14 +13,20 @@ struct AgentTasksScreen: View {
     @Bindable var context: AgentTasksScreenViewModel.Context
     
     var body: some View {
-        Group {
-            if context.viewState.isEmpty {
-                emptyState
-            } else {
-                switch context.viewState.viewMode {
-                case .list: taskList
-                case .kanban: kanbanBoard
-                case .metric: metricDashboard
+        VStack(spacing: 0) {
+            if let selectedSpaceFilterName = context.viewState.selectedSpaceFilterName {
+                spaceFilterIndicator(name: selectedSpaceFilterName)
+            }
+
+            Group {
+                if context.viewState.isEmpty {
+                    emptyState
+                } else {
+                    switch context.viewState.viewMode {
+                    case .list: taskList
+                    case .kanban: kanbanBoard
+                    case .metric: metricDashboard
+                    }
                 }
             }
         }
@@ -37,6 +43,25 @@ struct AgentTasksScreen: View {
         }
     }
     
+    /// Shown only while the tab is scoped to one 道, mirroring 政事堂's own selection — makes the
+    /// filtering visible instead of tasks just silently looking fewer. Not tappable in V1: 道
+    /// switching stays on 政事堂 as the single control point.
+    private func spaceFilterIndicator(name: String) -> some View {
+        HStack(spacing: 6) {
+            CompoundIcon(\.space, size: .xSmall, relativeTo: .compound.bodySM)
+                .foregroundColor(.compound.iconTertiary)
+                .accessibilityHidden(true)
+            Text(context.viewState.terminology.spaceFilterIndicator(name: name))
+                .font(.compound.bodySM)
+                .foregroundColor(.compound.textSecondary)
+                .lineLimit(1)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.compound.bgSubtleSecondary)
+    }
+
     private var settingsButton: some View {
         Button {
             context.send(viewAction: .showSettings)
@@ -331,6 +356,15 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
     static let metricTaskWithHistory = AgentTaskSummary(roomID: "!a:example.com", roomName: "Hermes案", taskID: "task-1", title: "内存占用瘦身",
                                                         isResolved: false, doneStepCount: 2, totalStepCount: 3,
                                                         metric: .init(current: 310, target: 300, unit: "MB"))
+    static let spaceFilteredViewModel = makeViewModel(tasks: [
+        .init(roomID: "!a:example.com", roomName: "Backend", taskID: "task-1",
+              title: "Refactor auth module", isResolved: false, doneStepCount: 1, totalStepCount: 3),
+        .init(roomID: "!d:example.com", roomName: "iOS App", taskID: "task-4",
+              title: "A task in a different 道", isResolved: false, doneStepCount: 2, totalStepCount: 2)
+    ], spaceFilters: [
+        .init(room: .mock(id: "!a:example.com", name: "工程院", isSpace: true), level: 0, descendants: ["!a:example.com"]),
+        .init(room: .mock(id: "!d:example.com", name: "上林苑", isSpace: true), level: 0, descendants: ["!d:example.com"])
+    ], selectedSpaceFilterRoomID: "!a:example.com")
     static let metricViewModel = makeViewModel(tasks: [
         metricTaskWithHistory,
         .init(roomID: "!f:example.com", roomName: "无历史记录的差事", taskID: "task-6", title: "刚起步的指标任务",
@@ -369,12 +403,18 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
             AgentTasksScreen(context: metricViewModel.context)
         }
         .previewDisplayName("Metric")
+
+        ElementNavigationStack {
+            AgentTasksScreen(context: spaceFilteredViewModel.context)
+        }
+        .previewDisplayName("Space filtered")
     }
     
     static func makeViewModel(tasks: [AgentTaskSummary],
                               spaceFilters: [SpaceServiceFilter] = [],
                               viewMode: AgentTasksViewMode = .list,
-                              metricHistory: [String: [AgentTaskMetricHistoryPoint]] = [:]) -> AgentTasksScreenViewModel {
+                              metricHistory: [String: [AgentTaskMetricHistoryPoint]] = [:],
+                              selectedSpaceFilterRoomID: String? = nil) -> AgentTasksScreenViewModel {
         let indexService = AgentIndexServiceMock()
         indexService.underlyingTasksPublisher = .init(tasks)
         indexService.metricHistoryRoomIDTaskIDLimitClosure = { roomID, taskID, _ in
@@ -384,6 +424,7 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
         spaceService.underlyingSpaceFilterPublisher = .init(spaceFilters)
         let appSettings: AppSettings = .volatile()
         appSettings.agentTasksViewMode = viewMode
+        appSettings.selectedSpaceFilterRoomID = selectedSpaceFilterRoomID
         let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
         return AgentTasksScreenViewModel(userSession: userSession,
                                          agentIndexService: indexService,

@@ -42,13 +42,15 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         
         // No queue hop: the services publish on the main actor and the synchronous
         // initial emission populates state before the first render (previews rely on this).
-        Publishers.CombineLatest(agentIndexService.tasksPublisher, spaceService.spaceFilterPublisher)
-            .sink { [weak self] tasks, spaceFilters in
+        Publishers.CombineLatest3(agentIndexService.tasksPublisher, spaceService.spaceFilterPublisher, appSettings.selectedSpaceFilterRoomIDPublisher)
+            .sink { [weak self] tasks, spaceFilters, selectedSpaceFilterRoomID in
                 guard let self else { return }
-                state.unresolvedTasks = tasks.filter { !$0.isResolved }
-                state.resolvedTasks = tasks.filter(\.isResolved)
-                state.kanbanColumns = Self.makeKanbanColumns(tasks: tasks, spaceFilters: spaceFilters, terminology: state.terminology)
-                state.metricTasks = tasks.filter { $0.metric != nil }
+                let scoped = Self.scopeToSelectedSpace(tasks: tasks, spaceFilters: spaceFilters, selectedSpaceFilterRoomID: selectedSpaceFilterRoomID)
+                state.unresolvedTasks = scoped.tasks.filter { !$0.isResolved }
+                state.resolvedTasks = scoped.tasks.filter(\.isResolved)
+                state.kanbanColumns = Self.makeKanbanColumns(tasks: scoped.tasks, spaceFilters: spaceFilters, terminology: state.terminology)
+                state.metricTasks = scoped.tasks.filter { $0.metric != nil }
+                state.selectedSpaceFilterName = scoped.filterName
             }
             .store(in: &cancellables)
         
@@ -82,7 +84,23 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
     }
     
     // MARK: - Private
-    
+
+    /// Explicitly scopes the index's (always-full, see `AgentIndexService`) tasks down to the
+    /// 道 currently selected on 政事堂, so the 差事 tab visibly follows that same selection
+    /// rather than "coincidentally" matching whatever the home tab's room list happened to be
+    /// showing. A `nil` selection, or one that doesn't match any joined 道 (space left, or the
+    /// index hasn't caught up yet), means unfiltered — the second element of the tuple is the
+    /// matched 道's name, `nil` when unfiltered, driving the indicator strip.
+    private static func scopeToSelectedSpace(tasks: [AgentTaskSummary],
+                                             spaceFilters: [SpaceServiceFilter],
+                                             selectedSpaceFilterRoomID: String?) -> (tasks: [AgentTaskSummary], filterName: String?) {
+        guard let selectedSpaceFilterRoomID,
+              let filter = spaceFilters.first(where: { $0.room.id == selectedSpaceFilterRoomID }) else {
+            return (tasks, nil)
+        }
+        return (tasks.filter { filter.descendants.contains($0.roomID) }, filter.room.name)
+    }
+
     /// Groups tasks by the 道 (space) their room sits under, in the same order as
     /// `spaceFilters` (mirroring the order the 道 chips use elsewhere). A room can have
     /// multiple parent spaces, so a task may legitimately appear in more than one column.
