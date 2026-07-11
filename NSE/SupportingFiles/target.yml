@@ -61,7 +61,8 @@ targets:
     entitlements:
       path: NSE.entitlements
       properties:
-        com.apple.developer.usernotifications.filtering: true
+        # com.apple.developer.usernotifications.filtering is not supported by free/personal
+        # Apple Developer teams and is dropped here for personal builds.
         com.apple.security.application-groups:
         - $(APP_GROUP_IDENTIFIER)
         keychain-access-groups:

@@ -49,3 +49,7 @@ test_output
 # Only commit Pkl packages (there may be other caches in here).
 Secrets/vendor/*
 !Secrets/vendor/package-2
+
+
+# superpowers scratch/session state (progress ledgers, brainstorm mockups)
+/.superpowers/

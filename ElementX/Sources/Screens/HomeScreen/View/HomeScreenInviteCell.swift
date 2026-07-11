@@ -204,7 +204,8 @@ struct HomeScreenInviteCell_Previews: PreviewProvider, TestablePreview {
                                    appSettings: .volatile(),
                                    analyticsService: AnalyticsServiceMock(.init()),
                                    notificationManager: NotificationManagerMock(),
-                                   userIndicatorController: UserIndicatorControllerMock())
+                                   userIndicatorController: UserIndicatorControllerMock(),
+                                   agentIndexService: AgentIndexServiceMock(.init()))
     }
 }
 

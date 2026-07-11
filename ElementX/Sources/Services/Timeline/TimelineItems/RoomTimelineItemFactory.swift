@@ -103,8 +103,17 @@ nonisolated struct RoomTimelineItemFactory: RoomTimelineItemFactoryProtocol {
             return buildLocationTimelineItem(for: eventItemProxy, messageLikeContent, messageContent, locationMessageContent, isOutgoing)
         case .gallery(let galleryMessageContent):
             return buildGalleryTimelineItem(for: eventItemProxy, messageLikeContent, messageContent, galleryMessageContent, isOutgoing)
-        case .other:
-            return nil
+        case .other(let msgtype, let body):
+            switch msgtype {
+            case AgentTurnRoomTimelineItemContent.msgType:
+                return buildAgentTurnTimelineItem(for: eventItemProxy, messageLikeContent, messageContent, body, isOutgoing)
+            case AgentChoiceRequestRoomTimelineItemContent.msgType:
+                return buildChoiceRequestTimelineItem(for: eventItemProxy, messageLikeContent, messageContent, body, isOutgoing)
+            case AgentCanvasStepsRoomTimelineItemContent.msgType:
+                return buildCanvasStepsTimelineItem(for: eventItemProxy, messageLikeContent, messageContent, body, isOutgoing)
+            default:
+                return nil
+            }
         }
     }
     
@@ -318,6 +327,77 @@ nonisolated struct RoomTimelineItemFactory: RoomTimelineItemFactoryProtocol {
                                                    orderedReadReceipts: buildOrderedReadReceipts(eventItemProxy.readReceipts),
                                                    encryptionAuthenticity: buildEncryptionAuthenticity(eventItemProxy.shieldState),
                                                    encryptionForwarder: eventItemProxy.forwarder))
+    }
+    
+    private func buildAgentTurnTimelineItem(for eventItemProxy: EventTimelineItemProxy,
+                                            _ messageLikeContent: MsgLikeContent,
+                                            _ messageContent: MessageContent,
+                                            _ body: String,
+                                            _ isOutgoing: Bool) -> RoomTimelineItemProtocol {
+        AgentTurnRoomTimelineItem(id: eventItemProxy.id,
+                                  timestamp: eventItemProxy.timestamp,
+                                  isOutgoing: isOutgoing,
+                                  isEditable: eventItemProxy.isEditable,
+                                  canBeRepliedTo: eventItemProxy.canBeRepliedTo,
+                                  sender: eventItemProxy.sender,
+                                  content: .init(body: body, parsingToolCallsFrom: eventItemProxy.debugInfo.originalJSON),
+                                  properties: .init(replyDetails: buildTimelineItemReplyDetails(messageLikeContent.inReplyTo),
+                                                    isThreaded: messageLikeContent.threadRoot != nil,
+                                                    threadSummary: buildTimelineItemThreadSummary(messageLikeContent.threadSummary),
+                                                    isEdited: messageContent.isEdited,
+                                                    reactions: buildAggregatedReactions(messageLikeContent.reactions),
+                                                    deliveryStatus: eventItemProxy.deliveryStatus,
+                                                    orderedReadReceipts: buildOrderedReadReceipts(eventItemProxy.readReceipts),
+                                                    encryptionAuthenticity: buildEncryptionAuthenticity(eventItemProxy.shieldState),
+                                                    encryptionForwarder: eventItemProxy.forwarder))
+    }
+    
+    private func buildChoiceRequestTimelineItem(for eventItemProxy: EventTimelineItemProxy,
+                                                _ messageLikeContent: MsgLikeContent,
+                                                _ messageContent: MessageContent,
+                                                _ body: String,
+                                                _ isOutgoing: Bool) -> RoomTimelineItemProtocol {
+        AgentChoiceRequestRoomTimelineItem(id: eventItemProxy.id,
+                                           timestamp: eventItemProxy.timestamp,
+                                           isOutgoing: isOutgoing,
+                                           isEditable: eventItemProxy.isEditable,
+                                           canBeRepliedTo: eventItemProxy.canBeRepliedTo,
+                                           sender: eventItemProxy.sender,
+                                           content: .init(body: body,
+                                                          parsingFrom: eventItemProxy.debugInfo.originalJSON),
+                                           properties: .init(replyDetails: buildTimelineItemReplyDetails(messageLikeContent.inReplyTo),
+                                                             isThreaded: messageLikeContent.threadRoot != nil,
+                                                             threadSummary: buildTimelineItemThreadSummary(messageLikeContent.threadSummary),
+                                                             isEdited: messageContent.isEdited,
+                                                             reactions: buildAggregatedReactions(messageLikeContent.reactions),
+                                                             deliveryStatus: eventItemProxy.deliveryStatus,
+                                                             orderedReadReceipts: buildOrderedReadReceipts(eventItemProxy.readReceipts),
+                                                             encryptionAuthenticity: buildEncryptionAuthenticity(eventItemProxy.shieldState),
+                                                             encryptionForwarder: eventItemProxy.forwarder))
+    }
+    
+    private func buildCanvasStepsTimelineItem(for eventItemProxy: EventTimelineItemProxy,
+                                              _ messageLikeContent: MsgLikeContent,
+                                              _ messageContent: MessageContent,
+                                              _ body: String,
+                                              _ isOutgoing: Bool) -> RoomTimelineItemProtocol {
+        AgentCanvasStepsRoomTimelineItem(id: eventItemProxy.id,
+                                         timestamp: eventItemProxy.timestamp,
+                                         isOutgoing: isOutgoing,
+                                         isEditable: eventItemProxy.isEditable,
+                                         canBeRepliedTo: eventItemProxy.canBeRepliedTo,
+                                         sender: eventItemProxy.sender,
+                                         content: .init(body: body,
+                                                        parsingFrom: eventItemProxy.debugInfo.originalJSON),
+                                         properties: .init(replyDetails: buildTimelineItemReplyDetails(messageLikeContent.inReplyTo),
+                                                           isThreaded: messageLikeContent.threadRoot != nil,
+                                                           threadSummary: buildTimelineItemThreadSummary(messageLikeContent.threadSummary),
+                                                           isEdited: messageContent.isEdited,
+                                                           reactions: buildAggregatedReactions(messageLikeContent.reactions),
+                                                           deliveryStatus: eventItemProxy.deliveryStatus,
+                                                           orderedReadReceipts: buildOrderedReadReceipts(eventItemProxy.readReceipts),
+                                                           encryptionAuthenticity: buildEncryptionAuthenticity(eventItemProxy.shieldState),
+                                                           encryptionForwarder: eventItemProxy.forwarder))
     }
     
     private func buildGalleryTimelineItem(for eventItemProxy: EventTimelineItemProxy,

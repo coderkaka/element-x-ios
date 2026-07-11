@@ -123,7 +123,7 @@ final class RoomMembersFlowCoordinator: FlowCoordinatorProtocol {
         case .accountProvisioningLink, .oAuthCallback,
              .roomList, .room, .roomDetails, .event,
              .userProfile, .call, .settings, .chatBackupSettings,
-             .share, .transferOwnership, .thread, .search:
+             .share, .transferOwnership, .thread, .search, .canvasSteps:
             break
         }
     }

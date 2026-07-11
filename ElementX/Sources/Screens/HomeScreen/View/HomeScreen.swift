@@ -16,39 +16,51 @@ struct HomeScreen: View {
     
     @State private var scrollViewAdapter = ScrollViewAdapter()
     
-    @Namespace private var navigationTransitionNamespace
-    private enum NavigationTransitionSourceID {
-        case spaceFilters
-    }
-    
     var body: some View {
         HomeScreenContent(context: context, scrollViewAdapter: scrollViewAdapter)
             .alert(item: $context.alertInfo)
             .alert(item: $context.leaveRoomAlertItem,
                    actions: leaveRoomAlertActions,
                    message: leaveRoomAlertMessage)
-            .navigationTitle(title)
+            .navigationTitle(context.viewState.terminology.homeTitle)
             .toolbar { toolbar }
             .background(Color.compound.bgCanvasDefault.ignoresSafeArea())
             .track(screen: .Home)
             .toolbarBloom(hasSearchBar: true)
             .sentryTrace("\(Self.self)")
-            .sheet(item: $context.spaceFiltersViewModel) { vm in
-                ChatsSpaceFiltersScreen(context: vm.context)
-                    .navigationTransition(.zoom(sourceID: NavigationTransitionSourceID.spaceFilters,
-                                                in: navigationTransitionNamespace))
+            .sheet(isPresented: $context.isPresentingPendingChoices) {
+                pendingChoicesSheet
             }
     }
     
-    // MARK: - Private
-    
-    private var title: String {
-        if let selectedSpace = context.viewState.selectedSpaceFilter {
-            selectedSpace.room.name
-        } else {
-            L10n.screenRoomlistMainSpaceTitle
+    private var pendingChoicesSheet: some View {
+        ElementNavigationStack {
+            Form {
+                Section {
+                    ForEach(context.viewState.pendingChoices) { pendingChoice in
+                        ListRow(label: .plain(title: pendingChoice.question ?? context.viewState.terminology.pendingChoicesSheetTitle,
+                                              description: pendingChoice.roomName),
+                                kind: .button {
+                                    context.send(viewAction: .selectPendingChoice(roomID: pendingChoice.roomID))
+                                })
+                    }
+                }
+            }
+            .compoundList()
+            .navigationTitle(context.viewState.terminology.pendingChoicesSheetTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    ToolbarButton(role: .close) {
+                        context.isPresentingPendingChoices = false
+                    }
+                }
+            }
         }
+        .presentationDragIndicator(.visible)
     }
+    
+    // MARK: - Private
     
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
@@ -63,20 +75,6 @@ struct HomeScreen: View {
             } else {
                 newRoomButton
                     .buttonStyle(.compound(.super, size: .toolbarIcon))
-            }
-        }
-        
-        if context.viewState.shouldShowSpaceFilters {
-            if #available(iOS 26, *) {
-                ToolbarSpacer(.fixed, placement: .primaryAction)
-            }
-            
-            ToolbarItem(placement: .primaryAction) {
-                SpaceFiltersButton(selected: context.viewState.selectedSpaceFilter != nil) {
-                    context.send(viewAction: .spaceFilters)
-                }
-                .matchedTransitionSource(id: NavigationTransitionSourceID.spaceFilters,
-                                         in: navigationTransitionNamespace)
             }
         }
     }
@@ -124,51 +122,6 @@ struct HomeScreen: View {
     
     private func leaveRoomAlertMessage(_ item: LeaveRoomAlertItem) -> some View {
         Text(item.subtitle)
-    }
-    
-    private struct SpaceFiltersButton: View {
-        @Environment(\.isInSidebar) private var isInSidebar
-        
-        var selected = false
-        var action: () -> Void
-        
-        /// Design prefers the custom style over the system's styling of a Toggle within a toolbar,
-        /// however Glass isn't supported for toolbar buttons in the sidebar on iPadOS 26 (likely due
-        /// to glass on glass being discouraged by Apple), so we need to handle our styling accordingly.
-        var shouldUseGlassButtonStyle: Bool {
-            !isInSidebar
-        }
-        
-        var body: some View {
-            if #available(iOS 26, *), shouldUseGlassButtonStyle {
-                if selected {
-                    content
-                        .backportButtonStyleGlassProminent()
-                        .tint(.compound.bgActionPrimaryRest)
-                } else {
-                    content
-                }
-            } else {
-                if selected {
-                    content
-                        .buttonStyle(.compound(.primary, size: .toolbarIcon))
-                } else {
-                    content
-                        .buttonStyle(.compound(.tertiary, size: .toolbarIcon))
-                }
-            }
-        }
-        
-        private var content: some View {
-            Button {
-                action()
-            } label: {
-                CompoundIcon(\.filter)
-            }
-            .accessibilityLabel(L10n.screenRoomlistYourSpaces)
-            .accessibilityAddTraits(selected ? .isSelected : [])
-            .accessibilityIdentifier(A11yIdentifiers.homeScreen.spaceFilters)
-        }
     }
 }
 
@@ -227,6 +180,7 @@ struct HomeScreen_Previews: PreviewProvider, TestablePreview {
                                    appSettings: .volatile(),
                                    analyticsService: AnalyticsServiceMock(.init()),
                                    notificationManager: NotificationManagerMock(),
-                                   userIndicatorController: UserIndicatorControllerMock())
+                                   userIndicatorController: UserIndicatorControllerMock(),
+                                   agentIndexService: AgentIndexServiceMock(.init()))
     }
 }

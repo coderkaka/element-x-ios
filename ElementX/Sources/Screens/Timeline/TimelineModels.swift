@@ -28,6 +28,8 @@ enum TimelineViewModelAction {
     case displayLiveLocation(sender: TimelineItemSender, initialLiveLocationShare: LiveLocationShare)
     case displayResolveSendFailure(failure: TimelineItemSendFailure.VerifiedUser, sendHandle: SendHandleProxy)
     case displayThread(itemID: TimelineItemIdentifier)
+    case presentCanvasSteps(eventID: String, taskID: String)
+    case presentTaskPanel
     case composer(action: TimelineComposerAction)
     case hasScrolled(direction: ScrollDirection)
     case viewInRoomTimeline(eventID: String, threadRootEventID: String?)
@@ -39,6 +41,10 @@ enum TimelineViewPollAction {
     case sendResponse(pollStartID: String, answerIDs: [String])
     case end(pollStartID: String)
     case edit(pollStartID: String, poll: Poll)
+}
+
+enum TimelineViewChoiceRequestAction {
+    case sendResponse(requestEventID: String, body: String)
 }
 
 enum TimelineAudioPlayerAction {
@@ -70,9 +76,20 @@ enum TimelineViewAction {
     case displayEmojiPicker(itemID: TimelineItemIdentifier)
     case displayReadReceipts(itemID: TimelineItemIdentifier)
     case displayThread(itemID: TimelineItemIdentifier)
+    case tappedRoomTaskChip
+    /// The user tapped an `io.element.agent.canvas.steps` card in the timeline. `taskID` is read
+    /// straight from the card's content — the handler prefers the state-resolved data in
+    /// `roomTaskSummary` when it already knows about this task, falling back to `itemID`'s own
+    /// event ID (and, downstream, the message payload) otherwise.
+    case tappedAgentTaskCard(itemID: TimelineItemIdentifier, taskID: String)
+    
+    /// Reads a room state event and stores its raw JSON in `TimelineViewState.fetchedStateEvents`,
+    /// keyed by `StateEventKey(eventType:stateKey:)`, for a view to read back once fetched.
+    case fetchStateEvent(eventType: String, stateKey: String)
     
     case handlePasteOrDrop(providers: [NSItemProvider])
     case handlePollAction(TimelineViewPollAction)
+    case handleChoiceRequestAction(TimelineViewChoiceRequestAction)
     case handleAudioPlayerAction(TimelineAudioPlayerAction)
     
     case stopLiveLocationSharing(TimelineItemIdentifier)
@@ -130,6 +147,13 @@ struct TimelineViewState: BindableState {
     /// It's updated from the room info, so it's faster than using the timeline
     var pinnedEventIDs: Set<String> = []
     
+    /// Every `io.element.agent.canvas.steps` task and pending `io.element.agent.choice_request`
+    /// in this timeline. Drives `RoomTaskProgressChipView`'s visibility in `RoomScreen`.
+    var roomTaskSummary = RoomTaskSummary()
+    
+    /// Current 御案体/通俗版 vocabulary — see `AppTerminology`.
+    var terminology = AppTerminology(scenario: .imperial)
+    
     /// A closure providing the associated audio player state for an item in the timeline.
     var audioPlayerStateProvider: (@MainActor (_ itemId: TimelineItemIdentifier) -> AudioPlayerState?)?
     
@@ -150,7 +174,17 @@ struct TimelineViewState: BindableState {
     
     var stoppedLiveLocationIDs: Set<TimelineItemIdentifier> = []
     
+    /// Raw JSON of state events fetched via `.fetchStateEvent`, keyed by `(eventType, stateKey)`.
+    /// Absence means "not fetched yet"; a fetched-but-unset state event is present with a `nil` value.
+    var fetchedStateEvents: [StateEventKey: String?] = [:]
+    
     var bindings: TimelineViewStateBindings
+}
+
+/// Identifies a room state event by its event type and state key, for use as a dictionary key.
+struct StateEventKey: Hashable {
+    let eventType: String
+    let stateKey: String
 }
 
 struct TimelineViewStateBindings {

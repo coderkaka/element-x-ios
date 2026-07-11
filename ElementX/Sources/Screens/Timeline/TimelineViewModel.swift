@@ -42,6 +42,22 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         actionsSubject.eraseToAnyPublisher()
     }
     
+    private let roomTaskSummarySubject = CurrentValueSubject<RoomTaskSummary, Never>(.init())
+    var roomTaskSummaryPublisher: CurrentValuePublisher<RoomTaskSummary, Never> {
+        roomTaskSummarySubject.asCurrentValuePublisher()
+    }
+    
+    /// The authoritative, state-enumerated view of the room's agent tasks (`eventID` empty until
+    /// enriched against currently-loaded timeline items in `updateRoomTaskSummary`). Refreshed by
+    /// `refreshStateEnumeratedTaskSummary` and merged into `roomTaskSummary` on every rebuild.
+    private var stateEnumeratedTasks = [RoomTaskSummary.Task]()
+    /// Every `io.element.agent.choice_request` state event the room currently has, pending or not —
+    /// kept unfiltered so a resolution can override a timeline guess that's still pending.
+    private var stateEnumeratedChoiceEvents = [AgentChoiceStateIndexEvent]()
+    /// Every `io.element.agent.objective` state event the room currently has — the 案卷面板 groups
+    /// tasks under the active ones.
+    private var stateEnumeratedObjectives = [RoomTaskSummary.Objective]()
+    
     private var currentUserProxy: RoomMemberProxyProtocol?
     
     private var paginateBackwardsTask: Task<Void, Never>?
@@ -105,11 +121,18 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
                                                        jumpToReadMarkerEnabled: appSettings.jumpToReadMarkerEnabled,
                                                        hasPredecessor: roomProxy.predecessorRoom != nil,
                                                        pinnedEventIDs: roomProxy.infoPublisher.value.pinnedEventIDs,
+                                                       terminology: .init(scenario: appSettings.terminologyScenario),
                                                        emojiProvider: emojiProvider,
                                                        linkMetadataProvider: hideTimelineMedia ? nil : linkMetadataProvider,
                                                        mapTilerSettings: appSettings.mapTilerSettings.publisher.value,
                                                        bindings: .init(reactionsCollapsed: [:])),
                    mediaProvider: userSession.mediaProvider)
+        
+        appSettings.terminologyScenarioPublisher
+            .sink { [weak self] scenario in
+                self?.state.terminology = .init(scenario: scenario)
+            }
+            .store(in: &cancellables)
         
         if focussedEventID != nil {
             // The timeline controller will start loading a detached timeline.
@@ -141,6 +164,10 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         
         state.timelineState.paginationState = timelineController.paginationState
         buildTimelineViews(timelineItems: timelineController.timelineItems)
+        // Room state is the authoritative task/choice source and already holds updates the
+        // timeline hasn't paginated in yet — enumerate it once up front so the chip is right
+        // immediately on room entry, instead of waiting for the first timeline diff.
+        refreshStateEnumeratedTaskSummary()
         
         updateRoomInfo(roomProxy.infoPublisher.value)
         updateMembers(roomProxy.membersPublisher.value)
@@ -206,10 +233,33 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
             displayReadReceipts(for: itemID)
         case .displayThread(let itemID):
             actionsSubject.send(.displayThread(itemID: itemID))
+        case .tappedRoomTaskChip:
+            // Smart shortcut (决策 6): exactly one active task and nothing else goes straight
+            // to its detail; any other non-empty summary opens the task panel.
+            let summary = state.roomTaskSummary
+            if let task = summary.activeTasks.first, summary.activeTasks.count == 1, summary.pendingChoices.isEmpty, summary.doneTasks.isEmpty {
+                actionsSubject.send(.presentCanvasSteps(eventID: task.eventID, taskID: task.taskID))
+            } else if !summary.isEmpty {
+                actionsSubject.send(.presentTaskPanel)
+            }
+        case .tappedAgentTaskCard(let itemID, let taskID):
+            // Prefer the state-resolved task from the summary (current data, matched by taskID
+            // since state-only tasks carry no event ID); fall back to the tapped card's own event
+            // ID so the flow coordinator can still push a detail built from the message snapshot.
+            let summary = state.roomTaskSummary
+            if let task = (summary.activeTasks + summary.doneTasks).first(where: { $0.taskID == taskID }) {
+                actionsSubject.send(.presentCanvasSteps(eventID: task.eventID, taskID: task.taskID))
+            } else if let eventID = itemID.eventID {
+                actionsSubject.send(.presentCanvasSteps(eventID: eventID, taskID: taskID))
+            }
+        case .fetchStateEvent(let eventType, let stateKey):
+            fetchStateEvent(eventType: eventType, stateKey: stateKey)
         case .handlePasteOrDrop(let providers):
             timelineInteractionHandler.handlePasteOrDrop(providers)
         case .handlePollAction(let pollAction):
             handlePollAction(pollAction)
+        case .handleChoiceRequestAction(let choiceRequestAction):
+            handleChoiceRequestAction(choiceRequestAction)
         case .handleAudioPlayerAction(let audioPlayerAction):
             handleAudioPlayerAction(audioPlayerAction)
         case .stopLiveLocationSharing(let id):
@@ -385,6 +435,13 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         }
     }
     
+    private func handleChoiceRequestAction(_ action: TimelineViewChoiceRequestAction) {
+        switch action {
+        case let .sendResponse(requestEventID, body):
+            timelineInteractionHandler.sendChoiceRequestResponse(requestEventID: requestEventID, body: body)
+        }
+    }
+    
     private func handleAudioPlayerAction(_ action: TimelineAudioPlayerAction) {
         switch action {
         case .playPause(let itemID):
@@ -482,6 +539,16 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] roomInfo in
                 self?.updateRoomInfo(roomInfo)
+            }
+            .store(in: &cancellables)
+        
+        // Custom state event types aren't delivered by sliding sync, so agent task state changes
+        // can't be observed directly — instead, any room activity re-checks the tracked state events.
+        roomProxy.infoPublisher
+            .debounce(for: .seconds(0.3), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.refreshFetchedStateEvents()
+                self?.refreshStateEnumeratedTaskSummary()
             }
             .store(in: &cancellables)
         
@@ -886,6 +953,211 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         
         state.timelineState.itemsDictionary = timelineItemsDictionary
         state.timelineState.recomputeReadMarkerUniqueID()
+        
+        updateRoomTaskSummary(timelineItems: timelineItems)
+    }
+    
+    /// Collects every canvas-steps task (grouped by resolution) and every pending choice request
+    /// into `TimelineViewState.roomTaskSummary`, merging two sources:
+    ///
+    /// 1. The timeline (below): updates after the initial message live in room state events
+    ///    (canvas steps keyed by `task_id`, choice requests by the message's event ID), not in the
+    ///    messages themselves, so each item's fields come from whichever is more current: the
+    ///    fetched state event if one has arrived (via `fetchStateEvent`), else the message payload.
+    ///    This is the only source for old-protocol rooms, which never write ask-time choice state.
+    /// 2. `stateEnumeratedTasks`/`stateEnumeratedChoiceEvents` (authoritative — see
+    ///    `refreshStateEnumeratedTaskSummary`): covers tasks/choices whose message hasn't been
+    ///    paginated into the timeline yet, which is why the chip used to lag behind pagination.
+    ///
+    /// State wins on content; the two are unioned by `taskID` (tasks) / `eventID` (choices) with no
+    /// duplicates.
+    private func updateRoomTaskSummary(timelineItems: [RoomTimelineItemProtocol]) {
+        var timelineActiveTasks = [RoomTaskSummary.Task]()
+        var timelineDoneTasks = [RoomTaskSummary.Task]()
+        var timelinePendingChoices = [RoomTaskSummary.PendingChoice]()
+        
+        for canvasItem in timelineItems.compactMap({ $0 as? AgentCanvasStepsRoomTimelineItem }) {
+            guard let eventID = canvasItem.id.eventID else { continue }
+            fetchStateEvent(eventType: AgentCanvasStepsRoomTimelineItemContent.msgType, stateKey: canvasItem.content.taskID)
+            
+            let key = StateEventKey(eventType: AgentCanvasStepsRoomTimelineItemContent.msgType, stateKey: canvasItem.content.taskID)
+            let stateContent = state.fetchedStateEvents[key].flatMap { AgentCanvasStepsStateContent(parsingFrom: $0) }
+            
+            let steps = stateContent?.steps ?? canvasItem.content.steps
+            let task = RoomTaskSummary.Task(eventID: eventID,
+                                            taskID: canvasItem.content.taskID,
+                                            title: stateContent?.title ?? canvasItem.content.title,
+                                            isResolved: stateContent?.isResolved ?? canvasItem.content.isResolved,
+                                            doneStepCount: steps.count(where: { $0.status == .done }),
+                                            totalStepCount: steps.count,
+                                            steps: steps,
+                                            threadRootEventID: stateContent?.threadRootEventID,
+                                            updatedAt: stateContent?.updatedAt,
+                                            objectiveID: stateContent?.objectiveID)
+            
+            if task.isResolved {
+                timelineDoneTasks.append(task)
+            } else {
+                timelineActiveTasks.append(task)
+            }
+        }
+        
+        for choiceItem in timelineItems.compactMap({ $0 as? AgentChoiceRequestRoomTimelineItem }) {
+            guard let eventID = choiceItem.id.eventID else { continue }
+            fetchStateEvent(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey: eventID)
+            
+            // A resolution state event with a non-empty selection, or an explicit cancellation
+            // (请旨撤销), means the choice is no longer pending.
+            let key = StateEventKey(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType, stateKey: eventID)
+            let stateContent = state.fetchedStateEvents[key].flatMap { AgentChoiceRequestStateContent(parsingFrom: $0) }
+            if let stateContent, !stateContent.resolvedSelection.isEmpty || stateContent.isCancelled {
+                continue
+            }
+            
+            let question = choiceItem.content.question.isEmpty ? choiceItem.content.body : choiceItem.content.question
+            timelinePendingChoices.append(.init(eventID: eventID, question: question))
+        }
+        
+        let mergedTasks = mergeTasks(timelineTasks: timelineActiveTasks + timelineDoneTasks)
+        let pendingChoices = mergePendingChoices(timelinePendingChoices: timelinePendingChoices)
+        
+        state.roomTaskSummary = RoomTaskSummary(activeTasks: sortedByUpdatedAtDescendingNilsLast(mergedTasks.filter { !$0.isResolved }),
+                                                doneTasks: sortedByUpdatedAtDescendingNilsLast(mergedTasks.filter(\.isResolved)),
+                                                pendingChoices: pendingChoices,
+                                                objectives: stateEnumeratedObjectives)
+        
+        // Mirror into the publisher feeding the task panel while it's pushed.
+        if roomTaskSummarySubject.value != state.roomTaskSummary {
+            roomTaskSummarySubject.send(state.roomTaskSummary)
+        }
+    }
+    
+    /// Unions the timeline-built tasks with `stateEnumeratedTasks` by `taskID`, state winning on
+    /// content. A state-enumerated task's `eventID` is filled in from a matching timeline task if
+    /// one is loaded, staying empty otherwise (no message paginated in yet).
+    private func mergeTasks(timelineTasks: [RoomTaskSummary.Task]) -> [RoomTaskSummary.Task] {
+        let eventIDsByTaskID = Dictionary(timelineTasks.map { ($0.taskID, $0.eventID) }, uniquingKeysWith: { first, _ in first })
+        
+        var stateTasksByTaskID = Dictionary(stateEnumeratedTasks.map { task -> (String, RoomTaskSummary.Task) in
+            var task = task
+            task.eventID = eventIDsByTaskID[task.taskID] ?? ""
+            return (task.taskID, task)
+        }, uniquingKeysWith: { first, _ in first })
+        
+        // Timeline order first (replacing content with the state-enumerated version where present),
+        // then any tasks state alone knows about (no message paginated in yet).
+        return timelineTasks.map { stateTasksByTaskID.removeValue(forKey: $0.taskID) ?? $0 } + Array(stateTasksByTaskID.values)
+    }
+    
+    /// Unions the timeline-built pending choices with `stateEnumeratedChoiceEvents` by `eventID`.
+    /// State is authoritative whenever it has an opinion at all — pending confirms/refreshes the
+    /// entry, non-pending drops it even if the timeline still thinks it's pending. When state has
+    /// no entry for an eventID (an old-protocol room, which never writes ask-time state), the
+    /// timeline's own resolution check is trusted instead.
+    private func mergePendingChoices(timelinePendingChoices: [RoomTaskSummary.PendingChoice]) -> [RoomTaskSummary.PendingChoice] {
+        var pendingChoices = [RoomTaskSummary.PendingChoice]()
+        for choice in timelinePendingChoices {
+            if let stateEvent = stateEnumeratedChoiceEvents.first(where: { $0.eventID == choice.eventID }) {
+                guard stateEvent.isPending else { continue } // State confirms this one's resolved.
+                let question = stateEvent.question?.isEmpty == false ? (stateEvent.question ?? "") : choice.question
+                pendingChoices.append(.init(eventID: choice.eventID, question: question))
+            } else {
+                pendingChoices.append(choice) // No ask-time state (old protocol) — trust the timeline.
+            }
+        }
+        
+        let handledEventIDs = Set(pendingChoices.map(\.eventID))
+        for stateEvent in stateEnumeratedChoiceEvents where stateEvent.isPending && !handledEventIDs.contains(stateEvent.eventID) {
+            pendingChoices.append(.init(eventID: stateEvent.eventID, question: stateEvent.question ?? ""))
+        }
+        
+        return pendingChoices
+    }
+    
+    /// Enumerates the room's agent task/choice state directly, independently of what's been
+    /// paginated into the timeline — this is what lets the chip show up immediately on room entry
+    /// rather than waiting for the relevant messages to load. Re-run (debounced) on room updates
+    /// for the same reason `refreshFetchedStateEvents` is: custom state event types aren't
+    /// delivered by sliding sync, so there's no push signal to react to directly.
+    private func refreshStateEnumeratedTaskSummary() {
+        Task {
+            switch await roomProxy.getStateEventsRaw(eventType: AgentCanvasStepsRoomTimelineItemContent.msgType) {
+            case .success(let rawStateEvents):
+                stateEnumeratedTasks = rawStateEvents.compactMap(Self.parseCanvasTaskState)
+            case .failure(let error):
+                MXLog.error("Failed enumerating \(AgentCanvasStepsRoomTimelineItemContent.msgType) state events with error: \(error)")
+            }
+            
+            switch await roomProxy.getStateEventsRaw(eventType: AgentChoiceRequestRoomTimelineItemContent.msgType) {
+            case .success(let rawStateEvents):
+                stateEnumeratedChoiceEvents = rawStateEvents.compactMap(AgentChoiceStateIndexEvent.init(parsingFrom:))
+            case .failure(let error):
+                MXLog.error("Failed enumerating \(AgentChoiceRequestRoomTimelineItemContent.msgType) state events with error: \(error)")
+            }
+            
+            switch await roomProxy.getStateEventsRaw(eventType: AgentObjectiveStateEvent.eventType) {
+            case .success(let rawStateEvents):
+                stateEnumeratedObjectives = rawStateEvents.compactMap(Self.parseObjectiveState)
+            case .failure(let error):
+                MXLog.error("Failed enumerating \(AgentObjectiveStateEvent.eventType) state events with error: \(error)")
+            }
+            
+            updateRoomTaskSummary(timelineItems: timelineController.timelineItems)
+        }
+    }
+    
+    /// Builds a task straight from one `io.element.agent.canvas.steps` state event's raw JSON.
+    /// `AgentCanvasStepsStateContent` only looks at `content`, so the state key (the task ID) is
+    /// recovered separately here. `eventID` is left empty — filled in later by `mergeTasks` if a
+    /// matching timeline item is loaded.
+    private static func parseCanvasTaskState(_ rawStateEventJSON: String) -> RoomTaskSummary.Task? {
+        guard let taskID = stateKey(from: rawStateEventJSON),
+              let content = AgentCanvasStepsStateContent(parsingFrom: rawStateEventJSON) else { return nil }
+        
+        return RoomTaskSummary.Task(eventID: "",
+                                    taskID: taskID,
+                                    title: content.title ?? "",
+                                    isResolved: content.isResolved,
+                                    doneStepCount: content.steps.count(where: { $0.status == .done }),
+                                    totalStepCount: content.steps.count,
+                                    steps: content.steps,
+                                    threadRootEventID: content.threadRootEventID,
+                                    updatedAt: content.updatedAt,
+                                    objectiveID: content.objectiveID)
+    }
+    
+    /// Builds an objective straight from one `io.element.agent.objective` state event's raw JSON,
+    /// reusing the same parser the cross-room index uses.
+    private static func parseObjectiveState(_ rawStateEventJSON: String) -> RoomTaskSummary.Objective? {
+        guard let event = AgentObjectiveStateEvent(parsingFrom: rawStateEventJSON) else { return nil }
+        return RoomTaskSummary.Objective(objectiveID: event.objectiveID,
+                                         title: event.title,
+                                         status: event.status,
+                                         successMetrics: event.successMetrics,
+                                         exitOptions: event.exitOptions,
+                                         priority: event.priority,
+                                         updatedAt: event.updatedAt)
+    }
+    
+    private static func stateKey(from rawStateEventJSON: String) -> String? {
+        struct Envelope: Decodable {
+            let stateKey: String
+            private enum CodingKeys: String, CodingKey { case stateKey = "state_key" }
+        }
+        guard let data = rawStateEventJSON.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(Envelope.self, from: data).stateKey
+    }
+    
+    /// Tasks without a known `updatedAt` sort after dated ones, keeping their timeline order
+    /// (`sorted` is documented stable).
+    private func sortedByUpdatedAtDescendingNilsLast(_ tasks: [RoomTaskSummary.Task]) -> [RoomTaskSummary.Task] {
+        tasks.sorted { lhs, rhs in
+            switch (lhs.updatedAt, rhs.updatedAt) {
+            case let (lhsDate?, rhsDate?): lhsDate > rhsDate
+            case (.some, .none): true
+            default: false
+            }
+        }
     }
     
     private func updateViewState(item: RoomTimelineItemProtocol, groupStyle: TimelineGroupStyle) -> RoomTimelineItemViewState {
@@ -993,6 +1265,38 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
         }
         
         state.bindings.readReceiptsSummaryInfo = .init(orderedReceipts: eventTimelineItem.properties.orderedReadReceipts, id: eventTimelineItem.id)
+    }
+    
+    private func fetchStateEvent(eventType: String, stateKey: String) {
+        let key = StateEventKey(eventType: eventType, stateKey: stateKey)
+        guard state.fetchedStateEvents[key] == nil else { return }
+        fetchStateEvent(key: key)
+    }
+    
+    /// Re-fetches every state event the timeline has already asked for, picking up any changes
+    /// the agent has made since. Called (debounced) on room updates because custom state event
+    /// types aren't delivered by sliding sync, so there's no push signal to react to directly.
+    private func refreshFetchedStateEvents() {
+        for key in state.fetchedStateEvents.keys {
+            fetchStateEvent(key: key)
+        }
+    }
+    
+    private func fetchStateEvent(key: StateEventKey) {
+        Task {
+            switch await roomProxy.getStateEventRaw(eventType: key.eventType, stateKey: key.stateKey) {
+            case .success(let raw):
+                // `updateValue` (not the `[key] = raw` subscript) because `raw` may be `nil` and the
+                // dictionary's value type is itself `String?` — the subscript setter treats an outer
+                // `nil` as "remove this key", which would erase the "already fetched" marker.
+                state.fetchedStateEvents.updateValue(raw, forKey: key)
+                // A freshly-fetched state event can flip a task's resolution or a choice's pending
+                // status, so the room task summary needs recomputing against the now-current state.
+                updateRoomTaskSummary(timelineItems: timelineController.timelineItems)
+            case .failure(let error):
+                MXLog.error("Failed fetching state event eventType: \(key.eventType) stateKey: \(key.stateKey) with error: \(error)")
+            }
+        }
     }
     
     // MARK: - Message forwarding

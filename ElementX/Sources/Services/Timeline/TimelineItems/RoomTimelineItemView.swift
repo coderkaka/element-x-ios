@@ -64,6 +64,12 @@ struct RoomTimelineItemView: View {
             CollapsibleRoomTimelineView(timelineItem: item)
         case .location(let item):
             LocationRoomTimelineView(timelineItem: item)
+        case .agentTurn(let item):
+            AgentTurnRoomTimelineView(timelineItem: item)
+        case .choiceRequest(let item):
+            AgentChoiceRequestRoomTimelineView(timelineItem: item)
+        case .canvasSteps(let item):
+            AgentCanvasStepsRoomTimelineView(timelineItem: item)
         case .poll(let item):
             PollRoomTimelineView(timelineItem: item)
         case .voice(let item):

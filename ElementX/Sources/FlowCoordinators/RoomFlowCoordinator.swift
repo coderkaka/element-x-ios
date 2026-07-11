@@ -46,6 +46,8 @@ enum RoomFlowCoordinatorEntryPoint: Hashable {
     case share(ShareExtensionPayload)
     /// The flow to change the the owner of the room
     case transferOwnership
+    /// The flow will start by showing the room, opening the canvas steps for the given task ID.
+    case canvasSteps(taskID: String)
     
     var isEventID: Bool {
         guard case .eventID = self else { return false }
@@ -191,6 +193,13 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                 await handleRoomRoute(roomID: roomID,
                                       via: via,
                                       presentationAction: .eventFocus(.init(eventID: eventID, shouldSetPin: false)),
+                                      animated: animated)
+            }
+        case .canvasSteps(let roomID, let taskID, let via):
+            Task {
+                await handleRoomRoute(roomID: roomID,
+                                      via: via,
+                                      presentationAction: .canvasSteps(taskID: taskID),
                                       animated: animated)
             }
         case .childEvent(let eventID, let roomID, let via):
@@ -403,6 +412,18 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
             case (.room, .presentPinnedEventsTimeline, .pinnedEventsTimeline):
                 startPinnedEventsTimelineFlow()
                 
+            case (.room, .presentCanvasSteps, .canvasSteps(let eventID, let taskID, _)):
+                Task { await self.presentCanvasSteps(eventID: eventID, taskID: taskID, animated: animated) }
+                
+            case (.taskPanel, .presentCanvasSteps, .canvasSteps):
+                guard let task = (context.userInfo as? EventUserInfo)?.roomTask else {
+                    fatalError("Missing required RoomTaskSummary.Task")
+                }
+                presentCanvasSteps(task: task, animated: animated)
+                
+            case (.room, .presentTaskPanel, .taskPanel):
+                presentTaskPanel(animated: animated)
+                
             // Thread List
                 
             case (.room, .presentThreadList, .threadList):
@@ -613,6 +634,8 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                         }
                     }
                     stateMachine.tryEvent(.presentThread(threadRootEventID: rootEventID, focusEventID: focusEvent?.eventID))
+                case .canvasSteps(let taskID):
+                    presentCanvasSteps(taskID: taskID, animated: animated)
                 case .none:
                     break
                 }
@@ -649,6 +672,8 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                                   userInfo: EventUserInfo(animated: animated, timelineController: timelineController))
         case .thread(let rootEventID, let focusEvent):
             stateMachine.tryEvent(.presentThread(threadRootEventID: rootEventID, focusEventID: focusEvent?.eventID))
+        case .canvasSteps(let taskID):
+            presentCanvasSteps(taskID: taskID, animated: animated)
         case .share(.text), .eventFocus:
             break // These are both handled in the coordinator's init.
         case .none:
@@ -741,6 +766,10 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
                     stateMachine.tryEvent(.presentThreadList, userInfo: EventUserInfo(animated: animated))
                 case .presentThread(let threadRootEventID, let focussedEventID):
                     stateMachine.tryEvent(.presentThread(threadRootEventID: threadRootEventID, focusEventID: focussedEventID))
+                case .presentCanvasSteps(let eventID, let taskID):
+                    stateMachine.tryEvent(.presentCanvasSteps(eventID: eventID, taskID: taskID), userInfo: EventUserInfo(animated: animated))
+                case .presentTaskPanel:
+                    stateMachine.tryEvent(.presentTaskPanel, userInfo: EventUserInfo(animated: animated))
                 case .presentRoom(let roomID, let via):
                     stateMachine.tryEvent(.startChildFlow(roomID: roomID,
                                                           via: via,
@@ -767,6 +796,122 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
         navigationStackCoordinator.push(coordinator, animated: animated) { [weak self] in
             guard let self else { return }
             stateMachine.tryEvent(.dismissThreadList)
+        }
+    }
+    
+    /// Pushes the full step list screen for the task presented by the `eventID` message.
+    /// The room's task summary is preferred as the source (it carries the state-event-resolved
+    /// steps and thread root); the already-loaded timeline item is the fallback. V1 is read-only
+    /// and doesn't re-fetch beyond that.
+    private func presentCanvasSteps(eventID: String, taskID: String, animated: Bool) async {
+        // Matched by taskID, not eventID: state-only tasks (not yet paginated into the timeline)
+        // carry an empty eventID, so taskID is the only identity guaranteed to be present.
+        if let summary = roomScreenCoordinator?.roomTaskSummaryPublisher.value,
+           let task = (summary.activeTasks + summary.doneTasks).first(where: { $0.taskID == taskID }) {
+            presentCanvasSteps(task: task, animated: animated)
+            return
+        }
+        
+        guard let canvasItem = timelineController?.timelineItems.first(where: { $0.id.eventID == eventID }) as? AgentCanvasStepsRoomTimelineItem else {
+            MXLog.error("Failed presenting canvas steps: item not found for eventID \(eventID), taskID \(taskID)")
+            stateMachine.tryEvent(.dismissCanvasSteps)
+            return
+        }
+        
+        let title = canvasItem.content.title.isEmpty ? canvasItem.content.body : canvasItem.content.title
+        presentCanvasSteps(parameters: .init(title: title,
+                                             steps: canvasItem.content.steps,
+                                             taskID: taskID,
+                                             threadRootEventID: nil,
+                                             roomProxy: roomProxy,
+                                             appSettings: flowParameters.appSettings),
+                           animated: animated)
+    }
+    
+    /// Deep-linked from the cross-room 差事 tab, which only carries `taskID` (no `eventID`).
+    /// Unlike `presentCanvasSteps(eventID:taskID:animated:)`, this can't fall back to a timeline
+    /// lookup (there's no eventID to match), and the room has *just* been presented so its task
+    /// summary may not have finished loading yet — so it waits (bounded) for the task to appear
+    /// instead of checking `roomTaskSummaryPublisher.value` once and giving up.
+    private func presentCanvasSteps(taskID: String, animated: Bool) {
+        guard let roomScreenCoordinator else { return }
+        
+        var didPresent = false
+        roomScreenCoordinator.roomTaskSummaryPublisher
+            .compactMap { summary in (summary.activeTasks + summary.doneTasks).first { $0.taskID == taskID } }
+            .first()
+            .timeout(.seconds(5), scheduler: DispatchQueue.main)
+            .sink(receiveCompletion: { _ in
+                if !didPresent {
+                    MXLog.error("Failed presenting canvas steps: task \(taskID) never appeared in the room's task summary")
+                }
+            }, receiveValue: { [weak self] task in
+                didPresent = true
+                self?.presentCanvasSteps(task: task, animated: animated)
+            })
+            .store(in: &cancellables)
+    }
+    
+    /// Pushes the step list screen directly from the task panel's summary data — no timeline-item
+    /// lookup, so it works for tasks whose presenting message isn't loaded (and carries the
+    /// state-event-resolved steps and thread root along).
+    private func presentCanvasSteps(task: RoomTaskSummary.Task, animated: Bool) {
+        presentCanvasSteps(parameters: .init(title: task.title,
+                                             steps: task.steps,
+                                             taskID: task.taskID,
+                                             threadRootEventID: task.threadRootEventID,
+                                             roomProxy: roomProxy,
+                                             appSettings: flowParameters.appSettings),
+                           animated: animated)
+    }
+    
+    private func presentCanvasSteps(parameters: CanvasStepsScreenCoordinatorParameters, animated: Bool) {
+        let coordinator = CanvasStepsScreenCoordinator(parameters: parameters)
+        
+        coordinator.actionsPublisher.sink { [weak self] action in
+            guard let self else { return }
+            switch action {
+            case .dismiss:
+                navigationStackCoordinator.pop()
+            case .presentThread(let threadRootEventID):
+                stateMachine.tryEvent(.presentThread(threadRootEventID: threadRootEventID, focusEventID: nil))
+            }
+        }
+        .store(in: &cancellables)
+        
+        navigationStackCoordinator.push(coordinator, animated: animated) { [weak self] in
+            guard let self else { return }
+            stateMachine.tryEvent(.dismissCanvasSteps)
+        }
+    }
+    
+    private func presentTaskPanel(animated: Bool) {
+        guard let roomScreenCoordinator else {
+            MXLog.error("Failed presenting task panel: no room screen")
+            stateMachine.tryEvent(.dismissTaskPanel)
+            return
+        }
+        
+        let coordinator = AgentTaskPanelScreenCoordinator(parameters: .init(summaryPublisher: roomScreenCoordinator.roomTaskSummaryPublisher, appSettings: flowParameters.appSettings))
+        
+        coordinator.actionsPublisher.sink { [weak self] action in
+            guard let self else { return }
+            switch action {
+            case .presentTaskDetail(let task):
+                stateMachine.tryEvent(.presentCanvasSteps(eventID: task.eventID, taskID: task.taskID),
+                                      userInfo: EventUserInfo(animated: animated, roomTask: task))
+            case .focusTimelineEvent(let eventID):
+                // Pop back to the room, then reuse the room screen's focus machinery
+                // (the same path `.eventFocus` presentation actions take).
+                navigationStackCoordinator.pop()
+                self.roomScreenCoordinator?.focusOnEvent(.init(eventID: eventID, shouldSetPin: false))
+            }
+        }
+        .store(in: &cancellables)
+        
+        navigationStackCoordinator.push(coordinator, animated: animated) { [weak self] in
+            guard let self else { return }
+            stateMachine.tryEvent(.dismissTaskPanel)
         }
     }
     
@@ -1568,7 +1713,7 @@ class RoomFlowCoordinator: FlowCoordinatorProtocol {
             coordinator.handleAppRoute(.share(payload), animated: true)
         case .transferOwnership:
             coordinator.handleAppRoute(.transferOwnership(roomID: roomID), animated: true)
-        case .thread:
+        case .thread, .canvasSteps:
             fatalError("This entry point is not allowed for child flows")
         }
     }

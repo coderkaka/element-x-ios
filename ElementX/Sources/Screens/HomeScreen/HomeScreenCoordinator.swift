@@ -17,6 +17,7 @@ struct HomeScreenCoordinatorParameters {
     let analyticsService: AnalyticsServiceProtocol
     let notificationManager: NotificationManagerProtocol
     let userIndicatorController: UserIndicatorControllerProtocol
+    let agentIndexService: AgentIndexServiceProtocol
 }
 
 enum HomeScreenCoordinatorAction {
@@ -29,6 +30,7 @@ enum HomeScreenCoordinatorAction {
     case roomLeft(roomIdentifier: String)
     case transferOwnership(roomIdentifier: String)
     case presentSettingsScreen
+    case presentSpaceManagement
     case presentFeedbackScreen
     case presentSecureBackupSettings
     case presentRecoveryKeyScreen
@@ -55,7 +57,8 @@ final class HomeScreenCoordinator: CoordinatorProtocol {
                                         appSettings: parameters.appSettings,
                                         analyticsService: parameters.analyticsService,
                                         notificationManager: parameters.notificationManager,
-                                        userIndicatorController: parameters.userIndicatorController)
+                                        userIndicatorController: parameters.userIndicatorController,
+                                        agentIndexService: parameters.agentIndexService)
         bugReportService = parameters.bugReportService
         
         viewModel.actions
@@ -81,6 +84,8 @@ final class HomeScreenCoordinator: CoordinatorProtocol {
                     actionsSubject.send(.presentFeedbackScreen)
                 case .presentSettingsScreen:
                     actionsSubject.send(.presentSettingsScreen)
+                case .presentSpaceManagement:
+                    actionsSubject.send(.presentSpaceManagement)
                 case .presentSecureBackupSettings:
                     actionsSubject.send(.presentSecureBackupSettings)
                 case .presentRecoveryKeyScreen:

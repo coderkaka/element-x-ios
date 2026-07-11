@@ -13,6 +13,8 @@ import SwiftUI
 protocol TimelineViewModelProtocol {
     var actions: AnyPublisher<TimelineViewModelAction, Never> { get }
     var context: TimelineViewModel.Context { get }
+    /// The timeline's live agent-task summary, mirroring `TimelineViewState.roomTaskSummary`.
+    var roomTaskSummaryPublisher: CurrentValuePublisher<RoomTaskSummary, Never> { get }
     
     func process(composerAction: ComposerToolbarViewModelAction)
     /// Updates the timeline to show and highlight the item with the corresponding event ID.

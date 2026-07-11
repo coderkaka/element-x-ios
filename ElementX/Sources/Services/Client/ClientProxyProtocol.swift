@@ -142,6 +142,9 @@ protocol ClientProxyProtocol: AnyObject {
     /// The filtering state when you are done with it
     var alternateRoomSummaryProvider: RoomSummaryProviderProtocol { get }
     
+    /// DM-only provider backing the 书信 tab; its filter is fixed at init and never changes.
+    var messagesRoomSummaryProvider: RoomSummaryProviderProtocol { get }
+    
     /// Used for listing rooms, can't be filtered nor its state observed
     var staticRoomSummaryProvider: StaticRoomSummaryProviderProtocol { get }
     
@@ -211,6 +214,18 @@ protocol ClientProxyProtocol: AnyObject {
     
     /// Will only work for rooms that are in our room list/local store
     func reportRoomForIdentifier(_ identifier: String, reason: String) async -> Result<Void, ClientProxyError>
+    
+    /// Reads all state events of a given type in a room (one raw event JSON string per state
+    /// key), from the local store. Deliberately not on `JoinedRoomProxy`: building one spins up
+    /// a live timeline, far too heavy for iterating every joined room.
+    func getRoomStateEventsRaw(roomID: String, eventType: String) async -> Result<[String], ClientProxyError>
+    
+    /// Reads past revisions of one specific state event (by type + state key), most-recent-first,
+    /// by paginating the room's timeline — the local state store only ever holds the latest
+    /// revision (that's inherent to Matrix's `/state` semantics), so this is the only way to
+    /// recover history for a repeatedly-overwritten state event (e.g. `canvas.steps`' `metric`
+    /// field). Can be slower than `getRoomStateEventsRaw` since it may page live from the server.
+    func getRoomStateEventHistoryRaw(roomID: String, eventType: String, stateKey: String, limit: UInt32) async -> Result<[String], ClientProxyError>
     
     @discardableResult func loadUserDisplayName() async -> Result<Void, ClientProxyError>
     

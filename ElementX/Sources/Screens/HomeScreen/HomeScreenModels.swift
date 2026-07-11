@@ -23,6 +23,7 @@ enum HomeScreenViewModelAction {
     case presentRecoveryKeyScreen
     case presentEncryptionResetScreen
     case presentSettingsScreen
+    case presentSpaceManagement
     case presentFeedbackScreen
     case presentStartChatScreen
     case logout
@@ -43,13 +44,25 @@ enum HomeScreenViewAction {
     case skipRecoveryKeyConfirmation
     case dismissNewSoundBanner
     case updateVisibleItemRange(Range<Int>)
-    case spaceFilters
+    case manageSpaces
     case markRoomAsUnread(roomIdentifier: String)
     case markRoomAsRead(roomIdentifier: String)
     case markRoomAsFavourite(roomIdentifier: String, isFavourite: Bool)
     
     case acceptInvite(roomIdentifier: String)
     case declineInvite(roomIdentifier: String)
+    
+    case selectSpaceFilter(SpaceServiceFilter?)
+    case reorderSpaceFilter(roomID: String, direction: MoveDirection)
+    
+    case tappedPendingChoicesStrip
+    case selectPendingChoice(roomID: String)
+}
+
+/// The direction a 道 chip is nudged by the "左移"/"右移" context menu actions.
+enum MoveDirection {
+    case left
+    case right
 }
 
 enum HomeScreenRoomListMode: CustomStringConvertible {
@@ -113,7 +126,24 @@ struct HomeScreenViewState: BindableState {
     var reportRoomEnabled = false
     
     var shouldShowSpaceFilters = false
+    var availableSpaceFilters: [SpaceServiceFilter] = []
     var selectedSpaceFilter: SpaceServiceFilter?
+    /// User-customised order of the 道 chips (space room IDs) — see `sortSpaceFilters(_:byOrder:)`.
+    var spaceFilterOrder: [String] = []
+    /// Whether the user has an unseen invite to a 道 (Space) not in `availableSpaceFilters`
+    /// (the SDK's space graph only surfaces joined spaces) — badges the "全部" chip.
+    var hasPendingSpaceInvites = false
+    
+    /// Current 御案体/通俗版 vocabulary — see `AppTerminology`.
+    var terminology = AppTerminology(scenario: .imperial)
+    
+    var topLevelSpaceFilters: [SpaceServiceFilter] {
+        sortSpaceFilters(availableSpaceFilters.filter { $0.level == 0 }, byOrder: spaceFilterOrder)
+    }
+    
+    var shouldShowSpaceTabBar: Bool {
+        shouldShowFilters
+    }
     
     /// Inline room list search is disabled when the dedicated global search tab is shown instead (see `UserSessionFlowCoordinator`).
     var isRoomListSearchEnabled = true
@@ -152,6 +182,45 @@ struct HomeScreenViewState: BindableState {
     var shouldShowBanner: Bool {
         securityBannerMode.isShown || shouldShowNewSoundBanner
     }
+    
+    /// Outstanding `AgentPendingChoiceSummary` items across every room, 道-filtered when a space is selected.
+    var pendingChoices: [HomeScreenPendingChoice] = []
+}
+
+/// Orders `filters` by their room ID's index in `order`. IDs not listed in `order` keep the SDK's
+/// own relative order and are placed after every filter that *is* listed (stable sort throughout).
+func sortSpaceFilters(_ filters: [SpaceServiceFilter], byOrder order: [String]) -> [SpaceServiceFilter] {
+    guard !order.isEmpty else { return filters }
+    
+    let indexByRoomID = Dictionary(order.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
+    return filters.enumerated()
+        .sorted { lhs, rhs in
+            let lhsIndex = indexByRoomID[lhs.element.room.id]
+            let rhsIndex = indexByRoomID[rhs.element.room.id]
+            switch (lhsIndex, rhsIndex) {
+            case let (lhsIndex?, rhsIndex?):
+                return lhsIndex < rhsIndex
+            case (.some, nil):
+                return true
+            case (nil, .some):
+                return false
+            case (nil, nil):
+                return lhs.offset < rhs.offset
+            }
+        }
+        .map(\.element)
+}
+
+/// A single 请旨待批 item shown in the cross-room pending choices strip/sheet.
+struct HomeScreenPendingChoice: Identifiable, Equatable {
+    let roomID: String
+    let eventID: String
+    let question: String?
+    let roomName: String?
+    
+    var id: String {
+        "\(roomID)|\(eventID)"
+    }
 }
 
 struct HomeScreenViewStateBindings {
@@ -162,7 +231,7 @@ struct HomeScreenViewStateBindings {
     var alertInfo: AlertInfo<UUID>?
     var leaveRoomAlertItem: LeaveRoomAlertItem?
     
-    var spaceFiltersViewModel: ChatsSpaceFiltersScreenViewModel?
+    var isPresentingPendingChoices = false
 }
 
 enum CallBadgeType {
@@ -224,6 +293,23 @@ struct HomeScreenRoom: Identifiable, Equatable {
     let canonicalAlias: String?
     
     let isTombstoned: Bool
+    
+    /// Whether an `io.element.agent.goal` state event marks this room as an agent project (政事案).
+    var isProject = false
+    /// Unresolved `AgentTaskSummary` count for this room.
+    var activeTaskCount = 0
+    /// Resolved `AgentTaskSummary` count for this room.
+    var doneTaskCount = 0
+    /// Outstanding `AgentPendingChoiceSummary` count for this room (待批).
+    var pendingChoiceCount = 0
+    /// Titles of this room's `active` 标的(`AgentObjectiveSummary`), if any. Empty for rooms
+    /// with no objectives (old-protocol rooms, or ones that haven't set one up yet) — the card
+    /// falls back to plain 差事 progress in that case.
+    var activeObjectiveTitles: [String] = []
+    
+    var totalTaskCount: Int {
+        activeTaskCount + doneTaskCount
+    }
     
     var displayedLastMessage: AttributedString? {
         if isTombstoned {

@@ -16,6 +16,7 @@ struct HomeScreenRoomCell: View {
     
     let room: HomeScreenRoom
     var roomListActivityVisibility: RoomListActivityVisibility = .current
+    var terminology: AppTerminology = .init(scenario: .imperial)
     let isSelected: Bool
     let mediaProvider: MediaProviderProtocol!
     let action: (HomeScreenViewAction) -> Void
@@ -131,6 +132,31 @@ struct HomeScreenRoomCell: View {
             Spacer()
             
             HStack(spacing: 8) {
+                if room.pendingChoiceCount > 0 {
+                    CompoundIcon(\.error, size: .xSmall, relativeTo: .compound.bodySM)
+                        .foregroundColor(.compound.iconCriticalPrimary)
+                        .accessibilityLabel(terminology.sectionPending)
+                }
+                
+                if let objectiveDisplayText {
+                    // A room's active 标的(s) take priority over the plain 差事 progress
+                    // caption — see `AppTerminology.objectivesInProgress` and
+                    // `element-agent-protocol.md` §3.4. Falls back to 差事 progress below when
+                    // the room has no active objective (old-protocol rooms, or none set up yet).
+                    Text(objectiveDisplayText)
+                        .font(.compound.bodyXS)
+                        .foregroundColor(.compound.textSecondary)
+                        .lineLimit(1)
+                } else if room.totalTaskCount > 0 {
+                    if terminology.prefersProgressBar {
+                        taskProgressBar
+                    } else {
+                        Text(terminology.roomTaskProgress(done: String(room.doneTaskCount), total: String(room.totalTaskCount)))
+                            .font(.compound.bodyXS)
+                            .foregroundColor(.compound.textSecondary)
+                    }
+                }
+                
                 if room.badges.callBadgeType == .voice {
                     CompoundIcon(\.voiceCallSolid, size: .xSmall, relativeTo: .compound.bodySM)
                         .accessibilityLabel(L10n.a11yNotificationsOngoingCall)
@@ -157,6 +183,34 @@ struct HomeScreenRoomCell: View {
                 }
             }
             .foregroundColor(room.isHighlighted ? .compound.iconAccentTertiary : .compound.iconQuaternary)
+        }
+    }
+    
+    /// 1 active 标的 → show its title (unambiguous). 2+ → a neutral count, not a single picked
+    /// title — picking one would misrepresent parallel efforts as a single storyline. 0 → nil,
+    /// caller falls back to plain 差事 progress.
+    private var objectiveDisplayText: String? {
+        switch room.activeObjectiveTitles.count {
+        case 0:
+            nil
+        case 1:
+            room.activeObjectiveTitles[0]
+        default:
+            terminology.objectivesInProgress(count: String(room.activeObjectiveTitles.count))
+        }
+    }
+    
+    /// 通俗版's stand-in for the "差事 x/y" caption — same done/total counts, rendered as a
+    /// percentage bar instead of a fraction, per D-2's "案卡片重点字段" split.
+    private var taskProgressBar: some View {
+        let progress = Double(room.doneTaskCount) / Double(room.totalTaskCount)
+        return HStack(spacing: 4) {
+            ProgressView(value: progress)
+                .frame(width: 40)
+                .tint(.compound.iconAccentTertiary)
+            Text("\(Int((progress * 100).rounded()))%")
+                .font(.compound.bodyXS)
+                .foregroundColor(.compound.textSecondary)
         }
     }
     
@@ -218,6 +272,14 @@ struct HomeScreenRoomCell_Previews: PreviewProvider, TestablePreview {
     
     static let lastMessageStateRooms = [makeRoom(lastMessageState: .sending), makeRoom(lastMessageState: .failed)]
     
+    static let projectRoomWithTasks = makeAgentRoom(name: "Foundation Archive", isProject: true, activeTaskCount: 2, doneTaskCount: 3)
+    static let roomWithPendingChoice = makeAgentRoom(name: "Second Foundation Council", pendingChoiceCount: 1)
+    static let plainRoom = makeAgentRoom(name: "Casual Chat")
+    static let roomWithSingleObjective = makeAgentRoom(name: "Foundation Archive", isProject: true, activeTaskCount: 2, doneTaskCount: 3,
+                                                       activeObjectiveTitles: ["验证指标趋势图在真实数据下可用"])
+    static let roomWithMultipleObjectives = makeAgentRoom(name: "Foundation Archive", isProject: true, activeTaskCount: 2, doneTaskCount: 3,
+                                                          activeObjectiveTitles: ["验证指标趋势图在真实数据下可用", "补齐标的的跨房间聚合视图"])
+    
     static var previews: some View {
         VStack(spacing: 0) {
             ForEach(genericRooms) { room in
@@ -244,10 +306,43 @@ struct HomeScreenRoomCell_Previews: PreviewProvider, TestablePreview {
         }
         .previewLayout(.sizeThatFits)
         .previewDisplayName("Last Message State")
+        
+        VStack(spacing: 0) {
+            HomeScreenRoomCell(room: projectRoomWithTasks, isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
+            HomeScreenRoomCell(room: roomWithPendingChoice, isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
+            HomeScreenRoomCell(room: plainRoom, isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
+            HomeScreenRoomCell(room: roomWithSingleObjective, isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
+            HomeScreenRoomCell(room: roomWithMultipleObjectives, isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
+        }
+        .previewLayout(.sizeThatFits)
+        .previewDisplayName("Agent Cards")
+        
+        VStack(spacing: 0) {
+            HomeScreenRoomCell(room: projectRoomWithTasks, terminology: .init(scenario: .plain), isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
+            HomeScreenRoomCell(room: roomWithPendingChoice, terminology: .init(scenario: .plain), isSelected: false, mediaProvider: MediaProviderMock(.init())) { _ in }
+        }
+        .previewLayout(.sizeThatFits)
+        .previewDisplayName("Agent Cards (通俗版 progress bar)")
     }
     
     static func mockRoom(summary: RoomSummary) -> HomeScreenRoom? {
         HomeScreenRoom(summary: summary)
+    }
+    
+    /// Builds a room with the 政事 agent fields set, for previewing the 差事 progress caption and 待批 badge.
+    static func makeAgentRoom(name: String,
+                              isProject: Bool = false,
+                              activeTaskCount: Int = 0,
+                              doneTaskCount: Int = 0,
+                              pendingChoiceCount: Int = 0,
+                              activeObjectiveTitles: [String] = []) -> HomeScreenRoom {
+        var room = HomeScreenRoom(summary: .mock(id: UUID().uuidString, name: name))
+        room.isProject = isProject
+        room.activeTaskCount = activeTaskCount
+        room.doneTaskCount = doneTaskCount
+        room.pendingChoiceCount = pendingChoiceCount
+        room.activeObjectiveTitles = activeObjectiveTitles
+        return room
     }
     
     static func makeViewModel(roomSummaryProvider: RoomSummaryProviderProtocol) -> HomeScreenViewModel {
@@ -258,7 +353,8 @@ struct HomeScreenRoomCell_Previews: PreviewProvider, TestablePreview {
                                    appSettings: .volatile(),
                                    analyticsService: AnalyticsServiceMock(.init()),
                                    notificationManager: NotificationManagerMock(),
-                                   userIndicatorController: UserIndicatorControllerMock())
+                                   userIndicatorController: UserIndicatorControllerMock(),
+                                   agentIndexService: AgentIndexServiceMock(.init()))
     }
     
     static func makeRoom(lastMessageState: RoomSummary.LastMessageState) -> HomeScreenRoom {

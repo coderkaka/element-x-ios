@@ -56,6 +56,7 @@ class ClientProxy: ClientProxyProtocol {
     // can apply their own filtering and pagination
     private(set) var roomSummaryProvider: RoomSummaryProviderProtocol
     private(set) var alternateRoomSummaryProvider: RoomSummaryProviderProtocol
+    private(set) var messagesRoomSummaryProvider: RoomSummaryProviderProtocol
     
     private(set) var staticRoomSummaryProvider: StaticRoomSummaryProviderProtocol
     
@@ -239,6 +240,8 @@ class ClientProxy: ClientProxyProtocol {
         roomListService = configuredAppService.roomListService
         roomSummaryProvider = configuredAppService.roomSummaryProvider
         alternateRoomSummaryProvider = configuredAppService.alternateRoomSummaryProvider
+        messagesRoomSummaryProvider = configuredAppService.messagesRoomSummaryProvider
+        messagesRoomSummaryProvider.setFilter(.all(filters: [.people]))
         staticRoomSummaryProvider = configuredAppService.staticRoomSummaryProvider
         eventStringBuilder = configuredAppService.eventStringBuilder
         
@@ -673,6 +676,30 @@ class ClientProxy: ClientProxyProtocol {
             return .success(())
         } catch {
             MXLog.error("Failed reporting room with identifier: \(identifier), with error: \(error)")
+            return .failure(.sdkError(error))
+        }
+    }
+    
+    func getRoomStateEventsRaw(roomID: String, eventType: String) async -> Result<[String], ClientProxyError> {
+        do {
+            guard let room = try client.getRoom(roomId: roomID) else {
+                return .success([])
+            }
+            return try await .success(room.getStateEventsRaw(eventType: eventType))
+        } catch {
+            MXLog.error("Failed reading state events eventType: \(eventType) roomID: \(roomID) with error: \(error)")
+            return .failure(.sdkError(error))
+        }
+    }
+    
+    func getRoomStateEventHistoryRaw(roomID: String, eventType: String, stateKey: String, limit: UInt32) async -> Result<[String], ClientProxyError> {
+        do {
+            guard let room = try client.getRoom(roomId: roomID) else {
+                return .success([])
+            }
+            return try await .success(room.getStateEventHistoryRaw(eventType: eventType, stateKey: stateKey, limit: limit))
+        } catch {
+            MXLog.error("Failed reading state event history eventType: \(eventType) stateKey: \(stateKey) roomID: \(roomID) with error: \(error)")
             return .failure(.sdkError(error))
         }
     }
@@ -1445,6 +1472,7 @@ private struct ClientProxyServices {
     let roomListService: RoomListService
     let roomSummaryProvider: RoomSummaryProviderProtocol
     let alternateRoomSummaryProvider: RoomSummaryProviderProtocol
+    let messagesRoomSummaryProvider: RoomSummaryProviderProtocol
     let staticRoomSummaryProvider: StaticRoomSummaryProviderProtocol
     let eventStringBuilder: RoomEventStringBuilder
     
@@ -1482,6 +1510,13 @@ private struct ClientProxyServices {
                                                            notificationSettings: notificationSettings,
                                                            appSettings: appSettings)
         try await alternateRoomSummaryProvider.setRoomList(roomListService.allRooms())
+        
+        messagesRoomSummaryProvider = RoomSummaryProvider(roomListService: roomListService,
+                                                          eventStringBuilder: eventStringBuilder,
+                                                          name: "MessagesRooms",
+                                                          notificationSettings: notificationSettings,
+                                                          appSettings: appSettings)
+        try await messagesRoomSummaryProvider.setRoomList(roomListService.allRooms())
         
         staticRoomSummaryProvider = RoomSummaryProvider(roomListService: roomListService,
                                                         eventStringBuilder: eventStringBuilder,

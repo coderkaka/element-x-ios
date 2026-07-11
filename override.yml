@@ -1,0 +1,8 @@
+settings:
+  DEVELOPMENT_TEAM: 8T6SHSGBYW
+  BASE_BUNDLE_IDENTIFIER: com.zhangqiongtest.elementx
+  APP_GROUP_IDENTIFIER: group.com.zhangqiongtest.elementx
+  CLASSIC_APP_GROUP_IDENTIFIER: group.com.zhangqiongtest.vector
+packages:
+  MatrixRustSDK:
+    path: ../matrix-rust-sdk-pinned

@@ -314,6 +314,25 @@ final nonisolated class AppSettings: @unchecked Sendable {
     @UserPreference(defaultValue: RoomListActivityVisibility.current)
     var roomListActivityVisibility: RoomListActivityVisibility
     
+    /// The room ID of the last 道 (space) filter explicitly selected on the 政事 tab, restored once
+    /// on next launch so staying in a 道 survives an app relaunch. `nil` means 全部 (no filter).
+    @UserPreference
+    var selectedSpaceFilterRoomID: String?
+    
+    /// User-customised left-to-right order of the 道 chips on the 政事 tab, as space room IDs.
+    /// IDs not present here keep the SDK's own order and are shown after the ones listed.
+    @UserPreference(defaultValue: [String]())
+    var spaceFilterOrder: [String]
+    
+    /// Which vocabulary the agent UI speaks in (御案体 imperial-court terms, or plain terms).
+    /// Global for the whole app — see `AppTerminology`.
+    @UserPreference(defaultValue: TerminologyScenario.imperial)
+    var terminologyScenario: TerminologyScenario
+    
+    /// Which of the 差事 tab's 3 view modes (列表/看板/指标) is currently shown.
+    @UserPreference(defaultValue: AgentTasksViewMode.list)
+    var agentTasksViewMode: AgentTasksViewMode
+    
     // MARK: - Room Screen
     
     @UserPreference(defaultValue: AppBuildType.current == .debug)

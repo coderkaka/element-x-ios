@@ -1,0 +1,5 @@
+settings:
+  DEVELOPMENT_TEAM: YOUR_TEAM_ID
+  BASE_BUNDLE_IDENTIFIER: com.yourdomain.elementx
+  APP_GROUP_IDENTIFIER: group.com.yourdomain.elementx
+  CLASSIC_APP_GROUP_IDENTIFIER: group.com.yourdomain.vector
