@@ -78,10 +78,12 @@ struct SpaceTabBarView: View {
     
     /// Light tap feedback on an actual selection change — follows `TimelineScrollButton`'s
     /// existing `UIImpactFeedbackGenerator` precedent elsewhere in the codebase (no
-    /// `sensoryFeedback` usage to match instead). Skipped on a no-op tap of the already-selected chip.
+    /// `sensoryFeedback` usage to match instead). Re-tapping the selected chip skips only the
+    /// haptic — the action still forwards so downstream refresh semantics stay unchanged.
     private func selectFilter(_ filter: SpaceServiceFilter?) {
-        guard filter != selectedFilter else { return }
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        if filter != selectedFilter {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
         action(filter)
     }
 }
