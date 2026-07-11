@@ -134,7 +134,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 restorePersistedSpaceFilterIfNeeded(availableFilters: filters)
             }
             .store(in: &cancellables)
-
+        
         // Keeps 政事堂 in sync when the 道 filter is changed from elsewhere (the 差事 tab's own
         // 道 menu, fix-kanban contract C) — `appSettings.selectedSpaceFilterRoomID` is the single
         // source of truth both tabs observe. No `.receive(on:)` hop: `@UserPreference`'s setter
@@ -143,18 +143,18 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         appSettings.selectedSpaceFilterRoomIDPublisher
             .sink { [weak self] roomID in
                 guard let self else { return }
-
+                
                 // Anti-loop: `selectSpaceFilter` below writes this very setting after already
                 // updating `spaceFilterSubject`, so by the time that write's publish reaches
                 // here the two are already consistent — nothing further to do. This is also
                 // what makes 政事堂's own selection a no-op loop-wise, not just an external one.
                 guard spaceFilterSubject.value?.room.id != roomID else { return }
-
+                
                 guard let roomID else {
                     spaceFilterSubject.send(nil)
                     return
                 }
-
+                
                 if let match = state.topLevelSpaceFilters.first(where: { $0.room.id == roomID }) {
                     spaceFilterSubject.send(match)
                 }
@@ -163,7 +163,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 // handles the launch-time stale-ID cleanup once `availableSpaceFilters` arrives.
             }
             .store(in: &cancellables)
-
+        
         selectedRoomPublisher
             .weakAssign(to: \.state.selectedRoomID, on: self)
             .store(in: &cancellables)

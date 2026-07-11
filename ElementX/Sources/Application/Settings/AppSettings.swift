@@ -332,11 +332,11 @@ final nonisolated class AppSettings: @unchecked Sendable {
     /// Which of the 差事 tab's 3 view modes (列表/看板/指标) is currently shown.
     @UserPreference(defaultValue: AgentTasksViewMode.list)
     var agentTasksViewMode: AgentTasksViewMode
-
+    
     /// Which dimension the 差事 tab's 看板 view currently groups its columns by (按状态/按案).
     @UserPreference(defaultValue: AgentTasksKanbanGroupingMode.status)
     var agentTasksKanbanGroupingMode: AgentTasksKanbanGroupingMode
-
+    
     // MARK: - Room Screen
     
     @UserPreference(defaultValue: AppBuildType.current == .debug)

@@ -15,7 +15,7 @@ struct AgentTasksScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             spaceFilterMenu
-
+            
             Group {
                 // Kanban's status columns are always shown (even empty) as a fixed skeleton —
                 // don't let an empty task list hide the switcher's own destination. List/metric
@@ -41,7 +41,7 @@ struct AgentTasksScreen: View {
             }
         }
     }
-
+    
     /// The 道 filter as a tappable menu (listing 全部 + every top-level 道, same source as
     /// 政事堂's own 道条) — always shown, including when unfiltered, so it doubles as the entry
     /// point into switching 道 without going back to 政事堂.
@@ -90,7 +90,7 @@ struct AgentTasksScreen: View {
         .buttonStyle(.plain)
         .accessibilityLabel(spaceFilterMenuLabel)
     }
-
+    
     private var spaceFilterMenuLabel: String {
         if let name = context.viewState.selectedSpaceFilterName {
             context.viewState.terminology.spaceFilterIndicator(name: name)
@@ -98,7 +98,7 @@ struct AgentTasksScreen: View {
             UntranslatedL10n.screenHomeSpaceAll
         }
     }
-
+    
     private var settingsButton: some View {
         Button {
             context.send(viewAction: .showSettings)
@@ -192,7 +192,7 @@ struct AgentTasksScreen: View {
     private var kanbanBoard: some View {
         VStack(spacing: 0) {
             kanbanGroupingModeMenu
-
+            
             // Scroll both axes: horizontal across columns, vertical so a column taller than the
             // screen is still reachable (a horizontal-only ScrollView left overflow stuck off-screen).
             ScrollView([.horizontal, .vertical]) {
@@ -206,7 +206,7 @@ struct AgentTasksScreen: View {
             .background(Color.compound.bgCanvasDefault.ignoresSafeArea())
         }
     }
-
+    
     /// Switches whether the board's columns are 按状态(default) or 按案 — a lightweight menu at
     /// the kanban content's own top, matching `viewModeMenu`'s style.
     private var kanbanGroupingModeMenu: some View {
@@ -244,14 +244,14 @@ struct AgentTasksScreen: View {
         .buttonStyle(.plain)
         .accessibilityLabel(currentKanbanGroupingModeLabel)
     }
-
+    
     private var currentKanbanGroupingModeLabel: String {
         switch context.viewState.kanbanGroupingMode {
         case .status: context.viewState.terminology.kanbanGroupByStatusLabel
         case .room: context.viewState.terminology.kanbanGroupByRoomLabel
         }
     }
-
+    
     private func kanbanColumn(_ column: AgentTasksKanbanColumn) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(column.title)
@@ -495,28 +495,28 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
             AgentTasksScreen(context: kanbanViewModel.context)
         }
         .previewDisplayName("Kanban")
-
+        
         ElementNavigationStack {
             AgentTasksScreen(context: kanbanByRoomViewModel.context)
         }
         .previewDisplayName("Kanban by room")
-
+        
         ElementNavigationStack {
             AgentTasksScreen(context: emptyKanbanViewModel.context)
         }
         .previewDisplayName("Empty kanban")
-
+        
         ElementNavigationStack {
             AgentTasksScreen(context: metricViewModel.context)
         }
         .previewDisplayName("Metric")
-
+        
         ElementNavigationStack {
             AgentTasksScreen(context: spaceFilteredViewModel.context)
         }
         .previewDisplayName("Space filtered")
     }
-
+    
     static func makeViewModel(tasks: [AgentTaskSummary],
                               spaceFilters: [SpaceServiceFilter] = [],
                               viewMode: AgentTasksViewMode = .list,

@@ -46,11 +46,11 @@ struct AgentTasksScreenViewState: BindableState {
     /// User-customised 道 chip order, live-mirrored from `AppSettings.spaceFilterOrder` (the 差事
     /// tab doesn't itself support reordering, only reflects whatever 政事堂's chips currently show).
     var spaceFilterOrder: [String] = []
-
+    
     var topLevelSpaceFilters: [SpaceServiceFilter] {
         sortSpaceFilters(availableSpaceFilters.filter { $0.level == 0 }, byOrder: spaceFilterOrder)
     }
-
+    
     var isEmpty: Bool {
         unresolvedTasks.isEmpty && resolvedTasks.isEmpty
     }
@@ -64,7 +64,7 @@ enum AgentTasksScreenViewAction: CustomStringConvertible {
     case showSettings
     /// `nil` selects 全部 (unfiltered).
     case selectSpaceFilter(String?)
-
+    
     var description: String {
         switch self {
         case .taskTapped: "taskTapped"

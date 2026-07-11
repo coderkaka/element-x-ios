@@ -46,7 +46,7 @@ nonisolated struct AgentTaskSummary: Identifiable, Equatable {
     /// ordering (most-recently-active 案 first). `nil` only defensively (a real state event
     /// always carries this in the envelope); a column with no timestamped tasks sorts last.
     var updatedAt: Date?
-
+    
     var id: String {
         "\(roomID)|\(taskID)"
     }
@@ -65,7 +65,7 @@ nonisolated struct AgentTaskStateEvent: Decodable {
     let metric: AgentTaskMetric?
     let objectiveID: String?
     let updatedAt: Date?
-
+    
     private enum EventKeys: String, CodingKey {
         case stateKey = "state_key"
         case content
@@ -115,7 +115,7 @@ nonisolated struct AgentTaskStateEvent: Decodable {
         let timestampMs = try? event.decode(UInt64.self, forKey: .originServerTimestamp)
         updatedAt = timestampMs.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
     }
-
+    
     init?(parsingFrom rawStateEventJSON: String) {
         guard let data = rawStateEventJSON.data(using: .utf8),
               let event = try? JSONDecoder().decode(Self.self, from: data) else {

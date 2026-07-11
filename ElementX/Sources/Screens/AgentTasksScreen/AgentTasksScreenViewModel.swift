@@ -57,7 +57,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
                 state.availableSpaceFilters = spaceFilters
             }
             .store(in: &cancellables)
-
+        
         appSettings.terminologyScenarioPublisher
             .sink { [weak self] scenario in
                 guard let self else { return }
@@ -67,7 +67,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
                                                              terminology: state.terminology)
             }
             .store(in: &cancellables)
-
+        
         // Keeps the 道 menu's chip order live: the coordinator/view model is created once per
         // session and outlives tab switches, so a reorder done on 政事堂 after the 差事 tab was
         // first opened must still reach `topLevelSpaceFilters` here, not just at launch.
@@ -93,8 +93,8 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
             appSettings.agentTasksKanbanGroupingMode = mode
             state.kanbanGroupingMode = mode
             state.kanbanColumns = Self.makeKanbanColumns(tasks: state.unresolvedTasks + state.resolvedTasks,
-                                                          groupingMode: mode,
-                                                          terminology: state.terminology)
+                                                         groupingMode: mode,
+                                                         terminology: state.terminology)
         case .loadMetricHistory(let task):
             loadMetricHistory(for: task)
         case .showSettings:
@@ -109,7 +109,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
     }
     
     // MARK: - Private
-
+    
     /// Explicitly scopes the index's (always-full, see `AgentIndexService`) tasks down to the
     /// 道 currently selected on 政事堂, so the 差事 tab visibly follows that same selection
     /// rather than "coincidentally" matching whatever the home tab's room list happened to be
@@ -125,7 +125,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         }
         return (tasks.filter { filter.descendants.contains($0.roomID) }, filter.room.name)
     }
-
+    
     private static func makeKanbanColumns(tasks: [AgentTaskSummary],
                                           groupingMode: AgentTasksKanbanGroupingMode,
                                           terminology: AppTerminology) -> [AgentTasksKanbanColumn] {
@@ -134,7 +134,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         case .room: makeRoomKanbanColumns(tasks: tasks)
         }
     }
-
+    
     /// Two fixed columns, always both present (even empty) so the board's skeleton doesn't
     /// jump around as data streams in. `AgentTaskSummary` only carries a resolved/unresolved
     /// bool (see `AgentTaskStateEvent`, which collapses the state event's richer `status` string
@@ -146,7 +146,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
             AgentTasksKanbanColumn(id: "done", title: terminology.sectionDone, tasks: tasks.filter(\.isResolved))
         ]
     }
-
+    
     /// One column per 案(room) that has at least one task — unlike 按状态 mode, columns are
     /// data-derived so an empty task list naturally yields zero columns. Ordered by each
     /// column's most-recently-updated task descending; columns with no timestamped task (see
@@ -161,13 +161,13 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
             }
             tasksByRoomID[task.roomID, default: []].append(task)
         }
-
+        
         let columns = roomOrder.map { roomID -> AgentTasksKanbanColumn in
             let roomTasks = tasksByRoomID[roomID] ?? []
             let title = roomTasks.first(where: { !$0.roomName.isEmpty })?.roomName ?? shortRoomID(roomID)
             return AgentTasksKanbanColumn(id: roomID, title: title, tasks: roomTasks)
         }
-
+        
         return columns.sorted { lhs, rhs in
             switch (lhs.tasks.compactMap(\.updatedAt).max(), rhs.tasks.compactMap(\.updatedAt).max()) {
             case let (lhsDate?, rhsDate?): lhsDate > rhsDate
@@ -177,7 +177,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
             }
         }
     }
-
+    
     /// `"!abc123:example.com"` → `"abc123"` — the fallback 案 column title when a room has no
     /// name (defensive; `RoomSummary.name` normally never comes back empty).
     private static func shortRoomID(_ roomID: String) -> String {
