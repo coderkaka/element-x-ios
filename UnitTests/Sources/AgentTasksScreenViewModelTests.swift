@@ -149,67 +149,61 @@ struct AgentTasksScreenViewModelTests {
     }
     
     @Test
-    func selectedSpaceFilterMatchesTheSelectedRoomID() {
+    func navigationTitleShowsTheSelectedSpaceNameOtherwiseTheTabTitle() {
+        let appSettings: AppSettings = .volatile()
+        let (viewModel, _) = makeViewModel(tasks: [], appSettings: appSettings)
+        #expect(viewModel.context.viewState.navigationTitle == AppTerminology(scenario: appSettings.terminologyScenario).tabTasks)
+
         let spaceService = SpaceServiceProxyMock()
         spaceService.underlyingSpaceFilterPublisher = .init([
             .init(room: .mock(id: "!a:example.com", name: "工程院", isSpace: true), level: 0, descendants: [])
         ])
-        let (viewModel, _) = makeViewModel(tasks: [], spaceService: spaceService, selectedSpaceFilterRoomID: "!a:example.com")
-        
-        #expect(viewModel.context.viewState.selectedSpaceFilter?.room.id == "!a:example.com")
+        let (filteredViewModel, _) = makeViewModel(tasks: [], spaceService: spaceService, selectedSpaceFilterRoomID: "!a:example.com")
+        #expect(filteredViewModel.context.viewState.navigationTitle == "工程院")
     }
-    
+
+    // MARK: - 道 picker panel (fix-spacebar3 contract B)
+
     @Test
-    func spaceFilterMenuOrderFollowsALaterReorderOnAppSettings() {
-        // The view model is created once per session and outlives switching tabs, so a 道 reorder
-        // done on 政事堂 *after* the 差事 tab was first opened must still reach the 道条 here,
-        // not just whatever order was current at construction time.
+    func spaceFiltersActionPresentsThePanel() {
+        let (viewModel, _) = makeViewModel(tasks: [])
+        #expect(viewModel.context.viewState.bindings.spaceFiltersViewModel == nil)
+
+        viewModel.context.send(viewAction: .spaceFilters)
+        #expect(viewModel.context.viewState.bindings.spaceFiltersViewModel != nil)
+    }
+
+    @Test
+    func confirmingAFilterInThePanelWritesTheSettingAndDismissesIt() async throws {
+        let filter = SpaceServiceFilter(room: .mock(id: "!a:example.com", name: "工程院", isSpace: true), level: 0, descendants: [])
         let spaceService = SpaceServiceProxyMock()
-        spaceService.underlyingSpaceFilterPublisher = .init([
-            .init(room: .mock(id: "!a:example.com", name: "A", isSpace: true), level: 0, descendants: []),
-            .init(room: .mock(id: "!b:example.com", name: "B", isSpace: true), level: 0, descendants: [])
-        ])
+        spaceService.underlyingSpaceFilterPublisher = .init([filter])
         let appSettings: AppSettings = .volatile()
         let (viewModel, _) = makeViewModel(tasks: [], spaceService: spaceService, appSettings: appSettings)
-        
-        #expect(viewModel.context.viewState.topLevelSpaceFilters.map(\.room.id) == ["!a:example.com", "!b:example.com"])
-        
-        appSettings.spaceFilterOrder = ["!b:example.com", "!a:example.com"]
-        
-        #expect(viewModel.context.viewState.topLevelSpaceFilters.map(\.room.id) == ["!b:example.com", "!a:example.com"])
+
+        viewModel.context.send(viewAction: .spaceFilters)
+        let panel = try #require(viewModel.context.viewState.bindings.spaceFiltersViewModel)
+
+        panel.context.send(viewAction: .confirm(filter))
+        try await Task.sleep(for: .milliseconds(50))
+
+        #expect(appSettings.selectedSpaceFilterRoomID == "!a:example.com")
+        #expect(viewModel.context.viewState.bindings.spaceFiltersViewModel == nil)
     }
-    
+
     @Test
-    func reorderSpaceFilterSwapsAdjacentChipsInAppSettings() {
-        let spaceService = SpaceServiceProxyMock()
-        spaceService.underlyingSpaceFilterPublisher = .init([
-            .init(room: .mock(id: "!a:example.com", name: "A", isSpace: true), level: 0, descendants: []),
-            .init(room: .mock(id: "!b:example.com", name: "B", isSpace: true), level: 0, descendants: [])
-        ])
-        let appSettings: AppSettings = .volatile()
-        let (viewModel, _) = makeViewModel(tasks: [], spaceService: spaceService, appSettings: appSettings)
-        
-        viewModel.context.send(viewAction: .reorderSpaceFilter(roomID: "!b:example.com", direction: .left))
-        
-        #expect(appSettings.spaceFilterOrder == ["!b:example.com", "!a:example.com"])
-        #expect(viewModel.context.viewState.topLevelSpaceFilters.map(\.room.id) == ["!b:example.com", "!a:example.com"])
+    func manageSpacesFromThePanelForwardsShowSpaceManagementAndDismissesIt() async throws {
+        let (viewModel, _) = makeViewModel(tasks: [])
+        viewModel.context.send(viewAction: .spaceFilters)
+        let panel = try #require(viewModel.context.viewState.bindings.spaceFiltersViewModel)
+
+        let deferred = deferFulfillment(viewModel.actionsPublisher) { $0 == .showSpaceManagement }
+        panel.context.send(viewAction: .manageSpaces)
+        try await deferred.fulfill()
+
+        #expect(viewModel.context.viewState.bindings.spaceFiltersViewModel == nil)
     }
-    
-    @Test
-    func reorderSpaceFilterAtTheLeadingEdgeIsANoOp() {
-        let spaceService = SpaceServiceProxyMock()
-        spaceService.underlyingSpaceFilterPublisher = .init([
-            .init(room: .mock(id: "!a:example.com", name: "A", isSpace: true), level: 0, descendants: []),
-            .init(room: .mock(id: "!b:example.com", name: "B", isSpace: true), level: 0, descendants: [])
-        ])
-        let appSettings: AppSettings = .volatile()
-        let (viewModel, _) = makeViewModel(tasks: [], spaceService: spaceService, appSettings: appSettings)
-        
-        viewModel.context.send(viewAction: .reorderSpaceFilter(roomID: "!a:example.com", direction: .left))
-        
-        #expect(appSettings.spaceFilterOrder.isEmpty)
-    }
-    
+
     @Test
     func manageSpacesForwardsShowSpaceManagementAction() async throws {
         let (viewModel, _) = makeViewModel(tasks: [])
