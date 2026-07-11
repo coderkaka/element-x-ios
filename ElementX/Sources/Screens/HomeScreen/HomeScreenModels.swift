@@ -53,7 +53,9 @@ enum HomeScreenViewAction {
     case declineInvite(roomIdentifier: String)
     
     case selectSpaceFilter(SpaceServiceFilter?)
-    case reorderSpaceFilter(roomID: String, direction: MoveDirection)
+    /// Opens the 道 picker panel (`ChatsSpaceFiltersScreen`) — sent by both the toolbar button
+    /// and the tappable navigation title (fix-spacebar3 contract A/A0).
+    case spaceFilters
     
     case tappedPendingChoicesStrip
     case selectPendingChoice(roomID: String)
@@ -128,21 +130,22 @@ struct HomeScreenViewState: BindableState {
     var shouldShowSpaceFilters = false
     var availableSpaceFilters: [SpaceServiceFilter] = []
     var selectedSpaceFilter: SpaceServiceFilter?
-    /// User-customised order of the 道 chips (space room IDs) — see `sortSpaceFilters(_:byOrder:)`.
-    var spaceFilterOrder: [String] = []
     /// Whether the user has an unseen invite to a 道 (Space) not in `availableSpaceFilters`
-    /// (the SDK's space graph only surfaces joined spaces) — badges the "全部" chip.
+    /// (the SDK's space graph only surfaces joined spaces) — badges the space picker button.
     var hasPendingSpaceInvites = false
     
     /// Current 御案体/通俗版 vocabulary — see `AppTerminology`.
     var terminology = AppTerminology(scenario: .imperial)
     
     var topLevelSpaceFilters: [SpaceServiceFilter] {
-        sortSpaceFilters(availableSpaceFilters.filter { $0.level == 0 }, byOrder: spaceFilterOrder)
+        availableSpaceFilters.filter { $0.level == 0 }
     }
     
-    var shouldShowSpaceTabBar: Bool {
-        shouldShowFilters
+    /// The navigation title: the selected 道's name when filtering, otherwise 政事堂/工作台
+    /// (fix-spacebar3 contract A0 — restores the upstream behaviour of the title tracking the
+    /// space filter, on top of the terminology skin).
+    var navigationTitle: String {
+        selectedSpaceFilter?.room.name ?? terminology.homeTitle
     }
     
     /// Inline room list search is disabled when the dedicated global search tab is shown instead (see `UserSessionFlowCoordinator`).
@@ -173,10 +176,6 @@ struct HomeScreenViewState: BindableState {
         !bindings.isSearchFieldFocused &&
             (bindings.filtersState.isFiltering || selectedSpaceFilter != nil) &&
             visibleRooms.isEmpty
-    }
-    
-    var shouldShowFilters: Bool {
-        !bindings.isSearchFieldFocused && roomListMode == .rooms
     }
     
     var shouldShowBanner: Bool {
@@ -211,11 +210,34 @@ func sortSpaceFilters(_ filters: [SpaceServiceFilter], byOrder order: [String]) 
         .map(\.element)
 }
 
+/// Like `sortSpaceFilters`, but for a tree-flattened list (each level-0 entry immediately
+/// followed by its own level>0 descendants). Reorders only the level-0 entries by `order`,
+/// carrying each one's descendant rows along with it so the hierarchy stays intact — used by
+/// the 道 picker panel (`ChatsSpaceFiltersScreen`), which unlike the retired chip bar also
+/// shows nested/descendant spaces (fix-spacebar3 contract C).
+func sortSpaceFilterTree(_ filters: [SpaceServiceFilter], byOrder order: [String]) -> [SpaceServiceFilter] {
+    guard !order.isEmpty else { return filters }
+    
+    var segments: [[SpaceServiceFilter]] = []
+    for filter in filters {
+        if filter.level == 0 || segments.isEmpty {
+            segments.append([filter])
+        } else {
+            segments[segments.count - 1].append(filter)
+        }
+    }
+    
+    let headers = segments.map { $0[0] }
+    let orderedHeaders = sortSpaceFilters(headers, byOrder: order)
+    let segmentsByHeaderID = Dictionary(zip(headers.map(\.id), segments), uniquingKeysWith: { first, _ in first })
+    return orderedHeaders.flatMap { segmentsByHeaderID[$0.id] ?? [$0] }
+}
+
 /// Whether `rooms` (typically an always-unfiltered list, e.g. `staticRoomSummaryProvider`)
 /// contains an unseen invite to a 道 (Space). The SDK's space graph only surfaces joined spaces,
-/// so an invited 道 never gets its own chip — this badges the "全部" chip instead so the invite
-/// stays visible. Shared between 政事堂 and 差事 (both render `SpaceTabBarView`, fix-kanban2
-/// contract B), each tab computing it from its own `staticRoomSummaryProvider`/`seenInvites` copy.
+/// so an invited 道 never gets its own chip — this badges the space picker button instead so the
+/// invite stays visible. Shared between 政事堂 and 差事, each tab computing it from its own
+/// `staticRoomSummaryProvider`/`seenInvites` copy.
 func hasPendingSpaceInvite(in rooms: [RoomSummary], seenInvites: Set<String>) -> Bool {
     rooms.contains { $0.isSpace && $0.joinRequestType?.isInvite == true && !seenInvites.contains($0.id) }
 }
@@ -241,6 +263,9 @@ struct HomeScreenViewStateBindings {
     var leaveRoomAlertItem: LeaveRoomAlertItem?
     
     var isPresentingPendingChoices = false
+    
+    /// Drives the 道 picker sheet (fix-spacebar3 contract A) — non-nil while it's presented.
+    var spaceFiltersViewModel: ChatsSpaceFiltersScreenViewModel?
 }
 
 enum CallBadgeType {
@@ -270,6 +295,16 @@ struct HomeScreenRoom: Identifiable, Equatable {
             return inviter
         }
         return nil
+    }
+    
+    /// A room/DM invite awaiting the user's accept/decline — used to sort invites to the very
+    /// front of the room list (fix-spacebar3 contract B2), ahead of 待批/在办.
+    var isInvite: Bool {
+        if case .invite = type {
+            true
+        } else {
+            false
+        }
     }
     
     let badges: Badges

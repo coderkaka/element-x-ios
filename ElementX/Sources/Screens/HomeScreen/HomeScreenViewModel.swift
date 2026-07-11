@@ -62,7 +62,6 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         staticRoomSummaryProvider = userSession.clientProxy.staticRoomSummaryProvider
         
         super.init(initialViewState: .init(userID: userSession.clientProxy.userID,
-                                           spaceFilterOrder: appSettings.spaceFilterOrder,
                                            terminology: .init(scenario: appSettings.terminologyScenario),
                                            bindings: .init(filtersState: .init(appSettings: appSettings))),
                    mediaProvider: userSession.mediaProvider)
@@ -319,8 +318,8 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         case .selectSpaceFilter(let filter):
             spaceFilterSubject.send(filter)
             appSettings.selectedSpaceFilterRoomID = filter?.room.id
-        case .reorderSpaceFilter(let roomID, let direction):
-            reorderSpaceFilter(roomID: roomID, direction: direction)
+        case .spaceFilters:
+            presentSpaceFiltersSheet()
         case .manageSpaces:
             actionsSubject.send(.presentSpaceManagement)
         case .markRoomAsUnread(let roomIdentifier):
@@ -440,21 +439,33 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         process(viewAction: .selectSpaceFilter(match))
     }
     
-    private func reorderSpaceFilter(roomID: String, direction: MoveDirection) {
-        // Build the full current order from what's displayed (already reflecting any partial
-        // persisted order), so a partially-populated/empty setting still swaps sensibly.
-        var order = state.topLevelSpaceFilters.map(\.room.id)
-        guard let currentIndex = order.firstIndex(of: roomID) else { return }
+    /// Constructs and presents the 道 picker panel (fix-spacebar3 contract A) — restored from the
+    /// upstream `HomeScreen`/`HomeScreenViewModel` handler (see `git show 97d0621a3`), but wired
+    /// through `appSettings.selectedSpaceFilterRoomID` (today's single source of truth) rather
+    /// than driving `spaceFilterSubject` directly.
+    private func presentSpaceFiltersSheet() {
+        let spaceFiltersViewModel = ChatsSpaceFiltersScreenViewModel(spaceService: userSession.clientProxy.spaceService,
+                                                                     appSettings: appSettings,
+                                                                     hasPendingSpaceInvites: state.hasPendingSpaceInvites,
+                                                                     mediaProvider: userSession.mediaProvider)
         
-        let swapIndex = switch direction {
-        case .left: currentIndex - 1
-        case .right: currentIndex + 1
+        spaceFiltersViewModel.actionsPublisher.sink { [weak self] action in
+            guard let self else { return }
+            
+            switch action {
+            case .confirm(let filter):
+                process(viewAction: .selectSpaceFilter(filter))
+                state.bindings.spaceFiltersViewModel = nil
+            case .manageSpaces:
+                state.bindings.spaceFiltersViewModel = nil
+                actionsSubject.send(.presentSpaceManagement)
+            case .cancel:
+                state.bindings.spaceFiltersViewModel = nil
+            }
         }
-        guard order.indices.contains(swapIndex) else { return } // Already at an edge.
+        .store(in: &cancellables)
         
-        order.swapAt(currentIndex, swapIndex)
-        appSettings.spaceFilterOrder = order
-        state.spaceFilterOrder = order
+        state.bindings.spaceFiltersViewModel = spaceFiltersViewModel
     }
     
     private func setupRoomListSubscriptions() {
@@ -542,12 +553,15 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             rooms.append(room)
         }
         
-        // Stable re-sort: pending (待批) → active (在办) → rest. `filter` preserves the relative
-        // order of the elements it keeps, so each group stays in provider order — that IS the guarantee.
-        let pending = rooms.filter { $0.pendingChoiceCount > 0 }
-        let active = rooms.filter { $0.pendingChoiceCount == 0 && $0.activeTaskCount > 0 }
-        let rest = rooms.filter { $0.pendingChoiceCount == 0 && $0.activeTaskCount == 0 }
-        state.rooms = pending + active + rest
+        // Stable re-sort: 邀请中 (invite) → 待批 (pending) → 在办 (active) → rest (fix-spacebar3
+        // contract B2 — an invite needs a response, so it always leads). `filter` preserves the
+        // relative order of the elements it keeps, so each group stays in provider order — that
+        // IS the guarantee.
+        let invited = rooms.filter(\.isInvite)
+        let pending = rooms.filter { !$0.isInvite && $0.pendingChoiceCount > 0 }
+        let active = rooms.filter { !$0.isInvite && $0.pendingChoiceCount == 0 && $0.activeTaskCount > 0 }
+        let rest = rooms.filter { !$0.isInvite && $0.pendingChoiceCount == 0 && $0.activeTaskCount == 0 }
+        state.rooms = invited + pending + active + rest
         
         // Cross-room pending-choices strip/sheet: joins ALL pending choices (not just ones whose room
         // is currently in the provider's list — a choice can outlive pagination/filtering), 道-filtered
@@ -567,10 +581,10 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     }
     
     /// The space graph behind `spaceFilterPublisher` only surfaces joined spaces, so an invited
-    /// 道 never gets a chip — badge the "全部" chip instead so the invite isn't invisible. Deliberately
-    /// reads `staticRoomSummaryProvider` (never filtered) rather than `roomSummaryProvider` (scoped to
-    /// whichever 道 is currently selected) — an invite to an unrelated 道 must still badge "全部" even
-    /// while some other 道's filter is active, not just when "全部" itself is already selected.
+    /// 道 never gets its own row — badge the space picker toolbar button instead so the invite
+    /// isn't invisible. Deliberately reads `staticRoomSummaryProvider` (never filtered) rather
+    /// than `roomSummaryProvider` (scoped to whichever 道 is currently selected) — an invite to
+    /// an unrelated 道 must still badge the button even while some other 道's filter is active.
     private func updatePendingSpaceInvites() {
         guard let staticRoomSummaryProvider else { return }
         

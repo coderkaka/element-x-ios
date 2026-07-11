@@ -470,6 +470,33 @@ final class HomeScreenViewModelTests {
     }
     
     @Test
+    func invitesSortFirstEvenAheadOfPendingAndActiveAndProviderOrder() async throws {
+        // "someAwesomeRoomId1" (a group-room invite) is appended *last* in provider order (see
+        // `setupViewModel(invites:)`) yet must sort first — an invite needs a response, so it
+        // always leads (fix-spacebar3 contract B2). The DM invite "someAwesomeRoomId2" is
+        // filtered out entirely by 政事's own DM-exclusion, same as any other DM.
+        let tasks = [
+            AgentTaskSummary(roomID: "2", roomName: "Foundation and Empire", taskID: "t1", title: nil, isResolved: false, doneStepCount: 0, totalStepCount: 1)
+        ]
+        let pendingChoices = [AgentPendingChoiceSummary(roomID: "4", eventID: "$choice1", question: nil)]
+        
+        setupViewModel(invites: .rooms, tasks: tasks, pendingChoices: pendingChoices)
+        
+        let deferred = deferFulfillment(context.$viewState) { state in
+            state.rooms.first?.roomID == "someAwesomeRoomId1"
+        }
+        try await deferred.fulfill()
+        
+        let orderedRoomIDs = context.viewState.rooms.compactMap(\.roomID)
+        #expect(orderedRoomIDs.first == "someAwesomeRoomId1")
+        #expect(!orderedRoomIDs.contains("someAwesomeRoomId2"))
+        // Right after the invite: pending (待批, room "4"), then active (在办, room "2").
+        let afterInvite = orderedRoomIDs.filter { $0 != "someAwesomeRoomId1" }
+        #expect(afterInvite.first == "4")
+        #expect(afterInvite.dropFirst().first == "2")
+    }
+    
+    @Test
     func pendingChoicesStripJoinsRoomNamesAndDegradesGracefully() async throws {
         let pendingChoices = [
             AgentPendingChoiceSummary(roomID: "4", eventID: "$choice1", question: "Proceed?"),
@@ -693,46 +720,61 @@ final class HomeScreenViewModelTests {
         #expect(context.viewState.selectedSpaceFilter?.room.id == "space2")
     }
     
-    // MARK: - Space Filter Reordering (G)
+    // MARK: - 道 picker panel (fix-spacebar3 contract A)
     
     @Test
-    func reorderSpaceFilterMovesLeftAndRight() async throws {
-        let filterSubject = CurrentValueSubject<[SpaceServiceFilter], Never>(Self.levelZeroSpaceFilters)
-        setupViewModel(spaceFilterSubject: filterSubject)
+    func spaceFiltersActionPresentsThePanel() {
+        setupViewModel()
+        #expect(context.viewState.bindings.spaceFiltersViewModel == nil)
         
-        let deferred = deferFulfillment(context.$viewState) { !$0.availableSpaceFilters.isEmpty }
-        try await deferred.fulfill()
-        
-        #expect(context.viewState.topLevelSpaceFilters.map(\.room.id) == ["space1", "space2", "space3", "space4", "space5", "space6", "space7"])
-        
-        context.send(viewAction: .reorderSpaceFilter(roomID: "space2", direction: .left))
-        try await Task.sleep(for: .milliseconds(50))
-        #expect(context.viewState.topLevelSpaceFilters.map(\.room.id) == ["space2", "space1", "space3", "space4", "space5", "space6", "space7"])
-        #expect(appSettings.spaceFilterOrder == ["space2", "space1", "space3", "space4", "space5", "space6", "space7"])
-        
-        context.send(viewAction: .reorderSpaceFilter(roomID: "space2", direction: .right))
-        try await Task.sleep(for: .milliseconds(50))
-        #expect(context.viewState.topLevelSpaceFilters.map(\.room.id) == ["space1", "space2", "space3", "space4", "space5", "space6", "space7"])
+        context.send(viewAction: .spaceFilters)
+        #expect(context.viewState.bindings.spaceFiltersViewModel != nil)
     }
     
     @Test
-    func reorderSpaceFilterClampsAtEdges() async throws {
+    func confirmingAFilterInThePanelWritesTheSettingAndDismissesIt() async throws {
         let filterSubject = CurrentValueSubject<[SpaceServiceFilter], Never>(Self.levelZeroSpaceFilters)
         setupViewModel(spaceFilterSubject: filterSubject)
         
-        let deferred = deferFulfillment(context.$viewState) { !$0.availableSpaceFilters.isEmpty }
+        let readyDeferred = deferFulfillment(context.$viewState) { !$0.availableSpaceFilters.isEmpty }
+        try await readyDeferred.fulfill()
+        
+        context.send(viewAction: .spaceFilters)
+        let panel = try #require(context.viewState.bindings.spaceFiltersViewModel)
+        
+        let filter = try #require(Self.levelZeroSpaceFilters.first { $0.room.id == "space2" })
+        panel.context.send(viewAction: .confirm(filter))
+        try await Task.sleep(for: .milliseconds(50))
+        
+        #expect(appSettings.selectedSpaceFilterRoomID == "space2")
+        #expect(context.viewState.selectedSpaceFilter?.room.id == "space2")
+        #expect(context.viewState.bindings.spaceFiltersViewModel == nil)
+    }
+    
+    @Test
+    func manageSpacesFromThePanelForwardsPresentSpaceManagementAndDismissesIt() async throws {
+        setupViewModel()
+        context.send(viewAction: .spaceFilters)
+        let panel = try #require(context.viewState.bindings.spaceFiltersViewModel)
+        
+        let deferred = deferFulfillment(viewModel.actions) { $0 == .presentSpaceManagement }
+        panel.context.send(viewAction: .manageSpaces)
         try await deferred.fulfill()
         
-        let originalOrder = context.viewState.topLevelSpaceFilters.map(\.room.id)
+        #expect(context.viewState.bindings.spaceFiltersViewModel == nil)
+    }
+    
+    @Test
+    func cancellingThePanelDismissesItWithoutChangingTheSelection() async throws {
+        setupViewModel()
+        context.send(viewAction: .spaceFilters)
+        let panel = try #require(context.viewState.bindings.spaceFiltersViewModel)
         
-        // Moving the first chip left, or the last chip right, must be a no-op.
-        context.send(viewAction: .reorderSpaceFilter(roomID: "space1", direction: .left))
+        panel.context.send(viewAction: .cancel)
         try await Task.sleep(for: .milliseconds(50))
-        #expect(context.viewState.topLevelSpaceFilters.map(\.room.id) == originalOrder)
         
-        context.send(viewAction: .reorderSpaceFilter(roomID: "space7", direction: .right))
-        try await Task.sleep(for: .milliseconds(50))
-        #expect(context.viewState.topLevelSpaceFilters.map(\.room.id) == originalOrder)
+        #expect(context.viewState.bindings.spaceFiltersViewModel == nil)
+        #expect(appSettings.selectedSpaceFilterRoomID == nil)
     }
     
     // MARK: - Helpers
@@ -849,6 +891,8 @@ extension HomeScreenViewModelAction: @MainActor @retroactive Equatable {
         case (.presentEncryptionResetScreen, .presentEncryptionResetScreen):
             true
         case (.presentSettingsScreen, .presentSettingsScreen):
+            true
+        case (.presentSpaceManagement, .presentSpaceManagement):
             true
         case (.presentFeedbackScreen, .presentFeedbackScreen):
             true

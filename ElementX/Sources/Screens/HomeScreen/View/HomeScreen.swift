@@ -16,13 +16,18 @@ struct HomeScreen: View {
     
     @State private var scrollViewAdapter = ScrollViewAdapter()
     
+    @Namespace private var navigationTransitionNamespace
+    private enum NavigationTransitionSourceID {
+        case spaceFilters
+    }
+    
     var body: some View {
         HomeScreenContent(context: context, scrollViewAdapter: scrollViewAdapter)
             .alert(item: $context.alertInfo)
             .alert(item: $context.leaveRoomAlertItem,
                    actions: leaveRoomAlertActions,
                    message: leaveRoomAlertMessage)
-            .navigationTitle(context.viewState.terminology.homeTitle)
+            .navigationTitle(context.viewState.navigationTitle)
             .toolbar { toolbar }
             .background(Color.compound.bgCanvasDefault.ignoresSafeArea())
             .track(screen: .Home)
@@ -30,6 +35,11 @@ struct HomeScreen: View {
             .sentryTrace("\(Self.self)")
             .sheet(isPresented: $context.isPresentingPendingChoices) {
                 pendingChoicesSheet
+            }
+            .sheet(item: $context.spaceFiltersViewModel) { viewModel in
+                ChatsSpaceFiltersScreen(context: viewModel.context)
+                    .navigationTransition(.zoom(sourceID: NavigationTransitionSourceID.spaceFilters,
+                                                in: navigationTransitionNamespace))
             }
     }
     
@@ -69,6 +79,12 @@ struct HomeScreen: View {
                 .buttonStyle(.borderless)
         }
         
+        if context.viewState.shouldShowSpaceFilters {
+            ToolbarItem(placement: .principal) {
+                navigationTitleButton
+            }
+        }
+        
         ToolbarItem(placement: .primaryAction) {
             if #available(iOS 26, *) {
                 newRoomButton
@@ -77,6 +93,39 @@ struct HomeScreen: View {
                     .buttonStyle(.compound(.super, size: .toolbarIcon))
             }
         }
+        
+        if context.viewState.shouldShowSpaceFilters {
+            if #available(iOS 26, *) {
+                ToolbarSpacer(.fixed, placement: .primaryAction)
+            }
+            
+            ToolbarItem(placement: .primaryAction) {
+                SpaceFiltersButton(selected: context.viewState.selectedSpaceFilter != nil,
+                                   hasPendingSpaceInvites: context.viewState.hasPendingSpaceInvites) {
+                    context.send(viewAction: .spaceFilters)
+                }
+                .matchedTransitionSource(id: NavigationTransitionSourceID.spaceFilters,
+                                         in: navigationTransitionNamespace)
+            }
+        }
+    }
+    
+    /// The dynamic navigation title (fix-spacebar3 contract A0) — a small chevron hints it opens
+    /// the same 道 picker panel as the toolbar button.
+    private var navigationTitleButton: some View {
+        Button {
+            context.send(viewAction: .spaceFilters)
+        } label: {
+            HStack(spacing: 4) {
+                Text(context.viewState.navigationTitle)
+                    .font(.compound.headingMDBold)
+                    .foregroundColor(.compound.textPrimary)
+                    .lineLimit(1)
+                CompoundIcon(\.chevronDown, size: .xSmall, relativeTo: .compound.headingMDBold)
+                    .foregroundColor(.compound.iconSecondary)
+            }
+        }
+        .accessibilityLabel(L10n.screenRoomlistYourSpaces)
     }
     
     private var settingsButton: some View {
@@ -122,6 +171,56 @@ struct HomeScreen: View {
     
     private func leaveRoomAlertMessage(_ item: LeaveRoomAlertItem) -> some View {
         Text(item.subtitle)
+    }
+    
+    /// Restored from the deleted upstream `HomeScreen.SpaceFiltersButton` (see `git show
+    /// 97d0621a3`), with a pending-invite badge added — previously shown on the retired chip
+    /// bar's "全部" chip (fix-spacebar3 contract A).
+    private struct SpaceFiltersButton: View {
+        @Environment(\.isInSidebar) private var isInSidebar
+        
+        var selected = false
+        var hasPendingSpaceInvites = false
+        var action: () -> Void
+        
+        /// Design prefers the custom style over the system's styling of a Toggle within a toolbar,
+        /// however Glass isn't supported for toolbar buttons in the sidebar on iPadOS 26 (likely due
+        /// to glass on glass being discouraged by Apple), so we need to handle our styling accordingly.
+        var shouldUseGlassButtonStyle: Bool {
+            !isInSidebar
+        }
+        
+        var body: some View {
+            if #available(iOS 26, *), shouldUseGlassButtonStyle {
+                if selected {
+                    content
+                        .backportButtonStyleGlassProminent()
+                        .tint(.compound.bgActionPrimaryRest)
+                } else {
+                    content
+                }
+            } else {
+                if selected {
+                    content
+                        .buttonStyle(.compound(.primary, size: .toolbarIcon))
+                } else {
+                    content
+                        .buttonStyle(.compound(.tertiary, size: .toolbarIcon))
+                }
+            }
+        }
+        
+        private var content: some View {
+            Button {
+                action()
+            } label: {
+                CompoundIcon(\.filter)
+                    .overlayBadge(10, isBadged: hasPendingSpaceInvites)
+            }
+            .accessibilityLabel(L10n.screenRoomlistYourSpaces)
+            .accessibilityAddTraits(selected ? .isSelected : [])
+            .accessibilityIdentifier(A11yIdentifiers.homeScreen.spaceFilters)
+        }
     }
 }
 

@@ -13,6 +13,7 @@ struct ChatsSpaceFilterCell: View {
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
     
     let filter: SpaceServiceFilter
+    let isSelected: Bool
     let mediaProvider: MediaProviderProtocol!
     
     private let verticalInsets = 12.0
@@ -34,19 +35,25 @@ struct ChatsSpaceFilterCell: View {
                         avatar
                         
                         content
-                            .padding(.vertical, verticalInsets)
-                            .overlay(alignment: .bottom) {
-                                Rectangle()
-                                    .fill(Color.compound.borderDisabled)
-                                    .frame(height: 1 / UIScreen.main.scale)
-                                    .padding(.trailing, -horizontalInsets)
-                            }
                     }
                     .accessibilityElement(children: .combine)
                 }
+                
+                if isSelected {
+                    CompoundIcon(\.check, size: .small, relativeTo: .compound.bodyLG)
+                        .foregroundColor(.compound.iconAccentTertiary)
+                        .accessibilityHidden(true)
+                }
+            }
+            .padding(.vertical, verticalInsets)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(Color.compound.borderDisabled)
+                    .frame(height: 1 / UIScreen.main.scale)
             }
         }
         .padding(.horizontal, horizontalInsets)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
     
     @ViewBuilder
@@ -104,10 +111,16 @@ struct ChatsSpaceFilterCell_Previews: PreviewProvider, TestablePreview {
         VStack(spacing: 0) {
             ForEach(spaces, id: \.id) { space in
                 ChatsSpaceFilterCell(filter: .init(room: space, level: 0, descendants: .init()),
+                                     isSelected: false,
                                      mediaProvider: mediaProvider) { _ in }
                 ChatsSpaceFilterCell(filter: .init(room: space, level: 1, descendants: .init()),
+                                     isSelected: false,
                                      mediaProvider: mediaProvider) { _ in }
             }
+            
+            ChatsSpaceFilterCell(filter: .init(room: spaces[0], level: 0, descendants: .init()),
+                                 isSelected: true,
+                                 mediaProvider: mediaProvider) { _ in }
         }
     }
 }

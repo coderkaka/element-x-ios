@@ -32,34 +32,30 @@ struct AgentTasksScreenViewState: BindableState {
     var viewMode = AgentTasksViewMode.list
     var terminology = AppTerminology(scenario: .imperial)
     /// The name of the 道 (space) tasks are currently scoped to, mirroring 政事堂's own
-    /// selection — `nil` means unfiltered (全部). No longer rendered as its own text (the shared
-    /// `SpaceTabBarView`'s selected chip is now the visible indicator, fix-kanban2 contract B) —
-    /// kept because `scopeToSelectedSpace` produces it as part of the scoping computation anyway.
+    /// selection — `nil` means unfiltered (全部). Drives both the scoping and the dynamic
+    /// navigation title (fix-spacebar3 contract A0).
     var selectedSpaceFilterName: String?
-    /// The raw room ID backing `selectedSpaceFilterName` — `nil` means 全部. Kept alongside the
-    /// name so the 道条 can mark the current selection even if two 道 happen to share a name.
-    var selectedSpaceFilterRoomID: String?
-    /// The full 道 list the 道条 is built from — same source as 政事堂's own.
-    var availableSpaceFilters: [SpaceServiceFilter] = []
-    /// User-customised 道 chip order, live-mirrored from `AppSettings.spaceFilterOrder` — shared
-    /// with 政事堂 since both tabs render the same `SpaceTabBarView` over the same order setting.
-    var spaceFilterOrder: [String] = []
-    /// Whether the user has an unseen invite to a 道 (Space) not in `availableSpaceFilters` —
-    /// same algorithm as `HomeScreenViewModel`'s own copy (see `hasPendingSpaceInvite(in:seenInvites:)`),
-    /// badges the "全部" chip since the space graph only surfaces joined spaces.
+    /// Whether the user has an unseen invite to a 道 (Space) — same algorithm as
+    /// `HomeScreenViewModel`'s own copy (see `hasPendingSpaceInvite(in:seenInvites:)`), badges
+    /// the space picker button since the space graph only surfaces joined spaces.
     var hasPendingSpaceInvites = false
     
-    var topLevelSpaceFilters: [SpaceServiceFilter] {
-        sortSpaceFilters(availableSpaceFilters.filter { $0.level == 0 }, byOrder: spaceFilterOrder)
-    }
-    
-    var selectedSpaceFilter: SpaceServiceFilter? {
-        topLevelSpaceFilters.first { $0.room.id == selectedSpaceFilterRoomID }
-    }
+    var bindings: AgentTasksScreenViewStateBindings
     
     var isEmpty: Bool {
         unresolvedTasks.isEmpty && resolvedTasks.isEmpty
     }
+    
+    /// The navigation title: the selected 道's name when filtering, otherwise the plain 差事 tab
+    /// title (fix-spacebar3 contract A0 — same rule as 政事堂's own title).
+    var navigationTitle: String {
+        selectedSpaceFilterName ?? terminology.tabTasks
+    }
+}
+
+struct AgentTasksScreenViewStateBindings {
+    /// Drives the 道 picker sheet (fix-spacebar3 contract B) — non-nil while it's presented.
+    var spaceFiltersViewModel: ChatsSpaceFiltersScreenViewModel?
 }
 
 enum AgentTasksScreenViewAction: CustomStringConvertible {
@@ -69,7 +65,8 @@ enum AgentTasksScreenViewAction: CustomStringConvertible {
     case showSettings
     /// `nil` selects 全部 (unfiltered).
     case selectSpaceFilter(String?)
-    case reorderSpaceFilter(roomID: String, direction: MoveDirection)
+    /// Opens the 道 picker panel (`ChatsSpaceFiltersScreen`) — the same one 政事堂 uses.
+    case spaceFilters
     case manageSpaces
     
     var description: String {
@@ -79,7 +76,7 @@ enum AgentTasksScreenViewAction: CustomStringConvertible {
         case .loadMetricHistory: "loadMetricHistory"
         case .showSettings: "showSettings"
         case .selectSpaceFilter(let roomID): "selectSpaceFilter(\(roomID ?? "nil"))"
-        case .reorderSpaceFilter(let roomID, let direction): "reorderSpaceFilter(\(roomID), \(direction))"
+        case .spaceFilters: "spaceFilters"
         case .manageSpaces: "manageSpaces"
         }
     }

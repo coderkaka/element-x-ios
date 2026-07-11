@@ -11,55 +11,83 @@ import SwiftUI
 
 struct AgentTasksScreen: View {
     @Bindable var context: AgentTasksScreenViewModel.Context
-    
+
+    @Namespace private var navigationTransitionNamespace
+    private enum NavigationTransitionSourceID {
+        case spaceFilters
+    }
+
     var body: some View {
-        VStack(spacing: 0) {
-            spaceTabBar
-            
-            Group {
-                // Kanban's status columns are always shown (even empty) as a fixed skeleton —
-                // don't let an empty task list hide the switcher's own destination. List/metric
-                // still show the friendlier "empty" message instead of a bare blank screen.
-                if context.viewState.isEmpty, context.viewState.viewMode != .kanban {
-                    emptyState
-                } else {
-                    switch context.viewState.viewMode {
-                    case .list: taskList
-                    case .kanban: kanbanBoard
-                    case .metric: metricDashboard
-                    }
+        Group {
+            // Kanban's status columns are always shown (even empty) as a fixed skeleton —
+            // don't let an empty task list hide the switcher's own destination. List/metric
+            // still show the friendlier "empty" message instead of a bare blank screen.
+            if context.viewState.isEmpty, context.viewState.viewMode != .kanban {
+                emptyState
+            } else {
+                switch context.viewState.viewMode {
+                case .list: taskList
+                case .kanban: kanbanBoard
+                case .metric: metricDashboard
                 }
             }
         }
-        .navigationTitle(context.viewState.terminology.tabTasks)
+        .navigationTitle(context.viewState.navigationTitle)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 settingsButton
             }
+            ToolbarItem(placement: .principal) {
+                navigationTitleButton
+            }
             ToolbarItem(placement: .primaryAction) {
                 viewModeMenu
             }
+            ToolbarItem(placement: .primaryAction) {
+                spaceFiltersButton
+            }
+        }
+        .sheet(item: $context.spaceFiltersViewModel) { viewModel in
+            ChatsSpaceFiltersScreen(context: viewModel.context)
+                .navigationTransition(.zoom(sourceID: NavigationTransitionSourceID.spaceFilters,
+                                            in: navigationTransitionNamespace))
         }
     }
-    
-    /// The same 道条 component 政事堂 renders (fix-kanban2 contract B) — selection is driven by
-    /// `appSettings.selectedSpaceFilterRoomID`, the single source of truth both tabs observe, so
-    /// picking a 道 here keeps 政事堂 in sync and vice versa.
-    private var spaceTabBar: some View {
-        VStack(spacing: 0) {
-            SpaceTabBarView(filters: context.viewState.topLevelSpaceFilters,
-                            selectedFilter: context.viewState.selectedSpaceFilter,
-                            hasPendingSpaceInvites: context.viewState.hasPendingSpaceInvites,
-                            terminology: context.viewState.terminology,
-                            mediaProvider: context.mediaProvider) { filter in
-                context.send(viewAction: .selectSpaceFilter(filter?.room.id))
-            } onManageTapped: {
-                context.send(viewAction: .manageSpaces)
-            } onReorder: { roomID, direction in
-                context.send(viewAction: .reorderSpaceFilter(roomID: roomID, direction: direction))
+
+    /// The dynamic navigation title (fix-spacebar3 contract A0) — mirrors 政事堂's
+    /// `HomeScreen.navigationTitleButton` verbatim: same chevron affordance, same tap target
+    /// (`.spaceFilters`, the same panel the trailing icon button opens). 差事's toolbar has no
+    /// `shouldShowSpaceFilters` gate (unlike 政事堂), so this is shown unconditionally, matching
+    /// `spaceFiltersButton` below which is also always visible.
+    private var navigationTitleButton: some View {
+        Button {
+            context.send(viewAction: .spaceFilters)
+        } label: {
+            HStack(spacing: 4) {
+                Text(context.viewState.navigationTitle)
+                    .font(.compound.headingMDBold)
+                    .foregroundColor(.compound.textPrimary)
+                    .lineLimit(1)
+                CompoundIcon(\.chevronDown, size: .xSmall, relativeTo: .compound.headingMDBold)
+                    .foregroundColor(.compound.iconSecondary)
             }
-            Divider()
         }
+        .accessibilityLabel(L10n.screenRoomlistYourSpaces)
+    }
+
+    /// The same 道 picker button/panel 政事堂 uses (fix-spacebar3 contract B) — selection is
+    /// driven by `appSettings.selectedSpaceFilterRoomID`, the single source of truth both tabs
+    /// observe, so picking a 道 here keeps 政事堂 in sync and vice versa.
+    private var spaceFiltersButton: some View {
+        Button {
+            context.send(viewAction: .spaceFilters)
+        } label: {
+            CompoundIcon(\.filter)
+                .overlayBadge(10, isBadged: context.viewState.hasPendingSpaceInvites)
+        }
+        .accessibilityLabel(L10n.screenRoomlistYourSpaces)
+        .matchedTransitionSource(id: NavigationTransitionSourceID.spaceFilters,
+                                 in: navigationTransitionNamespace)
     }
     
     private var settingsButton: some View {
