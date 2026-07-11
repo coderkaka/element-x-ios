@@ -74,7 +74,7 @@ final class ChatsSpaceFiltersScreenViewModelTests {
         let appSettings: AppSettings = .volatile()
         let (viewModel, _) = makeViewModel(appSettings: appSettings)
         
-        viewModel.context.send(viewAction: .reorder(roomID: "space2", direction: .left))
+        viewModel.context.send(viewAction: .reorder(roomID: "space2", direction: .up))
         
         #expect(appSettings.spaceFilterOrder == ["space2", "space1", "space3"])
         #expect(viewModel.context.viewState.topLevelFilterIDsInOrder == ["space2", "space1", "space3"])
@@ -85,9 +85,30 @@ final class ChatsSpaceFiltersScreenViewModelTests {
         let appSettings: AppSettings = .volatile()
         let (viewModel, _) = makeViewModel(appSettings: appSettings)
         
-        viewModel.context.send(viewAction: .reorder(roomID: "space1", direction: .left))
+        viewModel.context.send(viewAction: .reorder(roomID: "space1", direction: .up))
         
         #expect(appSettings.spaceFilterOrder.isEmpty)
+    }
+    
+    @Test
+    func reorderAtTheTrailingEdgeIsANoOp() {
+        let appSettings: AppSettings = .volatile()
+        let (viewModel, _) = makeViewModel(appSettings: appSettings)
+        
+        viewModel.context.send(viewAction: .reorder(roomID: "space3", direction: .down))
+        
+        #expect(appSettings.spaceFilterOrder.isEmpty)
+    }
+    
+    @Test
+    func reorderDownSwapsAdjacentTopLevelFiltersInAppSettings() {
+        let appSettings: AppSettings = .volatile()
+        let (viewModel, _) = makeViewModel(appSettings: appSettings)
+        
+        viewModel.context.send(viewAction: .reorder(roomID: "space2", direction: .down))
+        
+        #expect(appSettings.spaceFilterOrder == ["space1", "space3", "space2"])
+        #expect(viewModel.context.viewState.topLevelFilterIDsInOrder == ["space1", "space3", "space2"])
     }
     
     @Test
@@ -106,7 +127,7 @@ final class ChatsSpaceFiltersScreenViewModelTests {
                                                          hasPendingSpaceInvites: false,
                                                          mediaProvider: MediaProviderMock(.init()))
         
-        viewModel.context.send(viewAction: .reorder(roomID: "space2", direction: .left))
+        viewModel.context.send(viewAction: .reorder(roomID: "space2", direction: .up))
         
         #expect(viewModel.context.viewState.orderedFilters.map(\.room.id) == ["space2", "space1", "space1-child"])
     }

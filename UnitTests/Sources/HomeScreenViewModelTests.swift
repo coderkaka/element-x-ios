@@ -764,6 +764,31 @@ final class HomeScreenViewModelTests {
         #expect(context.viewState.bindings.spaceFiltersViewModel == nil)
     }
     
+    /// The panel is a SwiftUI `.sheet(item:)` — presenting `SpacesTabFlowCoordinator`'s own sheet
+    /// straight after nil-ing the binding (same run loop tick) silently drops because the panel's
+    /// dismiss animation hasn't finished yet. `.presentSpaceManagement` must only fire once that
+    /// dismissal has had time to complete.
+    @Test
+    func manageSpacesFromThePanelDelaysPresentSpaceManagementUntilTheSheetHasDismissed() async throws {
+        setupViewModel()
+        context.send(viewAction: .spaceFilters)
+        let panel = try #require(context.viewState.bindings.spaceFiltersViewModel)
+        
+        var receivedAction = false
+        viewModel.actions.sink { action in
+            if action == .presentSpaceManagement {
+                receivedAction = true
+            }
+        }
+        .store(in: &cancellables)
+        
+        panel.context.send(viewAction: .manageSpaces)
+        #expect(!receivedAction, "presentSpaceManagement must not fire synchronously with the dismissal")
+        
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(receivedAction)
+    }
+    
     @Test
     func cancellingThePanelDismissesItWithoutChangingTheSelection() async throws {
         setupViewModel()

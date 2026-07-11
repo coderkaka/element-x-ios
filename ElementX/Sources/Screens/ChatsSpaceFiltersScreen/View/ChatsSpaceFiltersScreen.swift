@@ -48,13 +48,13 @@ struct ChatsSpaceFiltersScreen: View {
         let order = context.viewState.topLevelFilterIDsInOrder
         let index = order.firstIndex(of: filter.room.id)
         
-        Button(UntranslatedL10n.actionMoveLeft) {
-            context.send(viewAction: .reorder(roomID: filter.room.id, direction: .left))
+        Button(UntranslatedL10n.actionMoveUp) {
+            context.send(viewAction: .reorder(roomID: filter.room.id, direction: .up))
         }
         .disabled(index == nil || index == 0)
         
-        Button(UntranslatedL10n.actionMoveRight) {
-            context.send(viewAction: .reorder(roomID: filter.room.id, direction: .right))
+        Button(UntranslatedL10n.actionMoveDown) {
+            context.send(viewAction: .reorder(roomID: filter.room.id, direction: .down))
         }
         .disabled(index == nil || index == order.count - 1)
     }

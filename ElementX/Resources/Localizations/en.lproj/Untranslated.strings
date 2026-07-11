@@ -3,6 +3,8 @@
 "action_manage_spaces" = "管理诸道";
 "action_move_left" = "左移";
 "action_move_right" = "右移";
+"action_move_up" = "上移";
+"action_move_down" = "下移";
 "screen_home_title" = "政事堂";
 "screen_home_space_all" = "全部";
 "screen_room_timeline_agent_choice_confirm_button" = "Confirm";

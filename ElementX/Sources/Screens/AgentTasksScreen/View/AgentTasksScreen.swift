@@ -11,12 +11,12 @@ import SwiftUI
 
 struct AgentTasksScreen: View {
     @Bindable var context: AgentTasksScreenViewModel.Context
-
+    
     @Namespace private var navigationTransitionNamespace
     private enum NavigationTransitionSourceID {
         case spaceFilters
     }
-
+    
     var body: some View {
         Group {
             // Kanban's status columns are always shown (even empty) as a fixed skeleton —
@@ -33,6 +33,10 @@ struct AgentTasksScreen: View {
             }
         }
         .navigationTitle(context.viewState.navigationTitle)
+        // The `.principal` toolbar title button (`navigationTitleButton`) already renders the
+        // title — without `.inline` the large title also renders, showing it twice. The
+        // `.navigationTitle` itself stays for the back-button label/a11y.
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 settingsButton
@@ -42,6 +46,11 @@ struct AgentTasksScreen: View {
             }
             ToolbarItem(placement: .primaryAction) {
                 viewModeMenu
+            }
+            // Mirrors HomeScreen's own trailing-item spacing so the two buttons don't crowd
+            // together.
+            if #available(iOS 26, *) {
+                ToolbarSpacer(.fixed, placement: .primaryAction)
             }
             ToolbarItem(placement: .primaryAction) {
                 spaceFiltersButton
@@ -53,7 +62,7 @@ struct AgentTasksScreen: View {
                                             in: navigationTransitionNamespace))
         }
     }
-
+    
     /// The dynamic navigation title (fix-spacebar3 contract A0) — mirrors 政事堂's
     /// `HomeScreen.navigationTitleButton` verbatim: same chevron affordance, same tap target
     /// (`.spaceFilters`, the same panel the trailing icon button opens). 差事's toolbar has no
@@ -74,7 +83,7 @@ struct AgentTasksScreen: View {
         }
         .accessibilityLabel(L10n.screenRoomlistYourSpaces)
     }
-
+    
     /// The same 道 picker button/panel 政事堂 uses (fix-spacebar3 contract B) — selection is
     /// driven by `appSettings.selectedSpaceFilterRoomID`, the single source of truth both tabs
     /// observe, so picking a 道 here keeps 政事堂 in sync and vice versa.

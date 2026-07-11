@@ -204,6 +204,32 @@ struct AgentTasksScreenViewModelTests {
         #expect(viewModel.context.viewState.bindings.spaceFiltersViewModel == nil)
     }
     
+    /// The panel is a SwiftUI `.sheet(item:)` — presenting another sheet straight after nil-ing
+    /// the binding (same run loop tick) silently drops because the panel's dismiss animation
+    /// hasn't finished yet. `.showSpaceManagement` must only fire once that dismissal has had
+    /// time to complete. Mirrors `HomeScreenViewModelTests`' identical case.
+    @Test
+    func manageSpacesFromThePanelDelaysShowSpaceManagementUntilTheSheetHasDismissed() async throws {
+        let (viewModel, _) = makeViewModel(tasks: [])
+        viewModel.context.send(viewAction: .spaceFilters)
+        let panel = try #require(viewModel.context.viewState.bindings.spaceFiltersViewModel)
+        
+        var cancellables = Set<AnyCancellable>()
+        var receivedAction = false
+        viewModel.actionsPublisher.sink { action in
+            if action == .showSpaceManagement {
+                receivedAction = true
+            }
+        }
+        .store(in: &cancellables)
+        
+        panel.context.send(viewAction: .manageSpaces)
+        #expect(!receivedAction, "showSpaceManagement must not fire synchronously with the dismissal")
+        
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(receivedAction)
+    }
+    
     @Test
     func manageSpacesForwardsShowSpaceManagementAction() async throws {
         let (viewModel, _) = makeViewModel(tasks: [])

@@ -28,6 +28,10 @@ struct HomeScreen: View {
                    actions: leaveRoomAlertActions,
                    message: leaveRoomAlertMessage)
             .navigationTitle(context.viewState.navigationTitle)
+            // The `.principal` toolbar title button (`navigationTitleButton`) already renders the
+            // title — without `.inline` the large title also renders, showing it twice. The
+            // `.navigationTitle` itself stays for the back-button label/a11y.
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbar }
             .background(Color.compound.bgCanvasDefault.ignoresSafeArea())
             .track(screen: .Home)
