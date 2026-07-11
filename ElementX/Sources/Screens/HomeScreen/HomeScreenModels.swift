@@ -211,6 +211,15 @@ func sortSpaceFilters(_ filters: [SpaceServiceFilter], byOrder order: [String]) 
         .map(\.element)
 }
 
+/// Whether `rooms` (typically an always-unfiltered list, e.g. `staticRoomSummaryProvider`)
+/// contains an unseen invite to a 道 (Space). The SDK's space graph only surfaces joined spaces,
+/// so an invited 道 never gets its own chip — this badges the "全部" chip instead so the invite
+/// stays visible. Shared between 政事堂 and 差事 (both render `SpaceTabBarView`, fix-kanban2
+/// contract B), each tab computing it from its own `staticRoomSummaryProvider`/`seenInvites` copy.
+func hasPendingSpaceInvite(in rooms: [RoomSummary], seenInvites: Set<String>) -> Bool {
+    rooms.contains { $0.isSpace && $0.joinRequestType?.isInvite == true && !seenInvites.contains($0.id) }
+}
+
 /// A single 请旨待批 item shown in the cross-room pending choices strip/sheet.
 struct HomeScreenPendingChoice: Identifiable, Equatable {
     let roomID: String

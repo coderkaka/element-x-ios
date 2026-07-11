@@ -52,7 +52,7 @@ struct AgentIndexServiceTests {
     
     @Test
     func taskStateEventParsingReadsOriginServerTimestampAsUpdatedAt() {
-        // `updatedAt` drives the 差事 tab's 按案 kanban column ordering — it comes from the
+        // `updatedAt` is a general-purpose timestamp for list/future sorting — it comes from the
         // state event's own `origin_server_ts` envelope field, not any `content` field.
         let json = """
         {"type":"io.element.agent.canvas.steps","state_key":"task-ts","origin_server_ts":1700000000000,"content":{"status":"in_progress"}}

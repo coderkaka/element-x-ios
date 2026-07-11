@@ -18,6 +18,7 @@ struct AgentTasksScreenCoordinatorParameters {
 enum AgentTasksScreenCoordinatorAction {
     case presentCanvasSteps(roomID: String, taskID: String)
     case showSettings
+    case showSpaceManagement
 }
 
 final class AgentTasksScreenCoordinator: CoordinatorProtocol {
@@ -47,6 +48,8 @@ final class AgentTasksScreenCoordinator: CoordinatorProtocol {
                 actionsSubject.send(.presentCanvasSteps(roomID: roomID, taskID: taskID))
             case .showSettings:
                 actionsSubject.send(.showSettings)
+            case .showSpaceManagement:
+                actionsSubject.send(.showSpaceManagement)
             }
         }
         .store(in: &cancellables)

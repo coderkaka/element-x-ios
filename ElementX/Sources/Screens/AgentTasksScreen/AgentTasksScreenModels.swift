@@ -7,8 +7,7 @@
 
 import Foundation
 
-/// One column of the 差事 tab's kanban view — either a fixed task-status bucket (按状态 mode)
-/// or all tasks belonging to one 案/room (按案 mode), depending on `AgentTasksKanbanGroupingMode`.
+/// One column of the 差事 tab's kanban view — a fixed task-status bucket (在办/已结).
 struct AgentTasksKanbanColumn: Identifiable, Equatable {
     let id: String
     let title: String
@@ -19,7 +18,7 @@ struct AgentTasksScreenViewState: BindableState {
     let userID: String
     var userDisplayName: String?
     var userAvatarURL: URL?
-    
+
     var unresolvedTasks: [AgentTaskSummary] = []
     var resolvedTasks: [AgentTaskSummary] = []
     var kanbanColumns: [AgentTasksKanbanColumn] = []
@@ -31,26 +30,33 @@ struct AgentTasksScreenViewState: BindableState {
     var metricHistories: [String: [AgentTaskMetricHistoryPoint]] = [:]
     var loadingMetricTaskIDs: Set<String> = []
     var viewMode = AgentTasksViewMode.list
-    var kanbanGroupingMode = AgentTasksKanbanGroupingMode.status
     var terminology = AppTerminology(scenario: .imperial)
     /// The name of the 道 (space) tasks are currently scoped to, mirroring 政事堂's own
-    /// selection — `nil` means unfiltered (全部). Drives the indicator strip; the strip's actual
-    /// wording goes through `terminology.spaceFilterIndicator(name:)`, not stored pre-rendered,
-    /// so it stays correct if the 御案体/通俗版 toggle flips without a new space selection.
+    /// selection — `nil` means unfiltered (全部). No longer rendered as its own text (the shared
+    /// `SpaceTabBarView`'s selected chip is now the visible indicator, fix-kanban2 contract B) —
+    /// kept because `scopeToSelectedSpace` produces it as part of the scoping computation anyway.
     var selectedSpaceFilterName: String?
     /// The raw room ID backing `selectedSpaceFilterName` — `nil` means 全部. Kept alongside the
-    /// name so the 道 menu can mark the current selection even if two 道 happen to share a name.
+    /// name so the 道条 can mark the current selection even if two 道 happen to share a name.
     var selectedSpaceFilterRoomID: String?
-    /// The full 道 list the 道 menu is built from — same source as 政事堂's own 道条.
+    /// The full 道 list the 道条 is built from — same source as 政事堂's own.
     var availableSpaceFilters: [SpaceServiceFilter] = []
-    /// User-customised 道 chip order, live-mirrored from `AppSettings.spaceFilterOrder` (the 差事
-    /// tab doesn't itself support reordering, only reflects whatever 政事堂's chips currently show).
+    /// User-customised 道 chip order, live-mirrored from `AppSettings.spaceFilterOrder` — shared
+    /// with 政事堂 since both tabs render the same `SpaceTabBarView` over the same order setting.
     var spaceFilterOrder: [String] = []
-    
+    /// Whether the user has an unseen invite to a 道 (Space) not in `availableSpaceFilters` —
+    /// same algorithm as `HomeScreenViewModel`'s own copy (see `hasPendingSpaceInvite(in:seenInvites:)`),
+    /// badges the "全部" chip since the space graph only surfaces joined spaces.
+    var hasPendingSpaceInvites = false
+
     var topLevelSpaceFilters: [SpaceServiceFilter] {
         sortSpaceFilters(availableSpaceFilters.filter { $0.level == 0 }, byOrder: spaceFilterOrder)
     }
-    
+
+    var selectedSpaceFilter: SpaceServiceFilter? {
+        topLevelSpaceFilters.first { $0.room.id == selectedSpaceFilterRoomID }
+    }
+
     var isEmpty: Bool {
         unresolvedTasks.isEmpty && resolvedTasks.isEmpty
     }
@@ -59,20 +65,22 @@ struct AgentTasksScreenViewState: BindableState {
 enum AgentTasksScreenViewAction: CustomStringConvertible {
     case taskTapped(AgentTaskSummary)
     case setViewMode(AgentTasksViewMode)
-    case setKanbanGroupingMode(AgentTasksKanbanGroupingMode)
     case loadMetricHistory(AgentTaskSummary)
     case showSettings
     /// `nil` selects 全部 (unfiltered).
     case selectSpaceFilter(String?)
-    
+    case reorderSpaceFilter(roomID: String, direction: MoveDirection)
+    case manageSpaces
+
     var description: String {
         switch self {
         case .taskTapped: "taskTapped"
         case .setViewMode(let mode): "setViewMode(\(mode.rawValue))"
-        case .setKanbanGroupingMode(let mode): "setKanbanGroupingMode(\(mode.rawValue))"
         case .loadMetricHistory: "loadMetricHistory"
         case .showSettings: "showSettings"
         case .selectSpaceFilter(let roomID): "selectSpaceFilter(\(roomID ?? "nil"))"
+        case .reorderSpaceFilter(let roomID, let direction): "reorderSpaceFilter(\(roomID), \(direction))"
+        case .manageSpaces: "manageSpaces"
         }
     }
 }
@@ -80,4 +88,5 @@ enum AgentTasksScreenViewAction: CustomStringConvertible {
 enum AgentTasksScreenViewModelAction: Equatable {
     case presentCanvasSteps(roomID: String, taskID: String)
     case showSettings
+    case showSpaceManagement
 }
