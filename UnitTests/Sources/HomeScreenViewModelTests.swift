@@ -479,14 +479,14 @@ final class HomeScreenViewModelTests {
             AgentTaskSummary(roomID: "2", roomName: "Foundation and Empire", taskID: "t1", title: nil, isResolved: false, doneStepCount: 0, totalStepCount: 1)
         ]
         let pendingChoices = [AgentPendingChoiceSummary(roomID: "4", eventID: "$choice1", question: nil)]
-
+        
         setupViewModel(invites: .rooms, tasks: tasks, pendingChoices: pendingChoices)
-
+        
         let deferred = deferFulfillment(context.$viewState) { state in
             state.rooms.first?.roomID == "someAwesomeRoomId1"
         }
         try await deferred.fulfill()
-
+        
         let orderedRoomIDs = context.viewState.rooms.compactMap(\.roomID)
         #expect(orderedRoomIDs.first == "someAwesomeRoomId1")
         #expect(!orderedRoomIDs.contains("someAwesomeRoomId2"))
@@ -495,7 +495,7 @@ final class HomeScreenViewModelTests {
         #expect(afterInvite.first == "4")
         #expect(afterInvite.dropFirst().first == "2")
     }
-
+    
     @Test
     func pendingChoicesStripJoinsRoomNamesAndDegradesGracefully() async throws {
         let pendingChoices = [
@@ -721,62 +721,62 @@ final class HomeScreenViewModelTests {
     }
     
     // MARK: - 道 picker panel (fix-spacebar3 contract A)
-
+    
     @Test
-    func spaceFiltersActionPresentsThePanel() async throws {
+    func spaceFiltersActionPresentsThePanel() {
         setupViewModel()
         #expect(context.viewState.bindings.spaceFiltersViewModel == nil)
-
+        
         context.send(viewAction: .spaceFilters)
         #expect(context.viewState.bindings.spaceFiltersViewModel != nil)
     }
-
+    
     @Test
     func confirmingAFilterInThePanelWritesTheSettingAndDismissesIt() async throws {
         let filterSubject = CurrentValueSubject<[SpaceServiceFilter], Never>(Self.levelZeroSpaceFilters)
         setupViewModel(spaceFilterSubject: filterSubject)
-
+        
         let readyDeferred = deferFulfillment(context.$viewState) { !$0.availableSpaceFilters.isEmpty }
         try await readyDeferred.fulfill()
-
+        
         context.send(viewAction: .spaceFilters)
         let panel = try #require(context.viewState.bindings.spaceFiltersViewModel)
-
+        
         let filter = try #require(Self.levelZeroSpaceFilters.first { $0.room.id == "space2" })
         panel.context.send(viewAction: .confirm(filter))
         try await Task.sleep(for: .milliseconds(50))
-
+        
         #expect(appSettings.selectedSpaceFilterRoomID == "space2")
         #expect(context.viewState.selectedSpaceFilter?.room.id == "space2")
         #expect(context.viewState.bindings.spaceFiltersViewModel == nil)
     }
-
+    
     @Test
     func manageSpacesFromThePanelForwardsPresentSpaceManagementAndDismissesIt() async throws {
         setupViewModel()
         context.send(viewAction: .spaceFilters)
         let panel = try #require(context.viewState.bindings.spaceFiltersViewModel)
-
+        
         let deferred = deferFulfillment(viewModel.actions) { $0 == .presentSpaceManagement }
         panel.context.send(viewAction: .manageSpaces)
         try await deferred.fulfill()
-
+        
         #expect(context.viewState.bindings.spaceFiltersViewModel == nil)
     }
-
+    
     @Test
     func cancellingThePanelDismissesItWithoutChangingTheSelection() async throws {
         setupViewModel()
         context.send(viewAction: .spaceFilters)
         let panel = try #require(context.viewState.bindings.spaceFiltersViewModel)
-
+        
         panel.context.send(viewAction: .cancel)
         try await Task.sleep(for: .milliseconds(50))
-
+        
         #expect(context.viewState.bindings.spaceFiltersViewModel == nil)
         #expect(appSettings.selectedSpaceFilterRoomID == nil)
     }
-
+    
     // MARK: - Helpers
     
     enum InviteType { case rooms, spaces }

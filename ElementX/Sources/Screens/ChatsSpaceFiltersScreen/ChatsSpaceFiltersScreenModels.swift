@@ -27,27 +27,27 @@ struct ChatsSpaceFiltersScreenViewState: BindableState {
     /// "管理" toolbar button instead (fix-spacebar3 contract C's V1 fallback).
     var hasPendingSpaceInvites = false
     var bindings: ChatsSpaceFiltersScreenViewStateBindings
-
+    
     var orderedFilters: [SpaceServiceFilter] {
         sortSpaceFilterTree(filters, byOrder: spaceFilterOrder)
     }
-
+    
     var visibleFilters: [SpaceServiceFilter] {
         guard !bindings.searchQuery.isEmpty else {
             return orderedFilters
         }
-
+        
         return orderedFilters.filter { filter in
             filter.room.name.localizedStandardContains(bindings.searchQuery) ||
                 (filter.room.canonicalAlias ?? "").localizedStandardContains(bindings.searchQuery)
         }
     }
-
+    
     /// Whether the pinned "全部" row should show as selected.
     var isAllFiltersSelected: Bool {
         selectedSpaceFilterRoomID == nil
     }
-
+    
     /// The level-0 filter IDs in their current display order — backs the reorder context menu's
     /// leading/trailing edge disabling, mirroring the retired chip bar's own boundary checks.
     var topLevelFilterIDsInOrder: [String] {
@@ -64,7 +64,7 @@ enum ChatsSpaceFiltersScreenViewAction: CustomStringConvertible {
     case manageSpaces
     case cancel
     case reorder(roomID: String, direction: MoveDirection)
-
+    
     var description: String {
         switch self {
         case .confirm(let filter): "Confirm(\(filter?.room.id ?? "all"))"

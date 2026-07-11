@@ -11,7 +11,7 @@ import SwiftUI
 
 struct AgentTasksScreen: View {
     @Bindable var context: AgentTasksScreenViewModel.Context
-
+    
     var body: some View {
         Group {
             // Kanban's status columns are always shown (even empty) as a fixed skeleton —
@@ -43,7 +43,7 @@ struct AgentTasksScreen: View {
             ChatsSpaceFiltersScreen(context: viewModel.context)
         }
     }
-
+    
     /// The same 道 picker button/panel 政事堂 uses (fix-spacebar3 contract B) — selection is
     /// driven by `appSettings.selectedSpaceFilterRoomID`, the single source of truth both tabs
     /// observe, so picking a 道 here keeps 政事堂 in sync and vice versa.
@@ -56,7 +56,7 @@ struct AgentTasksScreen: View {
         }
         .accessibilityLabel(L10n.screenRoomlistYourSpaces)
     }
-
+    
     private var settingsButton: some View {
         Button {
             context.send(viewAction: .showSettings)

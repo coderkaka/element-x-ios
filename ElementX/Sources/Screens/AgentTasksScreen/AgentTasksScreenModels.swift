@@ -18,7 +18,7 @@ struct AgentTasksScreenViewState: BindableState {
     let userID: String
     var userDisplayName: String?
     var userAvatarURL: URL?
-
+    
     var unresolvedTasks: [AgentTaskSummary] = []
     var resolvedTasks: [AgentTaskSummary] = []
     var kanbanColumns: [AgentTasksKanbanColumn] = []
@@ -39,13 +39,13 @@ struct AgentTasksScreenViewState: BindableState {
     /// `HomeScreenViewModel`'s own copy (see `hasPendingSpaceInvite(in:seenInvites:)`), badges
     /// the space picker button since the space graph only surfaces joined spaces.
     var hasPendingSpaceInvites = false
-
+    
     var bindings: AgentTasksScreenViewStateBindings
-
+    
     var isEmpty: Bool {
         unresolvedTasks.isEmpty && resolvedTasks.isEmpty
     }
-
+    
     /// The navigation title: the selected 道's name when filtering, otherwise the plain 差事 tab
     /// title (fix-spacebar3 contract A0 — same rule as 政事堂's own title).
     var navigationTitle: String {
@@ -68,7 +68,7 @@ enum AgentTasksScreenViewAction: CustomStringConvertible {
     /// Opens the 道 picker panel (`ChatsSpaceFiltersScreen`) — the same one 政事堂 uses.
     case spaceFilters
     case manageSpaces
-
+    
     var description: String {
         switch self {
         case .taskTapped: "taskTapped"

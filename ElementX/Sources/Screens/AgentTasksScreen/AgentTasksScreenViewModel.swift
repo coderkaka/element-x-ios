@@ -15,7 +15,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
     var actionsPublisher: AnyPublisher<AgentTasksScreenViewModelAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-
+    
     private let appSettings: AppSettings
     private let agentIndexService: AgentIndexServiceProtocol
     private let spaceService: SpaceServiceProxyProtocol
@@ -23,7 +23,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
     /// Unfiltered room list, used exactly like `HomeScreenViewModel`'s own copy — detecting a
     /// pending 道 invite regardless of whichever 道 filter happens to be selected right now.
     private let staticRoomSummaryProvider: StaticRoomSummaryProviderProtocol?
-
+    
     init(userSession: UserSessionProtocol,
          agentIndexService: AgentIndexServiceProtocol,
          spaceService: SpaceServiceProxyProtocol,
@@ -62,7 +62,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
                 state.selectedSpaceFilterName = scoped.filterName
             }
             .store(in: &cancellables)
-
+        
         appSettings.terminologyScenarioPublisher
             .sink { [weak self] scenario in
                 guard let self else { return }
@@ -70,7 +70,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
                 state.kanbanColumns = Self.makeKanbanColumns(tasks: state.unresolvedTasks + state.resolvedTasks, terminology: state.terminology)
             }
             .store(in: &cancellables)
-
+        
         appSettings.seenInvitesPublisher
             .removeDuplicates()
             .sink { [weak self] _ in
@@ -164,13 +164,13 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
     /// (fix-spacebar3 contract B).
     private func presentSpaceFiltersSheet() {
         let spaceFiltersViewModel = ChatsSpaceFiltersScreenViewModel(spaceService: spaceService,
-                                                                      appSettings: appSettings,
-                                                                      hasPendingSpaceInvites: state.hasPendingSpaceInvites,
-                                                                      mediaProvider: mediaProvider)
-
+                                                                     appSettings: appSettings,
+                                                                     hasPendingSpaceInvites: state.hasPendingSpaceInvites,
+                                                                     mediaProvider: mediaProvider)
+        
         spaceFiltersViewModel.actionsPublisher.sink { [weak self] action in
             guard let self else { return }
-
+            
             switch action {
             case .confirm(let filter):
                 process(viewAction: .selectSpaceFilter(filter?.room.id))
@@ -183,10 +183,10 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
             }
         }
         .store(in: &cancellables)
-
+        
         state.bindings.spaceFiltersViewModel = spaceFiltersViewModel
     }
-
+    
     private func updatePendingSpaceInvites() {
         guard let staticRoomSummaryProvider else { return }
         state.hasPendingSpaceInvites = hasPendingSpaceInvite(in: staticRoomSummaryProvider.roomListPublisher.value,

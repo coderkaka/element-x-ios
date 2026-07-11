@@ -13,14 +13,14 @@ import SwiftUI
 
 struct HomeScreen: View {
     @ObservedObject var context: HomeScreenViewModel.Context
-
+    
     @State private var scrollViewAdapter = ScrollViewAdapter()
-
+    
     @Namespace private var navigationTransitionNamespace
     private enum NavigationTransitionSourceID {
         case spaceFilters
     }
-
+    
     var body: some View {
         HomeScreenContent(context: context, scrollViewAdapter: scrollViewAdapter)
             .alert(item: $context.alertInfo)
@@ -78,13 +78,13 @@ struct HomeScreen: View {
             settingsButton
                 .buttonStyle(.borderless)
         }
-
+        
         if context.viewState.shouldShowSpaceFilters {
             ToolbarItem(placement: .principal) {
                 navigationTitleButton
             }
         }
-
+        
         ToolbarItem(placement: .primaryAction) {
             if #available(iOS 26, *) {
                 newRoomButton
@@ -93,12 +93,12 @@ struct HomeScreen: View {
                     .buttonStyle(.compound(.super, size: .toolbarIcon))
             }
         }
-
+        
         if context.viewState.shouldShowSpaceFilters {
             if #available(iOS 26, *) {
                 ToolbarSpacer(.fixed, placement: .primaryAction)
             }
-
+            
             ToolbarItem(placement: .primaryAction) {
                 SpaceFiltersButton(selected: context.viewState.selectedSpaceFilter != nil,
                                    hasPendingSpaceInvites: context.viewState.hasPendingSpaceInvites) {
@@ -109,7 +109,7 @@ struct HomeScreen: View {
             }
         }
     }
-
+    
     /// The dynamic navigation title (fix-spacebar3 contract A0) — a small chevron hints it opens
     /// the same 道 picker panel as the toolbar button.
     private var navigationTitleButton: some View {
@@ -127,7 +127,7 @@ struct HomeScreen: View {
         }
         .accessibilityLabel(L10n.screenRoomlistYourSpaces)
     }
-
+    
     private var settingsButton: some View {
         Button {
             context.send(viewAction: .showSettings)
@@ -172,24 +172,24 @@ struct HomeScreen: View {
     private func leaveRoomAlertMessage(_ item: LeaveRoomAlertItem) -> some View {
         Text(item.subtitle)
     }
-
+    
     /// Restored from the deleted upstream `HomeScreen.SpaceFiltersButton` (see `git show
     /// 97d0621a3`), with a pending-invite badge added — previously shown on the retired chip
     /// bar's "全部" chip (fix-spacebar3 contract A).
     private struct SpaceFiltersButton: View {
         @Environment(\.isInSidebar) private var isInSidebar
-
+        
         var selected = false
         var hasPendingSpaceInvites = false
         var action: () -> Void
-
+        
         /// Design prefers the custom style over the system's styling of a Toggle within a toolbar,
         /// however Glass isn't supported for toolbar buttons in the sidebar on iPadOS 26 (likely due
         /// to glass on glass being discouraged by Apple), so we need to handle our styling accordingly.
         var shouldUseGlassButtonStyle: Bool {
             !isInSidebar
         }
-
+        
         var body: some View {
             if #available(iOS 26, *), shouldUseGlassButtonStyle {
                 if selected {
@@ -209,7 +209,7 @@ struct HomeScreen: View {
                 }
             }
         }
-
+        
         private var content: some View {
             Button {
                 action()

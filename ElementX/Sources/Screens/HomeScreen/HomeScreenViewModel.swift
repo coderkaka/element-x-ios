@@ -445,13 +445,13 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     /// than driving `spaceFilterSubject` directly.
     private func presentSpaceFiltersSheet() {
         let spaceFiltersViewModel = ChatsSpaceFiltersScreenViewModel(spaceService: userSession.clientProxy.spaceService,
-                                                                      appSettings: appSettings,
-                                                                      hasPendingSpaceInvites: state.hasPendingSpaceInvites,
-                                                                      mediaProvider: userSession.mediaProvider)
-
+                                                                     appSettings: appSettings,
+                                                                     hasPendingSpaceInvites: state.hasPendingSpaceInvites,
+                                                                     mediaProvider: userSession.mediaProvider)
+        
         spaceFiltersViewModel.actionsPublisher.sink { [weak self] action in
             guard let self else { return }
-
+            
             switch action {
             case .confirm(let filter):
                 process(viewAction: .selectSpaceFilter(filter))
@@ -464,10 +464,10 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
         }
         .store(in: &cancellables)
-
+        
         state.bindings.spaceFiltersViewModel = spaceFiltersViewModel
     }
-
+    
     private func setupRoomListSubscriptions() {
         guard let roomSummaryProvider else {
             MXLog.error("Room summary provider unavailable")

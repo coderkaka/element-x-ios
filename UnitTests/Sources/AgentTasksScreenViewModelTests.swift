@@ -153,7 +153,7 @@ struct AgentTasksScreenViewModelTests {
         let appSettings: AppSettings = .volatile()
         let (viewModel, _) = makeViewModel(tasks: [], appSettings: appSettings)
         #expect(viewModel.context.viewState.navigationTitle == AppTerminology(scenario: appSettings.terminologyScenario).tabTasks)
-
+        
         let spaceService = SpaceServiceProxyMock()
         spaceService.underlyingSpaceFilterPublisher = .init([
             .init(room: .mock(id: "!a:example.com", name: "工程院", isSpace: true), level: 0, descendants: [])
@@ -161,18 +161,18 @@ struct AgentTasksScreenViewModelTests {
         let (filteredViewModel, _) = makeViewModel(tasks: [], spaceService: spaceService, selectedSpaceFilterRoomID: "!a:example.com")
         #expect(filteredViewModel.context.viewState.navigationTitle == "工程院")
     }
-
+    
     // MARK: - 道 picker panel (fix-spacebar3 contract B)
-
+    
     @Test
     func spaceFiltersActionPresentsThePanel() {
         let (viewModel, _) = makeViewModel(tasks: [])
         #expect(viewModel.context.viewState.bindings.spaceFiltersViewModel == nil)
-
+        
         viewModel.context.send(viewAction: .spaceFilters)
         #expect(viewModel.context.viewState.bindings.spaceFiltersViewModel != nil)
     }
-
+    
     @Test
     func confirmingAFilterInThePanelWritesTheSettingAndDismissesIt() async throws {
         let filter = SpaceServiceFilter(room: .mock(id: "!a:example.com", name: "工程院", isSpace: true), level: 0, descendants: [])
@@ -180,30 +180,30 @@ struct AgentTasksScreenViewModelTests {
         spaceService.underlyingSpaceFilterPublisher = .init([filter])
         let appSettings: AppSettings = .volatile()
         let (viewModel, _) = makeViewModel(tasks: [], spaceService: spaceService, appSettings: appSettings)
-
+        
         viewModel.context.send(viewAction: .spaceFilters)
         let panel = try #require(viewModel.context.viewState.bindings.spaceFiltersViewModel)
-
+        
         panel.context.send(viewAction: .confirm(filter))
         try await Task.sleep(for: .milliseconds(50))
-
+        
         #expect(appSettings.selectedSpaceFilterRoomID == "!a:example.com")
         #expect(viewModel.context.viewState.bindings.spaceFiltersViewModel == nil)
     }
-
+    
     @Test
     func manageSpacesFromThePanelForwardsShowSpaceManagementAndDismissesIt() async throws {
         let (viewModel, _) = makeViewModel(tasks: [])
         viewModel.context.send(viewAction: .spaceFilters)
         let panel = try #require(viewModel.context.viewState.bindings.spaceFiltersViewModel)
-
+        
         let deferred = deferFulfillment(viewModel.actionsPublisher) { $0 == .showSpaceManagement }
         panel.context.send(viewAction: .manageSpaces)
         try await deferred.fulfill()
-
+        
         #expect(viewModel.context.viewState.bindings.spaceFiltersViewModel == nil)
     }
-
+    
     @Test
     func manageSpacesForwardsShowSpaceManagementAction() async throws {
         let (viewModel, _) = makeViewModel(tasks: [])

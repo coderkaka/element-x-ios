@@ -11,16 +11,16 @@ import SwiftUI
 
 struct ChatsSpaceFilterCell: View {
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
-
+    
     let filter: SpaceServiceFilter
     let isSelected: Bool
     let mediaProvider: MediaProviderProtocol!
-
+    
     private let verticalInsets = 12.0
     private let horizontalInsets = 16.0
-
+    
     let action: (SpaceServiceFilter) -> Void
-
+    
     var body: some View {
         Button {
             action(filter)
@@ -30,15 +30,15 @@ struct ChatsSpaceFilterCell: View {
                     if filter.level > 0 {
                         Spacer(minLength: 16 * CGFloat(filter.level))
                     }
-
+                    
                     HStack(spacing: 12.0) {
                         avatar
-
+                        
                         content
                     }
                     .accessibilityElement(children: .combine)
                 }
-
+                
                 if isSelected {
                     CompoundIcon(\.check, size: .small, relativeTo: .compound.bodyLG)
                         .foregroundColor(.compound.iconAccentTertiary)
@@ -55,7 +55,7 @@ struct ChatsSpaceFilterCell: View {
         .padding(.horizontal, horizontalInsets)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
-
+    
     @ViewBuilder
     private var avatar: some View {
         if dynamicTypeSize < .accessibility3 {
@@ -66,18 +66,18 @@ struct ChatsSpaceFilterCell: View {
                 .accessibilityHidden(true)
         }
     }
-
+    
     private var content: some View {
         ZStack {
             // Hidden text to maintain consistent height.
             placeholderContent.hidden()
-
+            
             VStack(alignment: .leading, spacing: 2) {
                 Text(filter.room.name)
                     .font(.compound.bodyLG)
                     .foregroundColor(.compound.textPrimary)
                     .lineLimit(1)
-
+                
                 if let alias = filter.room.canonicalAlias {
                     Text(alias)
                         .font(.compound.bodyMD)
@@ -88,13 +88,13 @@ struct ChatsSpaceFilterCell: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-
+    
     private var placeholderContent: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(filter.room.name)
                 .font(.compound.bodyLG)
                 .lineLimit(1)
-
+            
             Text(" ")
                 .font(.compound.bodyMD)
                 .lineLimit(1)
@@ -104,9 +104,9 @@ struct ChatsSpaceFilterCell: View {
 
 struct ChatsSpaceFilterCell_Previews: PreviewProvider, TestablePreview {
     static let mediaProvider = MediaProviderMock(.init())
-
+    
     static let spaces = [SpaceServiceRoom].mockJoinedSpaces2
-
+    
     static var previews: some View {
         VStack(spacing: 0) {
             ForEach(spaces, id: \.id) { space in
@@ -117,7 +117,7 @@ struct ChatsSpaceFilterCell_Previews: PreviewProvider, TestablePreview {
                                      isSelected: false,
                                      mediaProvider: mediaProvider) { _ in }
             }
-
+            
             ChatsSpaceFilterCell(filter: .init(room: spaces[0], level: 0, descendants: .init()),
                                  isSelected: true,
                                  mediaProvider: mediaProvider) { _ in }

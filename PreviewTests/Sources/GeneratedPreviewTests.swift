@@ -1293,13 +1293,6 @@ extension PreviewTests {
     }
 
     @Test
-    func spaceTabBarView() async throws {
-        for (index, preview) in SpaceTabBarView_Previews._allPreviews.enumerated() {
-            try await assertSnapshots(matching: preview, step: index)
-        }
-    }
-
-    @Test
     func spacesScreen() async throws {
         for (index, preview) in SpacesScreen_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)

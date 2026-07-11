@@ -90,7 +90,6 @@
 		0BFA67AFD757EE2BA569836A /* ScrollViewAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53482ECA4B6633961EC224F5 /* ScrollViewAdapter.swift */; };
 		0C1E537A49ABB386F7554D4A /* HighlightedTimelineItemModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B7CC77B82C6C67DE3AD869 /* HighlightedTimelineItemModifier.swift */; };
 		0C346A4AD174F441EDB1414E /* IdentityConfirmationScreenViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB76A9AFC6CCAD4998D9B045 /* IdentityConfirmationScreenViewModel.swift */; };
-		0C4529C40312FFBA100AECE6 /* SpaceTabBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A3204D6309B83B26865B130 /* SpaceTabBarView.swift */; };
 		0C47AE2CA7929CB3B0E2D793 /* ServerSelectionScreenViewModelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0685156EB62D7E243F097CFC /* ServerSelectionScreenViewModelProtocol.swift */; };
 		0C58A846F61949B1D545D661 /* NoticeRoomTimelineItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 421E716C521F96D24ECE69B3 /* NoticeRoomTimelineItem.swift */; };
 		0C6DF318E9C8F6461E6ABDE7 /* EncryptionResetPasswordScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E1584F8BCF407BB94F48F04 /* EncryptionResetPasswordScreen.swift */; };
@@ -1458,6 +1457,7 @@
 		E9347F56CF0683208F4D9249 /* RoomNotificationSettingsScreenViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81A9B5225D0881CEFA2CF7C9 /* RoomNotificationSettingsScreenViewModel.swift */; };
 		E938F7A45D6A3DBBE6789A03 /* NSEUserSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C9651CD1066F239C7739240 /* NSEUserSession.swift */; };
 		E9560744F7B0292E20ECE5F2 /* RoomDetailsScreenViewModelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63E8A1E8EE094F570573B6E8 /* RoomDetailsScreenViewModelProtocol.swift */; };
+		E95E2F8333C24B33338AEC44 /* ChatsSpaceFiltersScreenViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDD5D5697E2C29CC18055D96 /* ChatsSpaceFiltersScreenViewModelTests.swift */; };
 		E96005321849DBD7C72A28F2 /* UITestsAppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46C208DA43CE25D13E670F40 /* UITestsAppCoordinator.swift */; };
 		E9985DCD1B0D026D7E8BF809 /* ServerSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6640DB5B9171D163E6742639 /* ServerSelectionTests.swift */; };
 		E9B4742B3D6E103327466513 /* SpaceHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3AAC314A877DBDB6EBE1170 /* SpaceHeaderView.swift */; };
@@ -2603,7 +2603,6 @@
 		9A028783CFFF861C5E44FFB1 /* BadgeLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BadgeLabel.swift; sourceTree = "<group>"; };
 		9A1C33355FFB0F0953C35036 /* ClientBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientBuilder.swift; sourceTree = "<group>"; };
 		9A22A05E472533ED3C5A31B3 /* NavigationModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationModule.swift; sourceTree = "<group>"; };
-		9A3204D6309B83B26865B130 /* SpaceTabBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceTabBarView.swift; sourceTree = "<group>"; };
 		9A34D9BCA1A7D9A56E1EAF1D /* ManageRoomMemberSheetViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageRoomMemberSheetViewModel.swift; sourceTree = "<group>"; };
 		9A68BCE6438873D2661D93D0 /* BugReportServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BugReportServiceProtocol.swift; sourceTree = "<group>"; };
 		9AA3AF94A06D319BB37E52DA /* TimelineItemFactoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineItemFactoryTests.swift; sourceTree = "<group>"; };
@@ -3004,6 +3003,7 @@
 		DD3C65634A34467CB407A061 /* target.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = target.yml; sourceTree = "<group>"; };
 		DD955A0380C287C418F1A74D /* PhotoLibraryManagerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoLibraryManagerMock.swift; sourceTree = "<group>"; };
 		DD97F9661ABF08CE002054A2 /* AppLockServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockServiceTests.swift; sourceTree = "<group>"; };
+		DDD5D5697E2C29CC18055D96 /* ChatsSpaceFiltersScreenViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatsSpaceFiltersScreenViewModelTests.swift; sourceTree = "<group>"; };
 		DE5127D6EA05B2E45D0A7D59 /* JoinRoomScreenViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinRoomScreenViewModelTests.swift; sourceTree = "<group>"; };
 		DEBB74427E24AF30CDB131B7 /* DeferredFulfillmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeferredFulfillmentTests.swift; sourceTree = "<group>"; };
 		DEC1D382565A4E9CAC2F14EA /* MediaFileHandleProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaFileHandleProxy.swift; sourceTree = "<group>"; };
@@ -3396,7 +3396,6 @@
 				CC1DDB2293A51EA4C2739351 /* RoomListFiltersEmptyStateView.swift */,
 				E6372DD10DED30E7AD7BCE21 /* RoomListFiltersView.swift */,
 				24EC819497BB5F8C4998D760 /* RoomListFilterView.swift */,
-				9A3204D6309B83B26865B130 /* SpaceTabBarView.swift */,
 			);
 			path = Filters;
 			sourceTree = "<group>";
@@ -5183,6 +5182,7 @@
 				7EECE8B331CD169790EF284F /* BugReportScreenViewModelTests.swift */,
 				EFFD3200F9960D4996159F10 /* BugReportServiceTests.swift */,
 				B223EAA28256030C7E559BAD /* CanvasStepsScreenViewModelTests.swift */,
+				DDD5D5697E2C29CC18055D96 /* ChatsSpaceFiltersScreenViewModelTests.swift */,
 				0328F54E0C3AAEDDF3E05D9D /* ChatsTabFlowCoordinatorTests.swift */,
 				80935ADC7ED867226225F965 /* ClassicAppAccountManagerTests.swift */,
 				4AC3F28DECDF8665E8EBC76E /* ClassicAppMediaLoaderTests.swift */,
@@ -8205,6 +8205,7 @@
 				1B2F9F368619FFF8C63C87CC /* BugReportScreenViewModelTests.swift in Sources */,
 				7F61F9ACD5EC9E845EF3EFBF /* BugReportServiceTests.swift in Sources */,
 				87DFAE08ACBE3DBF0F189C2A /* CanvasStepsScreenViewModelTests.swift in Sources */,
+				E95E2F8333C24B33338AEC44 /* ChatsSpaceFiltersScreenViewModelTests.swift in Sources */,
 				4BD5AB54A6982CF19F5CC7C4 /* ChatsTabFlowCoordinatorTests.swift in Sources */,
 				1F1BCEE81056FD9F344F3B0E /* ClassicAppAccountManagerTests.swift in Sources */,
 				1866A34DBAD0F730058CB3C3 /* ClassicAppMediaLoaderTests.swift in Sources */,
@@ -9343,7 +9344,6 @@
 				612196AF7826846A50C07FA6 /* SpaceServiceRoom.swift in Sources */,
 				D0E257557DAC8A34C7B52A9F /* SpaceSettingsFlowCoordinator.swift in Sources */,
 				383063A7924F06D54BA9B24C /* SpaceSettingsScreen.swift in Sources */,
-				0C4529C40312FFBA100AECE6 /* SpaceTabBarView.swift in Sources */,
 				E1428612B08ED3030EC1FEC3 /* SpacesScreen.swift in Sources */,
 				9B3589276CA008E38FAAAE91 /* SpacesScreenCoordinator.swift in Sources */,
 				89E6426C6097F848C125E65C /* SpacesScreenModels.swift in Sources */,

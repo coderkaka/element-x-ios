@@ -56,7 +56,7 @@ enum HomeScreenViewAction {
     /// Opens the 道 picker panel (`ChatsSpaceFiltersScreen`) — sent by both the toolbar button
     /// and the tappable navigation title (fix-spacebar3 contract A/A0).
     case spaceFilters
-
+    
     case tappedPendingChoicesStrip
     case selectPendingChoice(roomID: String)
 }
@@ -133,21 +133,21 @@ struct HomeScreenViewState: BindableState {
     /// Whether the user has an unseen invite to a 道 (Space) not in `availableSpaceFilters`
     /// (the SDK's space graph only surfaces joined spaces) — badges the space picker button.
     var hasPendingSpaceInvites = false
-
+    
     /// Current 御案体/通俗版 vocabulary — see `AppTerminology`.
     var terminology = AppTerminology(scenario: .imperial)
-
+    
     var topLevelSpaceFilters: [SpaceServiceFilter] {
         availableSpaceFilters.filter { $0.level == 0 }
     }
-
+    
     /// The navigation title: the selected 道's name when filtering, otherwise 政事堂/工作台
     /// (fix-spacebar3 contract A0 — restores the upstream behaviour of the title tracking the
     /// space filter, on top of the terminology skin).
     var navigationTitle: String {
         selectedSpaceFilter?.room.name ?? terminology.homeTitle
     }
-
+    
     /// Inline room list search is disabled when the dedicated global search tab is shown instead (see `UserSessionFlowCoordinator`).
     var isRoomListSearchEnabled = true
     
@@ -217,7 +217,7 @@ func sortSpaceFilters(_ filters: [SpaceServiceFilter], byOrder order: [String]) 
 /// shows nested/descendant spaces (fix-spacebar3 contract C).
 func sortSpaceFilterTree(_ filters: [SpaceServiceFilter], byOrder order: [String]) -> [SpaceServiceFilter] {
     guard !order.isEmpty else { return filters }
-
+    
     var segments: [[SpaceServiceFilter]] = []
     for filter in filters {
         if filter.level == 0 || segments.isEmpty {
@@ -226,7 +226,7 @@ func sortSpaceFilterTree(_ filters: [SpaceServiceFilter], byOrder order: [String
             segments[segments.count - 1].append(filter)
         }
     }
-
+    
     let headers = segments.map { $0[0] }
     let orderedHeaders = sortSpaceFilters(headers, byOrder: order)
     let segmentsByHeaderID = Dictionary(zip(headers.map(\.id), segments), uniquingKeysWith: { first, _ in first })
@@ -258,12 +258,12 @@ struct HomeScreenViewStateBindings {
     var filtersState: RoomListFiltersState
     var searchQuery = ""
     var isSearchFieldFocused = false
-
+    
     var alertInfo: AlertInfo<UUID>?
     var leaveRoomAlertItem: LeaveRoomAlertItem?
-
+    
     var isPresentingPendingChoices = false
-
+    
     /// Drives the 道 picker sheet (fix-spacebar3 contract A) — non-nil while it's presented.
     var spaceFiltersViewModel: ChatsSpaceFiltersScreenViewModel?
 }
@@ -296,7 +296,7 @@ struct HomeScreenRoom: Identifiable, Equatable {
         }
         return nil
     }
-
+    
     /// A room/DM invite awaiting the user's accept/decline — used to sort invites to the very
     /// front of the room list (fix-spacebar3 contract B2), ahead of 待批/在办.
     var isInvite: Bool {
@@ -306,7 +306,7 @@ struct HomeScreenRoom: Identifiable, Equatable {
             false
         }
     }
-
+    
     let badges: Badges
     struct Badges: Equatable {
         let isDotShown: Bool
