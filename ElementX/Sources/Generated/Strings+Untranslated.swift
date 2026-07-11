@@ -86,10 +86,12 @@ internal nonisolated enum UntranslatedL10n {
   internal static var screenRoomTimelineCanvasTaskBannerTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_canvas_task_banner_title") }
   /// Filters
   internal static var screenRoomlistFiltersTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_roomlist_filters_title") }
-  /// Search for rooms
+  /// Search for rooms or messages
   internal static var screenSearchEmptyStateMessage: String { return UntranslatedL10n.tr("Untranslated", "screen_search_empty_state_message") }
   /// Start searching...
   internal static var screenSearchEmptyStateTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_search_empty_state_title") }
+  /// Messages
+  internal static var screenSearchMessagesSectionTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_search_messages_section_title") }
   /// There are no results for “%1$@.” Try a new search term.
   internal static func screenSearchNoResultsMessage(_ p1: Any) -> String {
     return UntranslatedL10n.tr("Untranslated", "screen_search_no_results_message", String(describing: p1))

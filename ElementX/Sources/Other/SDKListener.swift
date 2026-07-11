@@ -293,3 +293,17 @@ nonisolated extension SDKListener: RoomDirectorySearchEntriesListener where T ==
         onUpdateClosure(roomEntriesUpdate)
     }
 }
+
+// MARK: MessageSearchProxy
+
+nonisolated extension SDKListener: SearchServiceResultsListener where T == [SearchServiceResultsUpdate] {
+    func onUpdate(updates: [SearchServiceResultsUpdate]) {
+        onUpdateClosure(updates)
+    }
+}
+
+nonisolated extension SDKListener: SearchServicePaginationStateListener where T == SearchServicePaginationState {
+    func onUpdate(paginationState: SearchServicePaginationState) {
+        onUpdateClosure(paginationState)
+    }
+}

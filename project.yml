@@ -78,9 +78,12 @@ include:
 packages:
   # Element/Matrix dependencies
   MatrixRustSDK:
-    url: https://github.com/element-hq/matrix-rust-components-swift
-    exactVersion: 26.06.30
-    # path: ../matrix-rust-sdk
+    # url: https://github.com/element-hq/matrix-rust-components-swift
+    # exactVersion: 26.06.30
+    # Temporary: local checkout on `agent-search-merge` (this fork's 8 custom agent-state commits,
+    # cherry-picked onto upstream's experimental-search/search_service addition). Switch back to a
+    # tagged components-swift release once that release ships both.
+    path: ../matrix-rust-sdk
   Compound:
     path: compound-ios
   BuildExtensions:

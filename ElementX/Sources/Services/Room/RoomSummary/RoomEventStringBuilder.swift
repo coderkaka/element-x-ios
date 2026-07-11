@@ -112,4 +112,11 @@ nonisolated struct RoomEventStringBuilder {
                                                                 style: .plain),
                                shouldPrefixSenderName: false)
     }
+    
+    static func messageSearchStringBuilder(userID: String) -> Self {
+        RoomEventStringBuilder(stateEventStringBuilder: .init(userID: userID),
+                               messageEventStringBuilder: .init(attributedStringBuilder: AttributedStringBuilder(cacheKey: "messageSearch", mentionBuilder: PlainMentionBuilder()),
+                                                                style: .plain),
+                               shouldPrefixSenderName: false)
+    }
 }

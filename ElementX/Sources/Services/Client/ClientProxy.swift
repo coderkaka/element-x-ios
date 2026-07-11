@@ -826,6 +826,12 @@ class ClientProxy: ClientProxyProtocol {
         RoomDirectorySearchProxy(roomDirectorySearch: client.roomDirectorySearch())
     }
     
+    func messageSearchProxy() -> MessageSearchProxyProtocol {
+        MessageSearchProxy(searchService: client.searchService(),
+                           eventStringBuilder: .messageSearchStringBuilder(userID: userID),
+                           userID: userID)
+    }
+    
     func resolveRoomAlias(_ alias: String) async -> Result<ResolvedRoomAlias, ClientProxyError> {
         do {
             guard let resolvedAlias = try await client.resolveRoomAlias(roomAlias: alias) else {
