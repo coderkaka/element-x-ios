@@ -261,6 +261,15 @@ class TimelineInteractionHandler {
         }
     }
     
+    func sendChoiceRequestResponse(requestEventID: String, body: String) {
+        Task {
+            await timelineController.sendMessage(body,
+                                                 html: nil,
+                                                 inReplyToEventID: requestEventID,
+                                                 intentionalMentions: .empty)
+        }
+    }
+    
     func endPoll(pollStartID: String) {
         Task {
             let endPollResult = await pollInteractionHandler.endPoll(pollStartID: pollStartID)

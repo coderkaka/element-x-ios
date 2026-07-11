@@ -103,6 +103,15 @@ protocol JoinedRoomProxyProtocol: RoomProxyProtocol {
     
     func loadOrFetchEventDetails(for eventID: String) async -> Result<TimelineEvent, RoomProxyError>
     
+    /// Reads a specific room state event, without needing a strongly-typed model for its content.
+    /// - Returns: The full raw event encoded as a JSON string, or `nil` if the room has no state
+    ///   event for this `(eventType, stateKey)` pair.
+    func getStateEventRaw(eventType: String, stateKey: String) async -> Result<String?, RoomProxyError>
+    
+    /// Reads every room state event of a given type, across all state keys.
+    /// - Returns: Each matching state event's full raw JSON, or an empty array if there are none.
+    func getStateEventsRaw(eventType: String) async -> Result<[String], RoomProxyError>
+    
     func messageFilteredTimeline(focus: TimelineFocus,
                                  allowedMessageTypes: [TimelineAllowedMessageType],
                                  presentation: TimelineKind.MediaPresentation) async -> Result<TimelineProxyProtocol, RoomProxyError>

@@ -66,7 +66,7 @@ final class RoomSummaryProviderTests {
         
         // Then the filter should be combined with the non-low priority filter.
         #expect(dynamicEntriesController.setFilterKindCallsCount == 3)
-        #expect(dynamicEntriesController.setFilterKindReceivedInvocations.last == .all(filters: [.all(filters: [.category(expect: .group), .joined])] + baseFilters + [.nonLowPriority]))
+        #expect(dynamicEntriesController.setFilterKindReceivedInvocations.last == .all(filters: [.all(filters: [.category(expect: .group), .any(filters: [.joined, .invite])])] + baseFilters + [.nonLowPriority]))
     }
     
     @Test

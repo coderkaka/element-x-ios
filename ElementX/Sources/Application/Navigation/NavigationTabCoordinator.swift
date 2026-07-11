@@ -20,7 +20,7 @@ import SwiftUI
     @Observable class TabDetails {
         /// A unique tab that identifies the tab for selection.
         let tag: Tag
-        let title: String
+        var title: String
         let icon: KeyPath<CompoundIcons, Image>
         let selectedIcon: KeyPath<CompoundIcons, Image>
         /// When `true` the tab is given the `.search` role, which on iOS 26 detaches it

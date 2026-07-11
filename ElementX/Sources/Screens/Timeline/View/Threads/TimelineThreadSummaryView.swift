@@ -82,6 +82,24 @@ struct TimelineThreadSummaryView: View {
                                plainBody: L10n.commonSharedLocation,
                                formattedBody: nil,
                                numberOfReplies: numberOfReplies)
+                case .agentTurn(let content):
+                    ThreadView(senderID: senderID,
+                               sender: sender,
+                               plainBody: content.body,
+                               formattedBody: nil,
+                               numberOfReplies: numberOfReplies)
+                case .choiceRequest(let content):
+                    ThreadView(senderID: senderID,
+                               sender: sender,
+                               plainBody: content.question.isEmpty ? content.body : content.question,
+                               formattedBody: nil,
+                               numberOfReplies: numberOfReplies)
+                case .canvasSteps(let content):
+                    ThreadView(senderID: senderID,
+                               sender: sender,
+                               plainBody: content.title.isEmpty ? content.body : content.title,
+                               formattedBody: nil,
+                               numberOfReplies: numberOfReplies)
                 }
             case .poll(let question):
                 ThreadView(senderID: senderID,

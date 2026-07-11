@@ -19,6 +19,41 @@ extension PreviewTests {
     }
 
     @Test
+    func agentCanvasStepsRoomTimelineView() async throws {
+        for (index, preview) in AgentCanvasStepsRoomTimelineView_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
+    func agentChoiceRequestRoomTimelineView() async throws {
+        for (index, preview) in AgentChoiceRequestRoomTimelineView_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
+    func agentTaskPanelScreen() async throws {
+        for (index, preview) in AgentTaskPanelScreen_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
+    func agentTasksScreen() async throws {
+        for (index, preview) in AgentTasksScreen_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
+    func agentTurnRoomTimelineView() async throws {
+        for (index, preview) in AgentTurnRoomTimelineView_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func analyticsPromptScreen() async throws {
         for (index, preview) in AnalyticsPromptScreen_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)
@@ -133,6 +168,13 @@ extension PreviewTests {
     @Test
     func callNotificationRoomTimelineView() async throws {
         for (index, preview) in CallNotificationRoomTimelineView_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
+    func canvasStepsScreen() async throws {
+        for (index, preview) in CanvasStepsScreen_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)
         }
     }
@@ -656,6 +698,13 @@ extension PreviewTests {
     }
 
     @Test
+    func messagesScreen() async throws {
+        for (index, preview) in MessagesScreen_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func noticeRoomTimelineView() async throws {
         for (index, preview) in NoticeRoomTimelineView_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)
@@ -700,6 +749,13 @@ extension PreviewTests {
     @Test
     func paginationIndicatorRoomTimelineView() async throws {
         for (index, preview) in PaginationIndicatorRoomTimelineView_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
+    func pendingChoicesStripView() async throws {
+        for (index, preview) in PendingChoicesStripView_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)
         }
     }
@@ -957,6 +1013,13 @@ extension PreviewTests {
     }
 
     @Test
+    func roomListFiltersScreen() async throws {
+        for (index, preview) in RoomListFiltersScreen_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func roomListFiltersView() async throws {
         for (index, preview) in RoomListFiltersView_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)
@@ -1036,6 +1099,13 @@ extension PreviewTests {
     @Test
     func roomSelectionScreen() async throws {
         for (index, preview) in RoomSelectionScreen_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
+    func roomTaskProgressChipView() async throws {
+        for (index, preview) in RoomTaskProgressChipView_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)
         }
     }
@@ -1218,6 +1288,13 @@ extension PreviewTests {
     @Test
     func spaceSettingsScreen() async throws {
         for (index, preview) in SpaceSettingsScreen_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
+    func spaceTabBarView() async throws {
+        for (index, preview) in SpaceTabBarView_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)
         }
     }

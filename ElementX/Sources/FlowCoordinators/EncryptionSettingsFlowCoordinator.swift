@@ -89,7 +89,7 @@ class EncryptionSettingsFlowCoordinator: FlowCoordinatorProtocol {
              .roomDetails, .roomMemberDetails, .userProfile, .thread,
              .event, .eventOnRoomAlias, .childEvent, .childEventOnRoomAlias,
              .call, .settings, .share, .transferOwnership,
-             .search:
+             .search, .canvasSteps:
             // These routes aren't in this flow so clear the entire stack.
             clearRoute(animated: animated)
         case .chatBackupSettings:

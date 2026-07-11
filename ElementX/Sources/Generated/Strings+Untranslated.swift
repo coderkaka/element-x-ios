@@ -10,8 +10,78 @@ import Foundation
 // swiftlint:disable explicit_type_interface function_parameter_count identifier_name line_length
 // swiftlint:disable nesting type_body_length type_name vertical_whitespace_opening_braces
 internal nonisolated enum UntranslatedL10n {
-  /// Search
+  /// Collapse tool calls
+  internal static var a11yCollapseToolCalls: String { return UntranslatedL10n.tr("Untranslated", "a11y_collapse_tool_calls") }
+  /// Expand tool calls
+  internal static var a11yExpandToolCalls: String { return UntranslatedL10n.tr("Untranslated", "a11y_expand_tool_calls") }
+  /// Show filters
+  internal static var a11yRoomListFiltersButton: String { return UntranslatedL10n.tr("Untranslated", "a11y_room_list_filters_button") }
+  /// 管理诸道
+  internal static var actionManageSpaces: String { return UntranslatedL10n.tr("Untranslated", "action_manage_spaces") }
+  /// 左移
+  internal static var actionMoveLeft: String { return UntranslatedL10n.tr("Untranslated", "action_move_left") }
+  /// 右移
+  internal static var actionMoveRight: String { return UntranslatedL10n.tr("Untranslated", "action_move_right") }
+  /// 暂无差事
+  internal static var screenAgentTasksEmpty: String { return UntranslatedL10n.tr("Untranslated", "screen_agent_tasks_empty") }
+  /// 在办
+  internal static var screenAgentTasksSectionActive: String { return UntranslatedL10n.tr("Untranslated", "screen_agent_tasks_section_active") }
+  /// 已结
+  internal static var screenAgentTasksSectionDone: String { return UntranslatedL10n.tr("Untranslated", "screen_agent_tasks_section_done") }
+  /// 查看实录
+  internal static var screenCanvasStepsViewThread: String { return UntranslatedL10n.tr("Untranslated", "screen_canvas_steps_view_thread") }
+  /// 请旨待批
+  internal static var screenHomePendingChoicesSheetTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_home_pending_choices_sheet_title") }
+  /// %1$@ 件请旨待批
+  internal static func screenHomePendingChoicesStrip(_ p1: Any) -> String {
+    return UntranslatedL10n.tr("Untranslated", "screen_home_pending_choices_strip", String(describing: p1))
+  }
+  /// 差事 %1$@/%2$@
+  internal static func screenHomeRoomTaskProgress(_ p1: Any, _ p2: Any) -> String {
+    return UntranslatedL10n.tr("Untranslated", "screen_home_room_task_progress", String(describing: p1), String(describing: p2))
+  }
+  /// 全部
+  internal static var screenHomeSpaceAll: String { return UntranslatedL10n.tr("Untranslated", "screen_home_space_all") }
+  /// 书信
+  internal static var screenHomeTabMessages: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_messages") }
+  /// 政事
+  internal static var screenHomeTabProjects: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_projects") }
+  /// 检索
   internal static var screenHomeTabSearch: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_search") }
+  /// 差事
+  internal static var screenHomeTabTasks: String { return UntranslatedL10n.tr("Untranslated", "screen_home_tab_tasks") }
+  /// 政事堂
+  internal static var screenHomeTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_home_title") }
+  /// 暂无书信
+  internal static var screenMessagesEmpty: String { return UntranslatedL10n.tr("Untranslated", "screen_messages_empty") }
+  /// %1$@ 件差事在办
+  internal static func screenRoomTaskChipMulti(_ p1: Any) -> String {
+    return UntranslatedL10n.tr("Untranslated", "screen_room_task_chip_multi", String(describing: p1))
+  }
+  /// %1$@ 件请旨待批
+  internal static func screenRoomTaskChipPendingOnly(_ p1: Any) -> String {
+    return UntranslatedL10n.tr("Untranslated", "screen_room_task_chip_pending_only", String(describing: p1))
+  }
+  ///  · %1$@ 件请旨待批
+  internal static func screenRoomTaskChipPendingSuffix(_ p1: Any) -> String {
+    return UntranslatedL10n.tr("Untranslated", "screen_room_task_chip_pending_suffix", String(describing: p1))
+  }
+  /// 已撤销
+  internal static var screenRoomTimelineAgentChoiceCancelled: String { return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_agent_choice_cancelled") }
+  /// Confirm
+  internal static var screenRoomTimelineAgentChoiceConfirmButton: String { return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_agent_choice_confirm_button") }
+  /// Selected
+  internal static var screenRoomTimelineAgentChoiceSelectedPrefix: String { return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_agent_choice_selected_prefix") }
+  /// Plural format key: "%#@COUNT@"
+  internal static func screenRoomTimelineAgentTurnToolCallsCount(_ p1: Int) -> String {
+    return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_agent_turn_tool_calls_count", p1)
+  }
+  /// View progress
+  internal static var screenRoomTimelineCanvasTaskBannerAction: String { return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_canvas_task_banner_action") }
+  /// Task in progress
+  internal static var screenRoomTimelineCanvasTaskBannerTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_room_timeline_canvas_task_banner_title") }
+  /// Filters
+  internal static var screenRoomlistFiltersTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_roomlist_filters_title") }
   /// Search for rooms
   internal static var screenSearchEmptyStateMessage: String { return UntranslatedL10n.tr("Untranslated", "screen_search_empty_state_message") }
   /// Start searching...
@@ -20,6 +90,22 @@ internal nonisolated enum UntranslatedL10n {
   internal static func screenSearchNoResultsMessage(_ p1: Any) -> String {
     return UntranslatedL10n.tr("Untranslated", "screen_search_no_results_message", String(describing: p1))
   }
+  /// 御案体
+  internal static var screenSettingsTerminologyImperial: String { return UntranslatedL10n.tr("Untranslated", "screen_settings_terminology_imperial") }
+  /// 通俗版
+  internal static var screenSettingsTerminologyPlain: String { return UntranslatedL10n.tr("Untranslated", "screen_settings_terminology_plain") }
+  /// 交互风格
+  internal static var screenSettingsTerminologyTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_settings_terminology_title") }
+  /// 本案暂无差事
+  internal static var screenTaskPanelEmpty: String { return UntranslatedL10n.tr("Untranslated", "screen_task_panel_empty") }
+  /// 在办
+  internal static var screenTaskPanelSectionActive: String { return UntranslatedL10n.tr("Untranslated", "screen_task_panel_section_active") }
+  /// 已结
+  internal static var screenTaskPanelSectionDone: String { return UntranslatedL10n.tr("Untranslated", "screen_task_panel_section_done") }
+  /// 待批
+  internal static var screenTaskPanelSectionPending: String { return UntranslatedL10n.tr("Untranslated", "screen_task_panel_section_pending") }
+  /// 案卷
+  internal static var screenTaskPanelTitle: String { return UntranslatedL10n.tr("Untranslated", "screen_task_panel_title") }
   /// Clear all data currently stored on this device?
   /// Sign in again to access your account data and messages.
   internal static var softLogoutClearDataDialogContent: String { return UntranslatedL10n.tr("Untranslated", "soft_logout_clear_data_dialog_content") }

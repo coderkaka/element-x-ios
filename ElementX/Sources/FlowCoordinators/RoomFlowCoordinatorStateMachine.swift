@@ -26,6 +26,9 @@ extension RoomFlowCoordinator {
         case eventFocus(FocusEvent)
         case share(ShareExtensionPayload)
         case thread(rootEventID: String, focusEvent: FocusEvent?)
+        /// Deep-linked from the cross-room 差事 tab, which only has `taskID` (no `eventID`) —
+        /// resolved against the room's own task summary once it's loaded, see `presentRoom`.
+        case canvasSteps(taskID: String)
         
         var focusedEvent: FocusEvent? {
             switch self {
@@ -77,6 +80,8 @@ extension RoomFlowCoordinator {
         case pollsHistoryForm
         case rolesAndPermissions
         case pinnedEventsTimeline(previousState: State)
+        case canvasSteps(eventID: String, taskID: String, previousState: State)
+        case taskPanel(previousState: State)
         case resolveSendFailure(previousState: State)
         case knockRequestsList(previousState: State)
         case mediaEventsTimeline(previousState: State)
@@ -102,6 +107,8 @@ extension RoomFlowCoordinator {
         var timelineController: TimelineControllerProtocol?
         var spaceRoomListProxy: SpaceRoomListProxyProtocol?
         var authorizedSpacesSelection: AuthorizedSpacesSelection?
+        /// The summary task backing a canvas-steps push from the task panel.
+        var roomTask: RoomTaskSummary.Task?
     }
     
     enum Event: EventType {
@@ -117,6 +124,12 @@ extension RoomFlowCoordinator {
         
         case presentThreadList
         case dismissThreadList
+        
+        case presentCanvasSteps(eventID: String, taskID: String)
+        case dismissCanvasSteps
+        
+        case presentTaskPanel
+        case dismissTaskPanel
         
         case startSpaceFlow
         case finishedSpaceFlow
@@ -239,6 +252,25 @@ extension RoomFlowCoordinator {
                 return .pinnedEventsTimeline(previousState: fromState)
             case (.pinnedEventsTimeline(let previousState), .dismissPinnedEventsTimeline):
                 return previousState
+                
+            case (.room, .presentCanvasSteps(let eventID, let taskID)):
+                return .canvasSteps(eventID: eventID, taskID: taskID, previousState: fromState)
+                
+            case (.canvasSteps(_, _, let previousState), .dismissCanvasSteps):
+                return previousState
+                
+            case (.room, .presentTaskPanel):
+                return .taskPanel(previousState: fromState)
+                
+            case (.taskPanel(let previousState), .dismissTaskPanel):
+                return previousState
+                
+            case (.taskPanel, .presentCanvasSteps(let eventID, let taskID)):
+                return .canvasSteps(eventID: eventID, taskID: taskID, previousState: fromState)
+                
+            // The detail's 实录 row jumps into the task's thread.
+            case (.canvasSteps, .presentThread(let threadRootEventID, _)):
+                return .thread(threadRootEventID: threadRootEventID, previousState: fromState)
                 
             // Thread List
             case (.room, .presentThreadList):

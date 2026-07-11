@@ -18,5 +18,21 @@
 			<string>%d untranslated items</string>
 		</dict>
 	</dict>
+	<key>screen_room_timeline_agent_turn_tool_calls_count</key>
+	<dict>
+		<key>COUNT</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%1$d tool call</string>
+			<key>other</key>
+			<string>%1$d tool calls</string>
+		</dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@COUNT@</string>
+	</dict>
 </dict>
 </plist>

@@ -114,10 +114,28 @@ struct HomeScreenContent: View {
     @ViewBuilder
     private var topSection: some View {
         // An empty VStack causes glitches within the room list
-        if context.viewState.shouldShowFilters || context.viewState.shouldShowBanner {
+        if context.viewState.shouldShowSpaceTabBar || context.viewState.shouldShowBanner || !context.viewState.pendingChoices.isEmpty {
             VStack(spacing: 0) {
-                if context.viewState.shouldShowFilters {
-                    RoomListFiltersView(state: $context.filtersState)
+                if context.viewState.shouldShowSpaceTabBar {
+                    SpaceTabBarView(filters: context.viewState.topLevelSpaceFilters,
+                                    selectedFilter: context.viewState.selectedSpaceFilter,
+                                    hasPendingSpaceInvites: context.viewState.hasPendingSpaceInvites,
+                                    terminology: context.viewState.terminology,
+                                    mediaProvider: context.mediaProvider) { filter in
+                        context.send(viewAction: .selectSpaceFilter(filter))
+                    } onManageTapped: {
+                        context.send(viewAction: .manageSpaces)
+                    } onReorder: { roomID, direction in
+                        context.send(viewAction: .reorderSpaceFilter(roomID: roomID, direction: direction))
+                    }
+                    Divider()
+                }
+                
+                if !context.viewState.pendingChoices.isEmpty {
+                    PendingChoicesStripView(count: context.viewState.pendingChoices.count, terminology: context.viewState.terminology) {
+                        context.send(viewAction: .tappedPendingChoicesStrip)
+                    }
+                    Divider()
                 }
                 
                 if case let .show(state) = context.viewState.securityBannerMode {

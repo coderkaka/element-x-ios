@@ -52,11 +52,23 @@ struct SettingsScreenViewState: BindableState {
     
     let navigationBarVisibility: Visibility
     
-    var bindings = SettingsScreenViewStateBindings()
+    var bindings: SettingsScreenViewStateBindings
 }
 
 struct SettingsScreenViewStateBindings {
+    private let appSettings: AppSettings
+    
+    init(appSettings: AppSettings) {
+        self.appSettings = appSettings
+    }
+    
     var isPresentingAccountDeactivationConfirmation = false
+    
+    /// Which vocabulary the agent UI speaks in — see `AppTerminology`.
+    var terminologyScenario: TerminologyScenario {
+        get { appSettings.terminologyScenario }
+        set { appSettings.terminologyScenario = newValue }
+    }
 }
 
 enum SettingsScreenViewAction {

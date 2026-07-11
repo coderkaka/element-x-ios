@@ -25,6 +25,8 @@ nonisolated struct EventTimelineItemSDKMockConfiguration {
                                                                inReplyTo: nil,
                                                                threadRoot: nil,
                                                                threadSummary: nil))
+    var originalJSON: String?
+    var latestEditJSON: String?
 }
 
 nonisolated extension EventTimelineItem {
@@ -32,7 +34,7 @@ nonisolated extension EventTimelineItem {
         let lazyProvider = LazyTimelineItemProviderSDKMock()
         lazyProvider.containsOnlyEmojisReturnValue = false
         lazyProvider.getShieldsStrictReturnValue = ShieldState.none
-        lazyProvider.debugInfoReturnValue = .init(model: "", originalJson: nil, latestEditJson: nil)
+        lazyProvider.debugInfoReturnValue = .init(model: "", originalJson: configuration.originalJSON, latestEditJson: configuration.latestEditJSON)
         self.init(isRemote: true,
                   eventOrTransactionId: .eventId(eventId: configuration.eventID),
                   sender: configuration.sender,
@@ -70,5 +72,78 @@ nonisolated extension EventTimelineItem {
     
     static func mockCallInvite(sender: String) -> EventTimelineItem {
         .init(configuration: .init(sender: sender, content: .callInvite))
+    }
+    
+    static func mockAgentTurn(sender: String = "", body: String = "Final reply", originalJSON: String? = nil) -> EventTimelineItem {
+        let messageType = MessageType.other(msgtype: AgentTurnRoomTimelineItemContent.msgType, body: body)
+        
+        let content = TimelineItemContent.msgLike(content: .init(kind: .message(content: .init(msgType: messageType,
+                                                                                               body: body,
+                                                                                               isEdited: false,
+                                                                                               mentions: nil)),
+                                                                 reactions: [],
+                                                                 inReplyTo: nil,
+                                                                 threadRoot: nil,
+                                                                 threadSummary: nil))
+        
+        return .init(configuration: .init(sender: sender, content: content, originalJSON: originalJSON))
+    }
+    
+    static func mockChoiceRequest(sender: String = "",
+                                  body: String = "Which environment?",
+                                  question: String = "Which environment?",
+                                  options: [(id: String, label: String)] = [("test", "Test"), ("prod", "Production")],
+                                  multiSelect: Bool = false,
+                                  originalJSON: String? = nil,
+                                  latestEditJSON: String? = nil) -> EventTimelineItem {
+        let messageType = MessageType.other(msgtype: AgentChoiceRequestRoomTimelineItemContent.msgType, body: body)
+        
+        let content = TimelineItemContent.msgLike(content: .init(kind: .message(content: .init(msgType: messageType,
+                                                                                               body: body,
+                                                                                               isEdited: false,
+                                                                                               mentions: nil)),
+                                                                 reactions: [],
+                                                                 inReplyTo: nil,
+                                                                 threadRoot: nil,
+                                                                 threadSummary: nil))
+        
+        let optionsJSONArray = options.map { "{\"id\":\"\($0.id)\",\"label\":\"\($0.label)\"}" }.joined(separator: ",")
+        let defaultOriginalJSON = originalJSON ?? """
+        {"content":{"msgtype":"io.element.agent.choice_request","body":"\(body)","question":"\(question)",\
+        "options":[\(optionsJSONArray)],"multi_select":\(multiSelect)}}
+        """
+        
+        return .init(configuration: .init(sender: sender, content: content, originalJSON: defaultOriginalJSON, latestEditJSON: latestEditJSON))
+    }
+    
+    static func mockCanvasSteps(sender: String = "",
+                                body: String = "Task: Refactor auth module",
+                                taskID: String = "task-1234",
+                                title: String = "Refactor auth module",
+                                status: String = "in_progress",
+                                steps: [(id: String, label: String, status: String)] = [
+                                    ("step1", "Read existing code", "done"),
+                                    ("step2", "Wait for approval", "in_progress"),
+                                    ("step3", "Run tests", "pending")
+                                ],
+                                originalJSON: String? = nil) -> EventTimelineItem {
+        let messageType = MessageType.other(msgtype: AgentCanvasStepsRoomTimelineItemContent.msgType, body: body)
+        
+        let content = TimelineItemContent.msgLike(content: .init(kind: .message(content: .init(msgType: messageType,
+                                                                                               body: body,
+                                                                                               isEdited: false,
+                                                                                               mentions: nil)),
+                                                                 reactions: [],
+                                                                 inReplyTo: nil,
+                                                                 threadRoot: nil,
+                                                                 threadSummary: nil))
+        
+        let stepsJSONArray = steps.map { "{\"id\":\"\($0.id)\",\"label\":\"\($0.label)\",\"status\":\"\($0.status)\"}" }.joined(separator: ",")
+        let defaultOriginalJSON = originalJSON ?? """
+        {"content":{"msgtype":"io.element.agent.canvas.steps","body":"\(body)","task_id":"\(taskID)","title":"\(title)",\
+        "status":"\(status)","steps":[\(stepsJSONArray)]}}
+        """
+        
+        return .init(configuration: .init(sender: sender, content: content, originalJSON: defaultOriginalJSON))
     }
 }

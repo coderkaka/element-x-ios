@@ -20,6 +20,7 @@ final class HomeScreenViewModelTests {
     var clientProxy: ClientProxyMock!
     var roomSummaryProvider: RoomSummaryProviderMock!
     var notificationManager: NotificationManagerMock!
+    var agentIndexService: AgentIndexServiceMock!
     private let appSettings: AppSettings
     
     var cancellables = Set<AnyCancellable>()
@@ -165,10 +166,21 @@ final class HomeScreenViewModelTests {
     func filters() async throws {
         setupViewModel()
         
+        // 政事 (chats tab) always excludes DMs: `.rooms` is force-applied and a (still technically
+        // possible) `.people` filter is stripped before the filter reaches the provider.
         context.filtersState.activateFilter(.people)
         try await Task.sleep(for: .milliseconds(100))
-        #expect(roomSummaryProvider.roomListPublisher.value.count == 2)
-        #expect(roomSummaryProvider.roomListPublisher.value.first?.name == "Foundation and Earth")
+        #expect(roomSummaryProvider.setFilterReceivedFilter == .all(filters: [.rooms]))
+        #expect(roomSummaryProvider.roomListPublisher.value.allSatisfy { !$0.isDirect })
+    }
+    
+    @Test
+    func defaultFilterExcludesDirectMessages() async throws {
+        setupViewModel()
+        
+        // Even with no user-selected filter active, 政事 must still only ask the provider for group rooms.
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(roomSummaryProvider.setFilterReceivedFilter == .all(filters: [.rooms]))
     }
     
     @Test
@@ -371,6 +383,186 @@ final class HomeScreenViewModelTests {
     }
     
     @Test
+    func agentTaskAndPendingChoiceCountsJoinRooms() async throws {
+        let tasks = [
+            AgentTaskSummary(roomID: "2", roomName: "Foundation and Empire", taskID: "t1", title: "A", isResolved: false, doneStepCount: 0, totalStepCount: 1),
+            AgentTaskSummary(roomID: "2", roomName: "Foundation and Empire", taskID: "t2", title: "B", isResolved: false, doneStepCount: 0, totalStepCount: 1),
+            AgentTaskSummary(roomID: "2", roomName: "Foundation and Empire", taskID: "t3", title: "C", isResolved: true, doneStepCount: 1, totalStepCount: 1)
+        ]
+        let projects = [AgentProjectSummary(roomID: "3", name: "Second Foundation Plan", description: nil, status: .active)]
+        let pendingChoices = [AgentPendingChoiceSummary(roomID: "4", eventID: "$choice1", question: "Proceed?")]
+        
+        setupViewModel(tasks: tasks, projects: projects, pendingChoices: pendingChoices)
+        
+        let deferred = deferFulfillment(context.$viewState) { state in
+            state.rooms.first { $0.roomID == "2" }?.activeTaskCount == 2
+        }
+        try await deferred.fulfill()
+        
+        let room2 = try #require(context.viewState.rooms.first { $0.roomID == "2" })
+        #expect(room2.activeTaskCount == 2)
+        #expect(room2.doneTaskCount == 1)
+        #expect(room2.totalTaskCount == 3)
+        #expect(!room2.isProject)
+        #expect(room2.pendingChoiceCount == 0)
+        
+        let room3 = try #require(context.viewState.rooms.first { $0.roomID == "3" })
+        #expect(room3.isProject)
+        #expect(room3.activeTaskCount == 0)
+        #expect(room3.totalTaskCount == 0)
+        
+        let room4 = try #require(context.viewState.rooms.first { $0.roomID == "4" })
+        #expect(room4.pendingChoiceCount == 1)
+        #expect(!room4.isProject)
+        
+        // A room untouched by any of the three publishers keeps every count at its zero default.
+        let room1 = try #require(context.viewState.rooms.first { $0.roomID == "1" })
+        #expect(room1.activeTaskCount == 0)
+        #expect(room1.doneTaskCount == 0)
+        #expect(room1.pendingChoiceCount == 0)
+        #expect(!room1.isProject)
+    }
+    
+    @Test
+    func activeObjectivesJoinRoomsAndDoneOnesAreExcluded() async throws {
+        let objectives = [
+            AgentObjectiveSummary(roomID: "2", objectiveID: "obj-1", title: "验证A", status: .active,
+                                  successMetrics: [], exitOptions: [], priority: 0, updatedAt: .now),
+            AgentObjectiveSummary(roomID: "2", objectiveID: "obj-2", title: "已放弃的旧标的", status: .abandoned,
+                                  successMetrics: [], exitOptions: [], priority: 0, updatedAt: .now)
+        ]
+        
+        setupViewModel(objectives: objectives)
+        
+        let deferred = deferFulfillment(context.$viewState) { state in
+            state.rooms.first { $0.roomID == "2" }?.activeObjectiveTitles.isEmpty == false
+        }
+        try await deferred.fulfill()
+        
+        let room2 = try #require(context.viewState.rooms.first { $0.roomID == "2" })
+        #expect(room2.activeObjectiveTitles == ["验证A"])
+        
+        let room1 = try #require(context.viewState.rooms.first { $0.roomID == "1" })
+        #expect(room1.activeObjectiveTitles.isEmpty)
+    }
+    
+    @Test
+    func agentPrioritySortingPutsPendingFirstThenActiveThenRestPreservingProviderOrder() async throws {
+        // Provider order for group rooms (DMs "5"/"6" excluded by the .rooms filter) is: 1, 2, 3, 4, 7, 0.
+        // Room "4" is last in that order but carries a pending choice, so it must sort first.
+        // Rooms "2" and "3" carry active tasks and must both come next, keeping their relative
+        // provider order (2 before 3) since the re-sort is a stable, filter-based grouping.
+        let tasks = [
+            AgentTaskSummary(roomID: "2", roomName: "Foundation and Empire", taskID: "t1", title: nil, isResolved: false, doneStepCount: 0, totalStepCount: 1),
+            AgentTaskSummary(roomID: "3", roomName: "Second Foundation", taskID: "t2", title: nil, isResolved: false, doneStepCount: 0, totalStepCount: 1)
+        ]
+        let pendingChoices = [AgentPendingChoiceSummary(roomID: "4", eventID: "$choice1", question: nil)]
+        
+        setupViewModel(tasks: tasks, pendingChoices: pendingChoices)
+        
+        let deferred = deferFulfillment(context.$viewState) { state in
+            state.rooms.first?.roomID == "4"
+        }
+        try await deferred.fulfill()
+        
+        let orderedRoomIDs = context.viewState.rooms.compactMap(\.roomID)
+        #expect(orderedRoomIDs == ["4", "2", "3", "1", "7", "0"])
+    }
+    
+    @Test
+    func pendingChoicesStripJoinsRoomNamesAndDegradesGracefully() async throws {
+        let pendingChoices = [
+            AgentPendingChoiceSummary(roomID: "4", eventID: "$choice1", question: "Proceed?"),
+            AgentPendingChoiceSummary(roomID: "not-in-provider", eventID: "$choice2", question: "Ship it?")
+        ]
+        
+        setupViewModel(pendingChoices: pendingChoices)
+        
+        let deferred = deferFulfillment(context.$viewState) { $0.pendingChoices.count == 2 }
+        try await deferred.fulfill()
+        
+        let joined = try #require(context.viewState.pendingChoices.first { $0.roomID == "4" })
+        #expect(joined.roomName == "Foundation's Edge")
+        
+        // A pending choice whose room isn't in the (possibly filtered/paginated) provider list
+        // must still surface in the strip/sheet, just without a resolvable room name.
+        let orphan = try #require(context.viewState.pendingChoices.first { $0.roomID == "not-in-provider" })
+        #expect(orphan.roomName == nil)
+    }
+    
+    @Test
+    func pendingChoicesStripIntersectsWithSpaceFilter() async throws {
+        let pendingChoices = [
+            AgentPendingChoiceSummary(roomID: "2", eventID: "$choice1", question: "A"),
+            AgentPendingChoiceSummary(roomID: "4", eventID: "$choice2", question: "B")
+        ]
+        
+        setupViewModel(pendingChoices: pendingChoices)
+        
+        let deferred = deferFulfillment(context.$viewState) { $0.pendingChoices.count == 2 }
+        try await deferred.fulfill()
+        
+        let spaceFilter = SpaceServiceFilter(room: .mock(id: "space1", isSpace: true), level: 0, descendants: ["4"])
+        let filteredDeferred = deferFulfillment(context.$viewState) { $0.pendingChoices.count == 1 }
+        context.send(viewAction: .selectSpaceFilter(spaceFilter))
+        try await filteredDeferred.fulfill()
+        
+        #expect(context.viewState.pendingChoices.map(\.roomID) == ["4"])
+    }
+    
+    @Test
+    func tappedPendingChoicesStripWithSinglePendingOpensRoomDirectly() async throws {
+        let pendingChoices = [AgentPendingChoiceSummary(roomID: "4", eventID: "$choice1", question: "Proceed?")]
+        setupViewModel(pendingChoices: pendingChoices)
+        
+        let deferred = deferFulfillment(context.$viewState) { $0.pendingChoices.count == 1 }
+        try await deferred.fulfill()
+        
+        let deferredAction = deferFulfillment(viewModel.actions) { $0 == .presentRoom(roomIdentifier: "4") }
+        context.send(viewAction: .tappedPendingChoicesStrip)
+        try await deferredAction.fulfill()
+        
+        #expect(!context.viewState.bindings.isPresentingPendingChoices)
+    }
+    
+    @Test
+    func tappedPendingChoicesStripWithMultiplePendingOpensSheet() async throws {
+        let pendingChoices = [
+            AgentPendingChoiceSummary(roomID: "2", eventID: "$choice1", question: "A"),
+            AgentPendingChoiceSummary(roomID: "4", eventID: "$choice2", question: "B")
+        ]
+        setupViewModel(pendingChoices: pendingChoices)
+        
+        let deferred = deferFulfillment(context.$viewState) { $0.pendingChoices.count == 2 }
+        try await deferred.fulfill()
+        
+        #expect(!context.viewState.bindings.isPresentingPendingChoices)
+        context.send(viewAction: .tappedPendingChoicesStrip)
+        #expect(context.viewState.bindings.isPresentingPendingChoices)
+    }
+    
+    @Test
+    func selectPendingChoiceClosesSheetAndOpensRoom() async throws {
+        let pendingChoices = [
+            AgentPendingChoiceSummary(roomID: "2", eventID: "$choice1", question: "A"),
+            AgentPendingChoiceSummary(roomID: "4", eventID: "$choice2", question: "B")
+        ]
+        setupViewModel(pendingChoices: pendingChoices)
+        
+        let deferred = deferFulfillment(context.$viewState) { $0.pendingChoices.count == 2 }
+        try await deferred.fulfill()
+        
+        context.send(viewAction: .tappedPendingChoicesStrip)
+        #expect(context.viewState.bindings.isPresentingPendingChoices)
+        
+        let deferredAction = deferFulfillment(viewModel.actions) { $0 == .presentRoom(roomIdentifier: "4") }
+        context.send(viewAction: .selectPendingChoice(roomID: "4"))
+        try await deferredAction.fulfill()
+        
+        #expect(!context.viewState.bindings.isPresentingPendingChoices)
+    }
+    
+    @Test
     func newSoundBanner() {
         appSettings.hasSeenNewSoundBanner = false
         
@@ -384,11 +576,114 @@ final class HomeScreenViewModelTests {
         #expect(appSettings.hasSeenNewSoundBanner)
     }
     
+    // MARK: - Space Filter Persistence (F)
+    
+    @Test
+    func restoresPersistedSpaceFilterOnFirstAvailableFiltersEmission() async throws {
+        // Given a persisted 道 selection from a previous launch.
+        appSettings.selectedSpaceFilterRoomID = "space2"
+        let filterSubject = CurrentValueSubject<[SpaceServiceFilter], Never>([])
+        setupViewModel(spaceFilterSubject: filterSubject)
+        #expect(context.viewState.selectedSpaceFilter == nil)
+        
+        // When the space list becomes available for the first time.
+        let deferred = deferFulfillment(context.$viewState) { $0.selectedSpaceFilter != nil }
+        filterSubject.send(Self.levelZeroSpaceFilters)
+        try await deferred.fulfill()
+        
+        // Then the persisted selection should be restored automatically.
+        #expect(context.viewState.selectedSpaceFilter?.room.id == "space2")
+    }
+    
+    @Test
+    func selectingAllClearsPersistenceAndIsNotReRestored() async throws {
+        appSettings.selectedSpaceFilterRoomID = "space2"
+        let filterSubject = CurrentValueSubject<[SpaceServiceFilter], Never>(Self.levelZeroSpaceFilters)
+        setupViewModel(spaceFilterSubject: filterSubject)
+        
+        let restoredDeferred = deferFulfillment(context.$viewState) { $0.selectedSpaceFilter != nil }
+        try await restoredDeferred.fulfill()
+        #expect(context.viewState.selectedSpaceFilter?.room.id == "space2")
+        
+        // When the user explicitly returns to 全部.
+        let clearedDeferred = deferFulfillment(context.$viewState) { $0.selectedSpaceFilter == nil }
+        context.send(viewAction: .selectSpaceFilter(nil))
+        try await clearedDeferred.fulfill()
+        #expect(appSettings.selectedSpaceFilterRoomID == nil)
+        
+        // Then a subsequent filters emission must not bounce the user back into their old 道.
+        filterSubject.send(Self.levelZeroSpaceFilters)
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(context.viewState.selectedSpaceFilter == nil)
+    }
+    
+    @Test
+    func stalePersistedSpaceFilterFallsBackToAll() async throws {
+        // Given a persisted ID for a space the user is no longer (or never was) a member of.
+        appSettings.selectedSpaceFilterRoomID = "no-longer-joined-space"
+        let filterSubject = CurrentValueSubject<[SpaceServiceFilter], Never>([])
+        setupViewModel(spaceFilterSubject: filterSubject)
+        
+        filterSubject.send(Self.levelZeroSpaceFilters)
+        try await Task.sleep(for: .milliseconds(100))
+        
+        #expect(context.viewState.selectedSpaceFilter == nil)
+        #expect(appSettings.selectedSpaceFilterRoomID == nil)
+    }
+    
+    // MARK: - Space Filter Reordering (G)
+    
+    @Test
+    func reorderSpaceFilterMovesLeftAndRight() async throws {
+        let filterSubject = CurrentValueSubject<[SpaceServiceFilter], Never>(Self.levelZeroSpaceFilters)
+        setupViewModel(spaceFilterSubject: filterSubject)
+        
+        let deferred = deferFulfillment(context.$viewState) { !$0.availableSpaceFilters.isEmpty }
+        try await deferred.fulfill()
+        
+        #expect(context.viewState.topLevelSpaceFilters.map(\.room.id) == ["space1", "space2", "space3", "space4", "space5", "space6", "space7"])
+        
+        context.send(viewAction: .reorderSpaceFilter(roomID: "space2", direction: .left))
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(context.viewState.topLevelSpaceFilters.map(\.room.id) == ["space2", "space1", "space3", "space4", "space5", "space6", "space7"])
+        #expect(appSettings.spaceFilterOrder == ["space2", "space1", "space3", "space4", "space5", "space6", "space7"])
+        
+        context.send(viewAction: .reorderSpaceFilter(roomID: "space2", direction: .right))
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(context.viewState.topLevelSpaceFilters.map(\.room.id) == ["space1", "space2", "space3", "space4", "space5", "space6", "space7"])
+    }
+    
+    @Test
+    func reorderSpaceFilterClampsAtEdges() async throws {
+        let filterSubject = CurrentValueSubject<[SpaceServiceFilter], Never>(Self.levelZeroSpaceFilters)
+        setupViewModel(spaceFilterSubject: filterSubject)
+        
+        let deferred = deferFulfillment(context.$viewState) { !$0.availableSpaceFilters.isEmpty }
+        try await deferred.fulfill()
+        
+        let originalOrder = context.viewState.topLevelSpaceFilters.map(\.room.id)
+        
+        // Moving the first chip left, or the last chip right, must be a no-op.
+        context.send(viewAction: .reorderSpaceFilter(roomID: "space1", direction: .left))
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(context.viewState.topLevelSpaceFilters.map(\.room.id) == originalOrder)
+        
+        context.send(viewAction: .reorderSpaceFilter(roomID: "space7", direction: .right))
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(context.viewState.topLevelSpaceFilters.map(\.room.id) == originalOrder)
+    }
+    
     // MARK: - Helpers
     
     enum InviteType { case rooms, spaces }
     
-    private func setupViewModel(securityStatePublisher: CurrentValuePublisher<SessionSecurityState, Never>? = nil, invites: InviteType? = nil) {
+    private func setupViewModel(securityStatePublisher: CurrentValuePublisher<SessionSecurityState, Never>? = nil,
+                                invites: InviteType? = nil,
+                                tasks: [AgentTaskSummary] = [],
+                                projects: [AgentProjectSummary] = [],
+                                pendingChoices: [AgentPendingChoiceSummary] = [],
+                                objectives: [AgentObjectiveSummary] = [],
+                                spaceFilterSubject: CurrentValueSubject<[SpaceServiceFilter], Never>? = nil) {
         cancellables.removeAll()
         
         var rooms: [RoomSummary] = .mockRooms
@@ -425,6 +720,12 @@ final class HomeScreenViewModelTests {
             break
         }
         
+        if let spaceFilterSubject {
+            let spaceServiceProxy = SpaceServiceProxyMock(.init())
+            spaceServiceProxy.spaceFilterPublisher = spaceFilterSubject.asCurrentValuePublisher()
+            clientProxy.spaceService = spaceServiceProxy
+        }
+        
         let userSession = UserSessionMock(.init(clientProxy: clientProxy))
         if let securityStatePublisher {
             userSession.sessionSecurityStatePublisher = securityStatePublisher
@@ -432,12 +733,19 @@ final class HomeScreenViewModelTests {
         
         notificationManager = NotificationManagerMock()
         
+        agentIndexService = AgentIndexServiceMock(.init(tasks: tasks, projects: projects, pendingChoices: pendingChoices, objectives: objectives))
+        
         viewModel = HomeScreenViewModel(userSession: userSession,
                                         selectedRoomPublisher: CurrentValueSubject<String?, Never>(nil).asCurrentValuePublisher(),
                                         appSettings: appSettings,
                                         analyticsService: AnalyticsServiceMock(.init()),
                                         notificationManager: notificationManager,
-                                        userIndicatorController: UserIndicatorControllerMock())
+                                        userIndicatorController: UserIndicatorControllerMock(),
+                                        agentIndexService: agentIndexService)
+    }
+    
+    private static var levelZeroSpaceFilters: [SpaceServiceFilter] {
+        [SpaceServiceRoom].mockJoinedSpaces.map { SpaceServiceFilter(room: $0, level: 0, descendants: []) }
     }
 }
 
@@ -489,5 +797,36 @@ extension HomeScreenViewModelAction: @MainActor @retroactive Equatable {
         default:
             false
         }
+    }
+}
+
+struct SortSpaceFiltersTests {
+    private static var filters: [SpaceServiceFilter] {
+        [SpaceServiceRoom].mockJoinedSpaces.prefix(4).map { SpaceServiceFilter(room: $0, level: 0, descendants: []) }
+    }
+    
+    @Test
+    func emptyOrderKeepsSDKOrder() {
+        let sorted = sortSpaceFilters(Self.filters, byOrder: [])
+        #expect(sorted.map(\.room.id) == ["space1", "space2", "space3", "space4"])
+    }
+    
+    @Test
+    func persistedOrderWins() {
+        let sorted = sortSpaceFilters(Self.filters, byOrder: ["space3", "space1"])
+        #expect(sorted.map(\.room.id) == ["space3", "space1", "space2", "space4"])
+    }
+    
+    @Test
+    func unknownIDsAreAppendedInSDKOrder() {
+        // "space9" isn't among the filters at all — it should simply have no effect.
+        let sorted = sortSpaceFilters(Self.filters, byOrder: ["space9", "space4"])
+        #expect(sorted.map(\.room.id) == ["space4", "space1", "space2", "space3"])
+    }
+    
+    @Test
+    func fullyOrderedListMatchesExactly() {
+        let sorted = sortSpaceFilters(Self.filters, byOrder: ["space4", "space3", "space2", "space1"])
+        #expect(sorted.map(\.room.id) == ["space4", "space3", "space2", "space1"])
     }
 }

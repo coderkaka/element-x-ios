@@ -55,6 +55,7 @@ extension ClientProxyMock {
         
         roomSummaryProvider = configuration.roomSummaryProvider
         alternateRoomSummaryProvider = RoomSummaryProviderMock(.init())
+        messagesRoomSummaryProvider = RoomSummaryProviderMock(.init())
         staticRoomSummaryProvider = RoomSummaryProviderMock(.init())
         
         roomDirectorySearchProxyReturnValue = configuration.roomDirectorySearchProxy
@@ -95,6 +96,8 @@ extension ClientProxyMock {
         profileForReturnValue = .success(.init(userID: "@a:b.com", displayName: "Some user"))
         ignoreUserReturnValue = .success(())
         unignoreUserReturnValue = .success(())
+        
+        getRoomStateEventsRawRoomIDEventTypeReturnValue = .success([])
         
         trackRecentlyVisitedRoomReturnValue = .success(())
         recentlyVisitedRoomsFilterReturnValue = []

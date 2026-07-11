@@ -18,6 +18,9 @@ nonisolated enum EventBasedMessageTimelineItemContentType: Hashable {
     case video(VideoRoomTimelineItemContent)
     case location(LocationRoomTimelineItemContent)
     case voice(AudioRoomTimelineItemContent)
+    case agentTurn(AgentTurnRoomTimelineItemContent)
+    case choiceRequest(AgentChoiceRequestRoomTimelineItemContent)
+    case canvasSteps(AgentCanvasStepsRoomTimelineItemContent)
 }
 
 nonisolated protocol EventBasedMessageTimelineItemProtocol: EventBasedTimelineItemProtocol {
@@ -29,7 +32,7 @@ nonisolated extension EventBasedMessageTimelineItemProtocol {
         switch contentType {
         case .audio, .file, .image, .video:
             true
-        case .emote, .notice, .text, .location, .voice:
+        case .emote, .notice, .text, .location, .voice, .agentTurn, .choiceRequest, .canvasSteps:
             false
         }
     }
@@ -48,7 +51,7 @@ nonisolated extension EventBasedMessageTimelineItemProtocol {
             content.caption
         case .video(let content):
             content.caption
-        case .emote, .notice, .text, .location, .voice:
+        case .emote, .notice, .text, .location, .voice, .agentTurn, .choiceRequest, .canvasSteps:
             nil
         }
     }
@@ -63,7 +66,7 @@ nonisolated extension EventBasedMessageTimelineItemProtocol {
             content.formattedCaption
         case .video(let content):
             content.formattedCaption
-        case .emote, .notice, .text, .location, .voice:
+        case .emote, .notice, .text, .location, .voice, .agentTurn, .choiceRequest, .canvasSteps:
             nil
         }
     }

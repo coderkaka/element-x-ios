@@ -22,6 +22,19 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     private let userIndicatorController: UserIndicatorControllerProtocol
     
     private let roomSummaryProvider: RoomSummaryProviderProtocol?
+    /// Unfiltered (can't be filtered) room list, used specifically for detecting pending 道
+    /// invites — `roomSummaryProvider`'s list is scoped to whichever 道 filter chip is currently
+    /// selected, so a newly-invited unrelated 道 would never show up in it until "全部" is tapped.
+    private let staticRoomSummaryProvider: StaticRoomSummaryProviderProtocol?
+    
+    private let agentIndexService: AgentIndexServiceProtocol
+    private var latestTaskSummaries: [AgentTaskSummary] = []
+    private var latestProjects: [AgentProjectSummary] = []
+    private var latestPendingChoices: [AgentPendingChoiceSummary] = []
+    private var latestObjectives: [AgentObjectiveSummary] = []
+    /// One-shot guard so the persisted 道 filter is only ever restored on the first non-empty
+    /// `availableSpaceFilters` emission, never again after the user explicitly returns to 全部.
+    private var hasRestoredSpaceFilter = false
     
     private var actionsSubject: PassthroughSubject<HomeScreenViewModelAction, Never> = .init()
     var actions: AnyPublisher<HomeScreenViewModelAction, Never> {
@@ -34,18 +47,23 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
          appSettings: AppSettings,
          analyticsService: AnalyticsServiceProtocol,
          notificationManager: NotificationManagerProtocol,
-         userIndicatorController: UserIndicatorControllerProtocol) {
+         userIndicatorController: UserIndicatorControllerProtocol,
+         agentIndexService: AgentIndexServiceProtocol) {
         self.userSession = userSession
         self.analyticsService = analyticsService
         self.appSettings = appSettings
         self.notificationManager = notificationManager
         self.userIndicatorController = userIndicatorController
+        self.agentIndexService = agentIndexService
         
         spaceFilterSubject = CurrentValueSubject<SpaceServiceFilter?, Never>(nil)
         
         roomSummaryProvider = userSession.clientProxy.roomSummaryProvider
+        staticRoomSummaryProvider = userSession.clientProxy.staticRoomSummaryProvider
         
         super.init(initialViewState: .init(userID: userSession.clientProxy.userID,
+                                           spaceFilterOrder: appSettings.spaceFilterOrder,
+                                           terminology: .init(scenario: appSettings.terminologyScenario),
                                            bindings: .init(filtersState: .init(appSettings: appSettings))),
                    mediaProvider: userSession.mediaProvider)
         
@@ -105,12 +123,15 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 guard let self else { return }
                 
                 state.shouldShowSpaceFilters = !filters.isEmpty
+                state.availableSpaceFilters = filters
                 
                 if let selectedSpaceFilter = spaceFilterSubject.value,
                    !filters.contains(selectedSpaceFilter) {
                     // Clear the spaces filter if the space has been left.
                     spaceFilterSubject.send(nil)
                 }
+                
+                restorePersistedSpaceFilterIfNeeded(availableFilters: filters)
             }
             .store(in: &cancellables)
         
@@ -125,10 +146,24 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
             .store(in: &cancellables)
         
+        appSettings.terminologyScenarioPublisher
+            .sink { [weak self] scenario in
+                self?.state.terminology = .init(scenario: scenario)
+            }
+            .store(in: &cancellables)
+        
         appSettings.seenInvitesPublisher
             .removeDuplicates()
             .sink { [weak self] _ in
                 self?.updateRooms()
+                self?.updatePendingSpaceInvites()
+            }
+            .store(in: &cancellables)
+        
+        staticRoomSummaryProvider?.roomListPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updatePendingSpaceInvites()
             }
             .store(in: &cancellables)
         
@@ -147,6 +182,15 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         spaceFilterSubject
             .receive(on: DispatchQueue.main)
             .weakAssign(to: \.state.selectedSpaceFilter, on: self)
+            .store(in: &cancellables)
+        
+        // The pending-choices strip/sheet re-intersects with the 道 filter on every change —
+        // unlike the room list itself, `latestPendingChoices` isn't re-fetched by `setFilter`.
+        spaceFilterSubject
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updateRooms()
+            }
             .store(in: &cancellables)
         
         Task {
@@ -169,9 +213,46 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
             .store(in: &cancellables)
         
+        agentIndexService.tasksPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] tasks in
+                guard let self else { return }
+                latestTaskSummaries = tasks
+                updateRooms()
+            }
+            .store(in: &cancellables)
+        
+        agentIndexService.projectsPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] projects in
+                guard let self else { return }
+                latestProjects = projects
+                updateRooms()
+            }
+            .store(in: &cancellables)
+        
+        agentIndexService.pendingChoicesPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] pendingChoices in
+                guard let self else { return }
+                latestPendingChoices = pendingChoices
+                updateRooms()
+            }
+            .store(in: &cancellables)
+        
+        agentIndexService.objectivesPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] objectives in
+                guard let self else { return }
+                latestObjectives = objectives
+                updateRooms()
+            }
+            .store(in: &cancellables)
+        
         setupRoomListSubscriptions()
         
         updateRooms()
+        updatePendingSpaceInvites()
     }
     
     // MARK: - Public
@@ -206,26 +287,13 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             roomSummaryProvider?.updateVisibleRange(range)
         case .startChat:
             actionsSubject.send(.presentStartChatScreen)
-        case .spaceFilters:
-            if spaceFilterSubject.value != nil {
-                spaceFilterSubject.send(nil)
-            } else {
-                state.bindings.spaceFiltersViewModel = ChatsSpaceFiltersScreenViewModel(spaceService: userSession.clientProxy.spaceService,
-                                                                                        mediaProvider: userSession.mediaProvider)
-                
-                state.bindings.spaceFiltersViewModel?.actionsPublisher.sink { [weak self] action in
-                    guard let self else { return }
-                    
-                    switch action {
-                    case .confirm(let spaceServiceFilter):
-                        spaceFilterSubject.send(spaceServiceFilter)
-                        state.bindings.spaceFiltersViewModel = nil
-                    case .cancel:
-                        state.bindings.spaceFiltersViewModel = nil
-                    }
-                }
-                .store(in: &cancellables)
-            }
+        case .selectSpaceFilter(let filter):
+            spaceFilterSubject.send(filter)
+            appSettings.selectedSpaceFilterRoomID = filter?.room.id
+        case .reorderSpaceFilter(let roomID, let direction):
+            reorderSpaceFilter(roomID: roomID, direction: direction)
+        case .manageSpaces:
+            actionsSubject.send(.presentSpaceManagement)
         case .markRoomAsUnread(let roomIdentifier):
             Task {
                 guard case let .joined(roomProxy) = await userSession.clientProxy.roomForIdentifier(roomIdentifier) else {
@@ -268,6 +336,15 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
         case .declineInvite(let roomIdentifier):
             Task { await showDeclineInviteConfirmationAlert(roomID: roomIdentifier) }
+        case .tappedPendingChoicesStrip:
+            if state.pendingChoices.count == 1, let onlyPendingChoice = state.pendingChoices.first {
+                actionsSubject.send(.presentRoom(roomIdentifier: onlyPendingChoice.roomID))
+            } else {
+                state.bindings.isPresentingPendingChoices = true
+            }
+        case .selectPendingChoice(let roomID):
+            state.bindings.isPresentingPendingChoices = false
+            actionsSubject.send(.presentRoom(roomIdentifier: roomID))
         }
     }
     
@@ -293,14 +370,56 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             if state.bindings.isSearchFieldFocused {
                 roomSummaryProvider?.setFilter(.search(query: state.bindings.searchQuery))
             } else {
+                // 政事 (chats tab) is group-rooms-only, DMs live in 书信 exclusively.
+                // Strip `.people` first: it's no longer user-selectable here, but a stale/persisted
+                // active `.people` filter must not collide with the force-applied `.rooms`
+                // (the two are declared mutually exclusive in `incompatibleFilters`).
+                let filters = state.bindings.filtersState.activeFilters.set.subtracting([.people]).union([.rooms])
                 if let spaceFilter = spaceFilterSubject.value {
                     roomSummaryProvider?.setFilter(.rooms(roomsIDs: spaceFilter.descendants,
-                                                          filters: state.bindings.filtersState.activeFilters.set))
+                                                          filters: filters))
                 } else {
-                    roomSummaryProvider?.setFilter(.all(filters: state.bindings.filtersState.activeFilters.set))
+                    roomSummaryProvider?.setFilter(.all(filters: filters))
                 }
             }
         }
+    }
+    
+    /// Restores the persisted 道 filter (`AppSettings.selectedSpaceFilterRoomID`) on the first
+    /// non-empty `availableSpaceFilters` emission only — never again afterwards, so a user who
+    /// explicitly returns to 全部 doesn't get bounced back into their old 道.
+    private func restorePersistedSpaceFilterIfNeeded(availableFilters: [SpaceServiceFilter]) {
+        guard !hasRestoredSpaceFilter, !availableFilters.isEmpty else { return }
+        hasRestoredSpaceFilter = true
+        
+        guard spaceFilterSubject.value == nil, let persistedRoomID = appSettings.selectedSpaceFilterRoomID else { return }
+        
+        let topLevelFilters = availableFilters.filter { $0.level == 0 }
+        guard let match = topLevelFilters.first(where: { $0.room.id == persistedRoomID }) else {
+            // Stale persisted ID (space left/never joined) — clear it and stay on 全部.
+            appSettings.selectedSpaceFilterRoomID = nil
+            return
+        }
+        
+        // Drive the same path as the user tapping the chip, so filter + UI + persistence stay consistent.
+        process(viewAction: .selectSpaceFilter(match))
+    }
+    
+    private func reorderSpaceFilter(roomID: String, direction: MoveDirection) {
+        // Build the full current order from what's displayed (already reflecting any partial
+        // persisted order), so a partially-populated/empty setting still swaps sensibly.
+        var order = state.topLevelSpaceFilters.map(\.room.id)
+        guard let currentIndex = order.firstIndex(of: roomID) else { return }
+        
+        let swapIndex = switch direction {
+        case .left: currentIndex - 1
+        case .right: currentIndex + 1
+        }
+        guard order.indices.contains(swapIndex) else { return } // Already at an edge.
+        
+        order.swapAt(currentIndex, swapIndex)
+        appSettings.spaceFilterOrder = order
+        state.spaceFilterOrder = order
     }
     
     private func setupRoomListSubscriptions() {
@@ -367,15 +486,63 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         
         var rooms = [HomeScreenRoom]()
         let seenInvites = appSettings.seenInvites
+        let tasksByRoom = Dictionary(grouping: latestTaskSummaries, by: \.roomID)
+        let projectRoomIDs = Set(latestProjects.map(\.roomID))
+        let pendingByRoom = Dictionary(grouping: latestPendingChoices, by: \.roomID)
+        let activeObjectivesByRoom = Dictionary(grouping: latestObjectives.filter { $0.status == .active }, by: \.roomID)
+        let roomSummaries = roomSummaryProvider.roomListPublisher.value
         
-        for summary in roomSummaryProvider.roomListPublisher.value {
-            let room = HomeScreenRoom(summary: summary,
+        for summary in roomSummaries {
+            var room = HomeScreenRoom(summary: summary,
                                       roomListActivityVisibility: appSettings.roomListActivityVisibility,
                                       seenInvites: seenInvites)
+            if let roomID = room.roomID {
+                room.isProject = projectRoomIDs.contains(roomID)
+                let tasks = tasksByRoom[roomID] ?? []
+                room.activeTaskCount = tasks.count(where: { !$0.isResolved })
+                room.doneTaskCount = tasks.count(where: \.isResolved)
+                room.pendingChoiceCount = pendingByRoom[roomID]?.count ?? 0
+                room.activeObjectiveTitles = (activeObjectivesByRoom[roomID] ?? []).map(\.title)
+            }
             rooms.append(room)
         }
         
-        state.rooms = rooms
+        // Stable re-sort: pending (待批) → active (在办) → rest. `filter` preserves the relative
+        // order of the elements it keeps, so each group stays in provider order — that IS the guarantee.
+        let pending = rooms.filter { $0.pendingChoiceCount > 0 }
+        let active = rooms.filter { $0.pendingChoiceCount == 0 && $0.activeTaskCount > 0 }
+        let rest = rooms.filter { $0.pendingChoiceCount == 0 && $0.activeTaskCount == 0 }
+        state.rooms = pending + active + rest
+        
+        // Cross-room pending-choices strip/sheet: joins ALL pending choices (not just ones whose room
+        // is currently in the provider's list — a choice can outlive pagination/filtering), 道-filtered
+        // when a space is selected. Room name lookup is best-effort and degrades to nil.
+        let roomNamesByID = Dictionary(roomSummaries.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        let spaceFilteredPendingChoices = if let spaceFilter = spaceFilterSubject.value {
+            latestPendingChoices.filter { spaceFilter.descendants.contains($0.roomID) }
+        } else {
+            latestPendingChoices
+        }
+        state.pendingChoices = spaceFilteredPendingChoices.map { pendingChoice in
+            HomeScreenPendingChoice(roomID: pendingChoice.roomID,
+                                    eventID: pendingChoice.eventID,
+                                    question: pendingChoice.question,
+                                    roomName: roomNamesByID[pendingChoice.roomID])
+        }
+    }
+    
+    /// The space graph behind `spaceFilterPublisher` only surfaces joined spaces, so an invited
+    /// 道 never gets a chip — badge the "全部" chip instead so the invite isn't invisible. Deliberately
+    /// reads `staticRoomSummaryProvider` (never filtered) rather than `roomSummaryProvider` (scoped to
+    /// whichever 道 is currently selected) — an invite to an unrelated 道 must still badge "全部" even
+    /// while some other 道's filter is active, not just when "全部" itself is already selected.
+    private func updatePendingSpaceInvites() {
+        guard let staticRoomSummaryProvider else { return }
+        
+        let seenInvites = appSettings.seenInvites
+        state.hasPendingSpaceInvites = staticRoomSummaryProvider.roomListPublisher.value.contains {
+            $0.isSpace && $0.joinRequestType?.isInvite == true && !seenInvites.contains($0.id)
+        }
     }
     
     private func markRoomAsFavourite(_ roomID: String, isFavourite: Bool) async {

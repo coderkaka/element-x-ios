@@ -14,6 +14,7 @@ import SwiftUI
 enum ChatsTabFlowCoordinatorAction {
     case switchToChatsTab
     case showSettings
+    case showSpaceManagement
     case showChatBackupSettings
     case sessionVerification(SessionVerificationScreenFlow)
     case showCallScreen(roomProxy: JoinedRoomProxyProtocol, isVoiceCall: Bool)
@@ -24,6 +25,7 @@ enum ChatsTabFlowCoordinatorAction {
 class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
     private let navigationSplitCoordinator: NavigationSplitCoordinator
     private let flowParameters: CommonFlowParameters
+    private let agentIndexService: AgentIndexServiceProtocol
     
     private var userSession: UserSessionProtocol {
         flowParameters.userSession
@@ -56,9 +58,11 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
     
     init(isNewLogin: Bool,
          navigationSplitCoordinator: NavigationSplitCoordinator,
+         agentIndexService: AgentIndexServiceProtocol,
          flowParameters: CommonFlowParameters) {
         stateMachine = flowParameters.stateMachineFactory.makeChatsTabFlowStateMachine()
         self.navigationSplitCoordinator = navigationSplitCoordinator
+        self.agentIndexService = agentIndexService
         self.flowParameters = flowParameters
         
         sidebarNavigationStackCoordinator = NavigationStackCoordinator(navigationSplitCoordinator: navigationSplitCoordinator)
@@ -138,6 +142,8 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
                                       userInfo: .init(animated: animated))
         case .event(let eventID, let roomID, let via):
             stateMachine.processEvent(.selectRoom(roomID: roomID, via: via, entryPoint: .eventID(eventID)), userInfo: .init(animated: animated))
+        case .canvasSteps(let roomID, let taskID, let via):
+            stateMachine.processEvent(.selectRoom(roomID: roomID, via: via, entryPoint: .canvasSteps(taskID: taskID)), userInfo: .init(animated: animated))
         case .eventOnRoomAlias(let eventID, let alias):
             switch await userSession.clientProxy.resolveRoomAlias(alias) {
             case .success(let resolved): await asyncHandleAppRoute(.event(eventID: eventID, roomID: resolved.roomId, via: resolved.servers), animated: animated)
@@ -316,6 +322,7 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
             case .share(let payload): .share(payload)
             case .transferOwnership: .transferOwnership(roomID: roomID)
             case .thread(let rootEventID, let focusEventID): .thread(roomID: roomID, threadRootEventID: rootEventID, focusEventID: focusEventID)
+            case .canvasSteps(let taskID): .canvasSteps(roomID: roomID, taskID: taskID, via: via)
             }
             roomFlowCoordinator.handleAppRoute(route, animated: animated)
         } else {
@@ -388,7 +395,8 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
                                                          appSettings: flowParameters.appSettings,
                                                          analyticsService: flowParameters.analytics,
                                                          notificationManager: flowParameters.notificationManager,
-                                                         userIndicatorController: flowParameters.userIndicatorController)
+                                                         userIndicatorController: flowParameters.userIndicatorController,
+                                                         agentIndexService: agentIndexService)
         let coordinator = HomeScreenCoordinator(parameters: parameters)
         
         coordinator.actions
@@ -413,6 +421,8 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
                     }
                 case .presentSettingsScreen:
                     actionsSubject.send(.showSettings)
+                case .presentSpaceManagement:
+                    actionsSubject.send(.showSpaceManagement)
                 case .presentFeedbackScreen:
                     stateMachine.processEvent(.feedbackScreen)
                 case .presentSecureBackupSettings:
@@ -568,6 +578,8 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
             coordinator.handleAppRoute(.transferOwnership(roomID: roomID), animated: animated)
         case .thread(let rootEventID, let focusEventID):
             coordinator.handleAppRoute(.thread(roomID: roomID, threadRootEventID: rootEventID, focusEventID: focusEventID), animated: animated)
+        case .canvasSteps(let taskID):
+            coordinator.handleAppRoute(.canvasSteps(roomID: roomID, taskID: taskID, via: via), animated: animated)
         }
         
         Task {

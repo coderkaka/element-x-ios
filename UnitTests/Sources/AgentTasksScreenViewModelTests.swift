@@ -1,0 +1,177 @@
+//
+// Copyright 2025 Element Creations Ltd.
+//
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial.
+// Please see LICENSE files in the repository root for full details.
+//
+
+import Combine
+@testable import ElementX
+import Testing
+
+@MainActor
+struct AgentTasksScreenViewModelTests {
+    @Test
+    func initialStateSplitsTasksByResolution() {
+        let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask, Self.resolvedTask])
+        
+        #expect(viewModel.context.viewState.unresolvedTasks == [Self.unresolvedTask])
+        #expect(viewModel.context.viewState.resolvedTasks == [Self.resolvedTask])
+        #expect(!viewModel.context.viewState.isEmpty)
+    }
+    
+    @Test
+    func emptyServiceGivesEmptyState() {
+        let (viewModel, _) = makeViewModel(tasks: [])
+        
+        #expect(viewModel.context.viewState.isEmpty)
+    }
+    
+    @Test
+    func publisherUpdatesAreReflectedInState() async throws {
+        let (viewModel, tasksSubject) = makeViewModel(tasks: [])
+        
+        let deferred = deferFulfillment(viewModel.context.observe(\.viewState.unresolvedTasks)) { !$0.isEmpty }
+        tasksSubject.send([Self.unresolvedTask, Self.resolvedTask])
+        try await deferred.fulfill()
+        
+        #expect(viewModel.context.viewState.unresolvedTasks == [Self.unresolvedTask])
+        #expect(viewModel.context.viewState.resolvedTasks == [Self.resolvedTask])
+    }
+    
+    @Test
+    func tappingTaskPresentsItsCanvasSteps() async throws {
+        let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask])
+        
+        let deferred = deferFulfillment(viewModel.actionsPublisher) { action in
+            action == .presentCanvasSteps(roomID: Self.unresolvedTask.roomID, taskID: Self.unresolvedTask.taskID)
+        }
+        viewModel.context.send(viewAction: .taskTapped(Self.unresolvedTask))
+        try await deferred.fulfill()
+    }
+    
+    @Test
+    func showSettingsForwardsTheAction() async throws {
+        let (viewModel, _) = makeViewModel(tasks: [])
+        
+        let deferred = deferFulfillment(viewModel.actionsPublisher) { $0 == .showSettings }
+        viewModel.context.send(viewAction: .showSettings)
+        try await deferred.fulfill()
+    }
+    
+    @Test
+    func setViewModePersistsToAppSettings() {
+        let appSettings: AppSettings = .volatile()
+        let (viewModel, _) = makeViewModel(tasks: [], appSettings: appSettings)
+        
+        #expect(viewModel.context.viewState.viewMode == .list)
+        viewModel.context.send(viewAction: .setViewMode(.metric))
+        #expect(viewModel.context.viewState.viewMode == .metric)
+        #expect(appSettings.agentTasksViewMode == .metric)
+    }
+    
+    @Test
+    func metricTasksFiltersToTasksWithAMetric() {
+        let taskWithMetric = AgentTaskSummary(roomID: "!c:example.com", roomName: "Room C", taskID: "task-3",
+                                              title: "Score improvement", isResolved: false, doneStepCount: 0, totalStepCount: 1,
+                                              metric: .init(current: 100, target: 130, unit: "分"))
+        let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask, taskWithMetric])
+        
+        #expect(viewModel.context.viewState.metricTasks == [taskWithMetric])
+    }
+    
+    @Test
+    func loadMetricHistoryFetchesAndCachesPoints() async throws {
+        let taskWithMetric = AgentTaskSummary(roomID: "!c:example.com", roomName: "Room C", taskID: "task-3",
+                                              title: "Score improvement", isResolved: false, doneStepCount: 0, totalStepCount: 1,
+                                              metric: .init(current: 100, target: 130, unit: "分"))
+        let points = [AgentTaskMetricHistoryPoint(metric: .init(current: 90, target: 130, unit: "分"), date: .now)]
+        let indexService = AgentIndexServiceMock()
+        indexService.underlyingTasksPublisher = .init([taskWithMetric])
+        indexService.metricHistoryRoomIDTaskIDLimitClosure = { _, _, _ in points }
+        let spaceService = SpaceServiceProxyMock()
+        spaceService.underlyingSpaceFilterPublisher = .init([])
+        let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
+        let viewModel = AgentTasksScreenViewModel(userSession: userSession,
+                                                  agentIndexService: indexService,
+                                                  spaceService: spaceService,
+                                                  appSettings: .volatile())
+        
+        let deferred = deferFulfillment(viewModel.context.observe(\.viewState.metricHistories)) { !$0.isEmpty }
+        viewModel.context.send(viewAction: .loadMetricHistory(taskWithMetric))
+        try await deferred.fulfill()
+        
+        #expect(viewModel.context.viewState.metricHistories[taskWithMetric.id] == points)
+    }
+    
+    @Test
+    func kanbanColumnsGroupTasksBySpaceAndFallBackForUnassignedRooms() {
+        let spaceService = SpaceServiceProxyMock()
+        spaceService.underlyingSpaceFilterPublisher = .init([
+            .init(room: .mock(id: "!space:example.com", name: "工程院", isSpace: true), level: 0, descendants: [Self.unresolvedTask.roomID])
+        ])
+        let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask, Self.resolvedTask], spaceService: spaceService)
+        
+        #expect(viewModel.context.viewState.kanbanColumns.count == 2)
+        #expect(viewModel.context.viewState.kanbanColumns[0].title == "工程院")
+        #expect(viewModel.context.viewState.kanbanColumns[0].tasks == [Self.unresolvedTask])
+        #expect(viewModel.context.viewState.kanbanColumns[1].tasks == [Self.resolvedTask])
+    }
+    
+    @Test
+    func kanbanColumnsDeDupeSpacesReachableViaMultipleParents() {
+        // The same space listed twice (two parent paths in the 道 graph) must not produce two
+        // columns with the same id — that would give ForEach duplicate ids.
+        let spaceService = SpaceServiceProxyMock()
+        spaceService.underlyingSpaceFilterPublisher = .init([
+            .init(room: .mock(id: "!space:example.com", name: "工程院", isSpace: true), level: 0, descendants: [Self.unresolvedTask.roomID]),
+            .init(room: .mock(id: "!space:example.com", name: "工程院", isSpace: true), level: 1, descendants: [Self.unresolvedTask.roomID])
+        ])
+        let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask], spaceService: spaceService)
+        
+        let ids = viewModel.context.viewState.kanbanColumns.map(\.id)
+        #expect(ids == ["!space:example.com"])
+        #expect(Set(ids).count == ids.count)
+    }
+    
+    // MARK: - Helpers
+    
+    private static let unresolvedTask = AgentTaskSummary(roomID: "!a:example.com",
+                                                         roomName: "Room A",
+                                                         taskID: "task-1",
+                                                         title: "Refactor auth module",
+                                                         isResolved: false,
+                                                         doneStepCount: 1,
+                                                         totalStepCount: 3)
+    
+    private static let resolvedTask = AgentTaskSummary(roomID: "!b:example.com",
+                                                       roomName: "Room B",
+                                                       taskID: "task-2",
+                                                       title: nil,
+                                                       isResolved: true,
+                                                       doneStepCount: 2,
+                                                       totalStepCount: 2)
+    
+    private func makeViewModel(tasks: [AgentTaskSummary],
+                               spaceService: SpaceServiceProxyProtocol? = nil,
+                               appSettings: AppSettings = .volatile()) -> (AgentTasksScreenViewModel, CurrentValueSubject<[AgentTaskSummary], Never>) {
+        let tasksSubject = CurrentValueSubject<[AgentTaskSummary], Never>(tasks)
+        let indexService = AgentIndexServiceMock()
+        indexService.underlyingTasksPublisher = tasksSubject.asCurrentValuePublisher()
+        
+        let resolvedSpaceService: SpaceServiceProxyProtocol
+        if let spaceService {
+            resolvedSpaceService = spaceService
+        } else {
+            let mock = SpaceServiceProxyMock()
+            mock.underlyingSpaceFilterPublisher = .init([])
+            resolvedSpaceService = mock
+        }
+        
+        let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
+        return (AgentTasksScreenViewModel(userSession: userSession,
+                                          agentIndexService: indexService,
+                                          spaceService: resolvedSpaceService,
+                                          appSettings: appSettings), tasksSubject)
+    }
+}
