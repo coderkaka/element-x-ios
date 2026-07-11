@@ -18,13 +18,13 @@ struct SpaceTabBarView: View {
     let action: (SpaceServiceFilter?) -> Void
     let onManageTapped: () -> Void
     let onReorder: (String, MoveDirection) -> Void
-
+    
     /// Backs the selected chip's sliding highlight (fix-kanban2 contract C) — one shared
     /// namespace so `matchedGeometryEffect` can animate the highlight moving between whichever
     /// two chips are the old/new selection, entirely internal so callers stay unaware of it.
     @Namespace private var selectionNamespace
     private static let selectionGeometryID = "selectedSpaceChip"
-
+    
     var body: some View {
         HStack(spacing: 8) {
             ScrollView(.horizontal) {
@@ -38,7 +38,7 @@ struct SpaceTabBarView: View {
                         selectFilter(nil)
                     }
                     .overlayBadge(10, isBadged: hasPendingSpaceInvites)
-
+                    
                     ForEach(Array(filters.enumerated()), id: \.element.id) { index, filter in
                         SpaceTabChipView(name: filter.room.name,
                                          avatar: filter.room.avatar,
@@ -53,7 +53,7 @@ struct SpaceTabBarView: View {
                                 onReorder(filter.room.id, .left)
                             }
                             .disabled(index == 0)
-
+                            
                             Button(UntranslatedL10n.actionMoveRight) {
                                 onReorder(filter.room.id, .right)
                             }
@@ -65,7 +65,7 @@ struct SpaceTabBarView: View {
                 .animation(.spring(response: 0.28, dampingFraction: 0.86), value: selectedFilter)
             }
             .scrollIndicators(.hidden)
-
+            
             Button(action: onManageTapped) {
                 CompoundIcon(\.settings, size: .small, relativeTo: .compound.bodyMD)
                     .foregroundColor(.compound.iconSecondary)
@@ -75,7 +75,7 @@ struct SpaceTabBarView: View {
         }
         .padding(.leading, 16)
     }
-
+    
     /// Light tap feedback on an actual selection change — follows `TimelineScrollButton`'s
     /// existing `UIImpactFeedbackGenerator` precedent elsewhere in the codebase (no
     /// `sensoryFeedback` usage to match instead). Skipped on a no-op tap of the already-selected chip.
@@ -94,15 +94,15 @@ private struct SpaceTabChipView: View {
     let selectionNamespace: Namespace.ID
     let selectionGeometryID: String
     let action: () -> Void
-
+    
     private var strokeColor: Color {
         isSelected ? .compound.bgActionPrimaryRest : .compound.borderInteractiveSecondary
     }
-
+    
     private var foregroundColor: Color {
         isSelected ? .compound.textOnSolidPrimary : .compound.textPrimary
     }
-
+    
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: 20)
         Button(action: action) {
@@ -160,9 +160,9 @@ struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
                             hasPendingSpaceInvites: false,
                             terminology: .init(scenario: .imperial),
                             mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
-
+            
             Divider()
-
+            
             // The sliding highlight lands on the second chip rather than the first — a quick
             // visual check that `matchedGeometryEffect` picks up whichever chip is selected, not
             // just always the leading one (fix-kanban2 contract C).
@@ -171,9 +171,9 @@ struct SpaceTabBarView_Previews: PreviewProvider, TestablePreview {
                             hasPendingSpaceInvites: false,
                             terminology: .init(scenario: .imperial),
                             mediaProvider: mediaProvider) { _ in } onManageTapped: { } onReorder: { _, _ in }
-
+            
             Divider()
-
+            
             SpaceTabBarView(filters: [],
                             selectedFilter: nil,
                             hasPendingSpaceInvites: false,

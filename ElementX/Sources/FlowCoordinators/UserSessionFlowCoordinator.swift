@@ -281,7 +281,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                 }
             }
             .store(in: &cancellables)
-
+        
         messagesScreenCoordinator.actionsPublisher
             .sink { [weak self] action in
                 guard let self else { return }

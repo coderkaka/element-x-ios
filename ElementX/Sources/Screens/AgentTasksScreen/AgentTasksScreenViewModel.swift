@@ -15,13 +15,13 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
     var actionsPublisher: AnyPublisher<AgentTasksScreenViewModelAction, Never> {
         actionsSubject.eraseToAnyPublisher()
     }
-
+    
     private let appSettings: AppSettings
     private let agentIndexService: AgentIndexServiceProtocol
     /// Unfiltered room list, used exactly like `HomeScreenViewModel`'s own copy — detecting a
     /// pending 道 invite regardless of whichever 道 filter happens to be selected right now.
     private let staticRoomSummaryProvider: StaticRoomSummaryProviderProtocol?
-
+    
     init(userSession: UserSessionProtocol,
          agentIndexService: AgentIndexServiceProtocol,
          spaceService: SpaceServiceProxyProtocol,
@@ -34,17 +34,17 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
                                                                terminology: .init(scenario: appSettings.terminologyScenario),
                                                                spaceFilterOrder: appSettings.spaceFilterOrder),
                    mediaProvider: userSession.mediaProvider)
-
+        
         userSession.clientProxy.userAvatarURLPublisher
             .receive(on: DispatchQueue.main)
             .weakAssign(to: \.state.userAvatarURL, on: self)
             .store(in: &cancellables)
-
+        
         userSession.clientProxy.userDisplayNamePublisher
             .receive(on: DispatchQueue.main)
             .weakAssign(to: \.state.userDisplayName, on: self)
             .store(in: &cancellables)
-
+        
         // No queue hop: the services publish on the main actor and the synchronous
         // initial emission populates state before the first render (previews rely on this).
         Publishers.CombineLatest3(agentIndexService.tasksPublisher, spaceService.spaceFilterPublisher, appSettings.selectedSpaceFilterRoomIDPublisher)
@@ -60,7 +60,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
                 state.availableSpaceFilters = spaceFilters
             }
             .store(in: &cancellables)
-
+        
         appSettings.terminologyScenarioPublisher
             .sink { [weak self] scenario in
                 guard let self else { return }
@@ -68,7 +68,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
                 state.kanbanColumns = Self.makeKanbanColumns(tasks: state.unresolvedTasks + state.resolvedTasks, terminology: state.terminology)
             }
             .store(in: &cancellables)
-
+        
         // Keeps the 道条's chip order live: the coordinator/view model is created once per
         // session and outlives tab switches, so a reorder done on either tab after the 差事 tab
         // was first opened must still reach `topLevelSpaceFilters` here, not just at launch.
@@ -77,29 +77,29 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
                 self?.state.spaceFilterOrder = order
             }
             .store(in: &cancellables)
-
+        
         appSettings.seenInvitesPublisher
             .removeDuplicates()
             .sink { [weak self] _ in
                 self?.updatePendingSpaceInvites()
             }
             .store(in: &cancellables)
-
+        
         staticRoomSummaryProvider?.roomListPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.updatePendingSpaceInvites()
             }
             .store(in: &cancellables)
-
+        
         updatePendingSpaceInvites()
     }
-
+    
     // MARK: - Public
-
+    
     override func process(viewAction: AgentTasksScreenViewAction) {
         MXLog.info("View model: received view action: \(viewAction)")
-
+        
         switch viewAction {
         case .taskTapped(let task):
             actionsSubject.send(.presentCanvasSteps(roomID: task.roomID, taskID: task.taskID))
@@ -122,9 +122,9 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
             actionsSubject.send(.showSpaceManagement)
         }
     }
-
+    
     // MARK: - Private
-
+    
     /// Explicitly scopes the index's (always-full, see `AgentIndexService`) tasks down to the
     /// 道 currently selected on 政事堂, so the 差事 tab visibly follows that same selection
     /// rather than "coincidentally" matching whatever the home tab's room list happened to be
@@ -140,7 +140,7 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
         }
         return (tasks.filter { filter.descendants.contains($0.roomID) }, filter.room.name)
     }
-
+    
     /// Two fixed columns, always both present (even empty) so the board's skeleton doesn't
     /// jump around as data streams in. `AgentTaskSummary` only carries a resolved/unresolved
     /// bool (see `AgentTaskStateEvent`, which collapses the state event's richer `status` string
@@ -152,13 +152,13 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
             AgentTasksKanbanColumn(id: "done", title: terminology.sectionDone, tasks: tasks.filter(\.isResolved))
         ]
     }
-
+    
     private func loadMetricHistory(for task: AgentTaskSummary) {
         guard state.metricHistories[task.id] == nil, !state.loadingMetricTaskIDs.contains(task.id) else {
             return
         }
         state.loadingMetricTaskIDs.insert(task.id)
-
+        
         Task { [weak self] in
             guard let self else { return }
             let points = await agentIndexService.metricHistory(roomID: task.roomID, taskID: task.taskID, limit: 20)
@@ -166,27 +166,27 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
             state.metricHistories[task.id] = points
         }
     }
-
+    
     /// Mirrors `HomeScreenViewModel.reorderSpaceFilter` exactly — same shared setting, so a
     /// reorder started from either tab must behave identically.
     private func reorderSpaceFilter(roomID: String, direction: MoveDirection) {
         var order = state.topLevelSpaceFilters.map(\.room.id)
         guard let currentIndex = order.firstIndex(of: roomID) else { return }
-
+        
         let swapIndex = switch direction {
         case .left: currentIndex - 1
         case .right: currentIndex + 1
         }
         guard order.indices.contains(swapIndex) else { return } // Already at an edge.
-
+        
         order.swapAt(currentIndex, swapIndex)
         appSettings.spaceFilterOrder = order
         state.spaceFilterOrder = order
     }
-
+    
     private func updatePendingSpaceInvites() {
         guard let staticRoomSummaryProvider else { return }
         state.hasPendingSpaceInvites = hasPendingSpaceInvite(in: staticRoomSummaryProvider.roomListPublisher.value,
-                                                              seenInvites: appSettings.seenInvites)
+                                                             seenInvites: appSettings.seenInvites)
     }
 }

@@ -15,7 +15,7 @@ struct AgentTasksScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             spaceTabBar
-
+            
             Group {
                 // Kanban's status columns are always shown (even empty) as a fixed skeleton —
                 // don't let an empty task list hide the switcher's own destination. List/metric
@@ -61,7 +61,7 @@ struct AgentTasksScreen: View {
             Divider()
         }
     }
-
+    
     private var settingsButton: some View {
         Button {
             context.send(viewAction: .showSettings)
@@ -165,7 +165,7 @@ struct AgentTasksScreen: View {
         }
         .background(Color.compound.bgCanvasDefault.ignoresSafeArea())
     }
-
+    
     private func kanbanColumn(_ column: AgentTasksKanbanColumn) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(column.title)

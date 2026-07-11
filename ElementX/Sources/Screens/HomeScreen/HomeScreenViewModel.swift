@@ -573,9 +573,9 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     /// while some other 道's filter is active, not just when "全部" itself is already selected.
     private func updatePendingSpaceInvites() {
         guard let staticRoomSummaryProvider else { return }
-
+        
         state.hasPendingSpaceInvites = hasPendingSpaceInvite(in: staticRoomSummaryProvider.roomListPublisher.value,
-                                                              seenInvites: appSettings.seenInvites)
+                                                             seenInvites: appSettings.seenInvites)
     }
     
     private func markRoomAsFavourite(_ roomID: String, isFavourite: Bool) async {

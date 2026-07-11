@@ -18,7 +18,7 @@ struct AgentTasksScreenViewState: BindableState {
     let userID: String
     var userDisplayName: String?
     var userAvatarURL: URL?
-
+    
     var unresolvedTasks: [AgentTaskSummary] = []
     var resolvedTasks: [AgentTaskSummary] = []
     var kanbanColumns: [AgentTasksKanbanColumn] = []
@@ -48,15 +48,15 @@ struct AgentTasksScreenViewState: BindableState {
     /// same algorithm as `HomeScreenViewModel`'s own copy (see `hasPendingSpaceInvite(in:seenInvites:)`),
     /// badges the "全部" chip since the space graph only surfaces joined spaces.
     var hasPendingSpaceInvites = false
-
+    
     var topLevelSpaceFilters: [SpaceServiceFilter] {
         sortSpaceFilters(availableSpaceFilters.filter { $0.level == 0 }, byOrder: spaceFilterOrder)
     }
-
+    
     var selectedSpaceFilter: SpaceServiceFilter? {
         topLevelSpaceFilters.first { $0.room.id == selectedSpaceFilterRoomID }
     }
-
+    
     var isEmpty: Bool {
         unresolvedTasks.isEmpty && resolvedTasks.isEmpty
     }
@@ -71,7 +71,7 @@ enum AgentTasksScreenViewAction: CustomStringConvertible {
     case selectSpaceFilter(String?)
     case reorderSpaceFilter(roomID: String, direction: MoveDirection)
     case manageSpaces
-
+    
     var description: String {
         switch self {
         case .taskTapped: "taskTapped"

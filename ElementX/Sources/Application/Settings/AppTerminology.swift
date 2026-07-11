@@ -121,7 +121,7 @@ nonisolated struct AppTerminology {
     var kanbanViewA11yLabel: String {
         pick("查看看板", "查看看板")
     }
-
+    
     var listViewA11yLabel: String {
         pick("查看清单", "查看列表")
     }
