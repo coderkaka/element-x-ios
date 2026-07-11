@@ -124,7 +124,7 @@ struct AgentTasksScreenViewModelTests {
         let (viewModel, _) = makeViewModel(tasks: [])
 
         #expect(viewModel.context.viewState.kanbanColumns.count == 2)
-        #expect(viewModel.context.viewState.kanbanColumns.allSatisfy(\.tasks.isEmpty))
+        #expect(viewModel.context.viewState.kanbanColumns.allSatisfy { $0.tasks.isEmpty })
     }
 
     // MARK: - Kanban columns (按案)
