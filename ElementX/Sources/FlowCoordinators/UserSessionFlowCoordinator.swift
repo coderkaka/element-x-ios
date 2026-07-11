@@ -276,6 +276,8 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
                     handleAppRoute(.canvasSteps(roomID: roomID, taskID: taskID, via: []), animated: true)
                 case .showSettings:
                     handleAppRoute(.settings, animated: true)
+                case .showSpaceManagement:
+                    presentSpaceManagement()
                 }
             }
             .store(in: &cancellables)

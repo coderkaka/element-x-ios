@@ -136,7 +136,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             .store(in: &cancellables)
         
         // Keeps 政事堂 in sync when the 道 filter is changed from elsewhere (the 差事 tab's own
-        // 道 menu, fix-kanban contract C) — `appSettings.selectedSpaceFilterRoomID` is the single
+        // 道条, fix-kanban2 contract B) — `appSettings.selectedSpaceFilterRoomID` is the single
         // source of truth both tabs observe. No `.receive(on:)` hop: `@UserPreference`'s setter
         // publishes synchronously on whatever thread wrote it, matching the other appSettings
         // subscriptions in this initializer (e.g. `roomListActivityVisibilityPublisher` below).
@@ -574,10 +574,8 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     private func updatePendingSpaceInvites() {
         guard let staticRoomSummaryProvider else { return }
         
-        let seenInvites = appSettings.seenInvites
-        state.hasPendingSpaceInvites = staticRoomSummaryProvider.roomListPublisher.value.contains {
-            $0.isSpace && $0.joinRequestType?.isInvite == true && !seenInvites.contains($0.id)
-        }
+        state.hasPendingSpaceInvites = hasPendingSpaceInvite(in: staticRoomSummaryProvider.roomListPublisher.value,
+                                                             seenInvites: appSettings.seenInvites)
     }
     
     private func markRoomAsFavourite(_ roomID: String, isFavourite: Bool) async {

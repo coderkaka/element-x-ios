@@ -42,9 +42,10 @@ nonisolated struct AgentTaskSummary: Identifiable, Equatable {
     /// The 标的(`AgentObjectiveSummary.objectiveID`) this task belongs to, if any — optional
     /// back-reference per `element-agent-protocol.md` §3.4; most tasks don't carry one.
     var objectiveID: String?
-    /// The state event's Matrix `origin_server_ts` — drives the 差事 tab's 按案 kanban column
-    /// ordering (most-recently-active 案 first). `nil` only defensively (a real state event
-    /// always carries this in the envelope); a column with no timestamped tasks sorts last.
+    /// The state event's Matrix `origin_server_ts` — a general-purpose timestamp for list/future
+    /// sorting (not currently consumed by the 差事 tab, which fixed its kanban board to 按状态
+    /// columns only, see fix-kanban2). `nil` only defensively (a real state event always carries
+    /// this in the envelope).
     var updatedAt: Date?
     
     var id: String {

@@ -14,7 +14,7 @@ struct AgentTasksScreen: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            spaceFilterMenu
+            spaceTabBar
             
             Group {
                 // Kanban's status columns are always shown (even empty) as a fixed skeleton —
@@ -42,60 +42,23 @@ struct AgentTasksScreen: View {
         }
     }
     
-    /// The 道 filter as a tappable menu (listing 全部 + every top-level 道, same source as
-    /// 政事堂's own 道条) — always shown, including when unfiltered, so it doubles as the entry
-    /// point into switching 道 without going back to 政事堂.
-    private var spaceFilterMenu: some View {
-        Menu {
-            Button {
-                context.send(viewAction: .selectSpaceFilter(nil))
-            } label: {
-                if context.viewState.selectedSpaceFilterRoomID == nil {
-                    Label(UntranslatedL10n.screenHomeSpaceAll, icon: \.check)
-                } else {
-                    Text(UntranslatedL10n.screenHomeSpaceAll)
-                }
+    /// The same 道条 component 政事堂 renders (fix-kanban2 contract B) — selection is driven by
+    /// `appSettings.selectedSpaceFilterRoomID`, the single source of truth both tabs observe, so
+    /// picking a 道 here keeps 政事堂 in sync and vice versa.
+    private var spaceTabBar: some View {
+        VStack(spacing: 0) {
+            SpaceTabBarView(filters: context.viewState.topLevelSpaceFilters,
+                            selectedFilter: context.viewState.selectedSpaceFilter,
+                            hasPendingSpaceInvites: context.viewState.hasPendingSpaceInvites,
+                            terminology: context.viewState.terminology,
+                            mediaProvider: context.mediaProvider) { filter in
+                context.send(viewAction: .selectSpaceFilter(filter?.room.id))
+            } onManageTapped: {
+                context.send(viewAction: .manageSpaces)
+            } onReorder: { roomID, direction in
+                context.send(viewAction: .reorderSpaceFilter(roomID: roomID, direction: direction))
             }
-            ForEach(context.viewState.topLevelSpaceFilters) { filter in
-                Button {
-                    context.send(viewAction: .selectSpaceFilter(filter.room.id))
-                } label: {
-                    if context.viewState.selectedSpaceFilterRoomID == filter.room.id {
-                        Label(filter.room.name, icon: \.check)
-                    } else {
-                        Text(filter.room.name)
-                    }
-                }
-            }
-        } label: {
-            HStack(spacing: 6) {
-                CompoundIcon(\.space, size: .xSmall, relativeTo: .compound.bodySM)
-                    .foregroundColor(.compound.iconTertiary)
-                    .accessibilityHidden(true)
-                Text(spaceFilterMenuLabel)
-                    .font(.compound.bodySM)
-                    .foregroundColor(.compound.textSecondary)
-                    .lineLimit(1)
-                CompoundIcon(\.chevronDown, size: .xSmall, relativeTo: .compound.bodySM)
-                    .foregroundColor(.compound.iconTertiary)
-                    .accessibilityHidden(true)
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.compound.bgSubtleSecondary)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(spaceFilterMenuLabel)
-    }
-    
-    private var spaceFilterMenuLabel: String {
-        if let name = context.viewState.selectedSpaceFilterName {
-            context.viewState.terminology.spaceFilterIndicator(name: name)
-        } else {
-            UntranslatedL10n.screenHomeSpaceAll
+            Divider()
         }
     }
     
@@ -190,66 +153,17 @@ struct AgentTasksScreen: View {
     }
     
     private var kanbanBoard: some View {
-        VStack(spacing: 0) {
-            kanbanGroupingModeMenu
-            
-            // Scroll both axes: horizontal across columns, vertical so a column taller than the
-            // screen is still reachable (a horizontal-only ScrollView left overflow stuck off-screen).
-            ScrollView([.horizontal, .vertical]) {
-                HStack(alignment: .top, spacing: 12) {
-                    ForEach(context.viewState.kanbanColumns) { column in
-                        kanbanColumn(column)
-                    }
-                }
-                .padding(16)
-            }
-            .background(Color.compound.bgCanvasDefault.ignoresSafeArea())
-        }
-    }
-    
-    /// Switches whether the board's columns are 按状态(default) or 按案 — a lightweight menu at
-    /// the kanban content's own top, matching `viewModeMenu`'s style.
-    private var kanbanGroupingModeMenu: some View {
-        Menu {
-            Button {
-                context.send(viewAction: .setKanbanGroupingMode(.status))
-            } label: {
-                if context.viewState.kanbanGroupingMode == .status {
-                    Label(context.viewState.terminology.kanbanGroupByStatusLabel, icon: \.check)
-                } else {
-                    Text(context.viewState.terminology.kanbanGroupByStatusLabel)
+        // Scroll both axes: horizontal across columns, vertical so a column taller than the
+        // screen is still reachable (a horizontal-only ScrollView left overflow stuck off-screen).
+        ScrollView([.horizontal, .vertical]) {
+            HStack(alignment: .top, spacing: 12) {
+                ForEach(context.viewState.kanbanColumns) { column in
+                    kanbanColumn(column)
                 }
             }
-            Button {
-                context.send(viewAction: .setKanbanGroupingMode(.room))
-            } label: {
-                if context.viewState.kanbanGroupingMode == .room {
-                    Label(context.viewState.terminology.kanbanGroupByRoomLabel, icon: \.check)
-                } else {
-                    Text(context.viewState.terminology.kanbanGroupByRoomLabel)
-                }
-            }
-        } label: {
-            HStack(spacing: 4) {
-                Text(currentKanbanGroupingModeLabel)
-                CompoundIcon(\.chevronDown, size: .xSmall, relativeTo: .compound.bodySM)
-            }
-            .font(.compound.bodySM)
-            .foregroundColor(.compound.textSecondary)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
+            .padding(16)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(currentKanbanGroupingModeLabel)
-    }
-    
-    private var currentKanbanGroupingModeLabel: String {
-        switch context.viewState.kanbanGroupingMode {
-        case .status: context.viewState.terminology.kanbanGroupByStatusLabel
-        case .room: context.viewState.terminology.kanbanGroupByRoomLabel
-        }
+        .background(Color.compound.bgCanvasDefault.ignoresSafeArea())
     }
     
     private func kanbanColumn(_ column: AgentTasksKanbanColumn) -> some View {
@@ -439,16 +353,6 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
         .init(room: .mock(id: "!a:example.com", name: "工程院", isSpace: true), level: 0, descendants: ["!a:example.com"]),
         .init(room: .mock(id: "!d:example.com", name: "上林苑", isSpace: true), level: 0, descendants: ["!d:example.com"])
     ], viewMode: .kanban)
-    static let kanbanByRoomViewModel = makeViewModel(tasks: [
-        .init(roomID: "!a:example.com", roomName: "Backend", taskID: "task-1",
-              title: "Refactor auth module", isResolved: false, doneStepCount: 1, totalStepCount: 3,
-              updatedAt: Date(timeIntervalSince1970: 1_751_000_000)),
-        .init(roomID: "!d:example.com", roomName: "iOS App", taskID: "task-4",
-              title: "Ship the kanban view", isResolved: false, doneStepCount: 2, totalStepCount: 2,
-              updatedAt: Date(timeIntervalSince1970: 1_751_100_000)),
-        .init(roomID: "!e:example.com", roomName: "", taskID: "task-5",
-              title: "A task in a room with no display name", isResolved: false, doneStepCount: 0, totalStepCount: 1)
-    ], viewMode: .kanban, kanbanGroupingMode: .room)
     static let emptyKanbanViewModel = makeViewModel(tasks: [], viewMode: .kanban)
     static let metricTaskWithHistory = AgentTaskSummary(roomID: "!a:example.com", roomName: "Hermes案", taskID: "task-1", title: "内存占用瘦身",
                                                         isResolved: false, doneStepCount: 2, totalStepCount: 3,
@@ -497,11 +401,6 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
         .previewDisplayName("Kanban")
         
         ElementNavigationStack {
-            AgentTasksScreen(context: kanbanByRoomViewModel.context)
-        }
-        .previewDisplayName("Kanban by room")
-        
-        ElementNavigationStack {
             AgentTasksScreen(context: emptyKanbanViewModel.context)
         }
         .previewDisplayName("Empty kanban")
@@ -520,7 +419,6 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
     static func makeViewModel(tasks: [AgentTaskSummary],
                               spaceFilters: [SpaceServiceFilter] = [],
                               viewMode: AgentTasksViewMode = .list,
-                              kanbanGroupingMode: AgentTasksKanbanGroupingMode = .status,
                               metricHistory: [String: [AgentTaskMetricHistoryPoint]] = [:],
                               selectedSpaceFilterRoomID: String? = nil) -> AgentTasksScreenViewModel {
         let indexService = AgentIndexServiceMock()
@@ -532,7 +430,6 @@ struct AgentTasksScreen_Previews: PreviewProvider, TestablePreview {
         spaceService.underlyingSpaceFilterPublisher = .init(spaceFilters)
         let appSettings: AppSettings = .volatile()
         appSettings.agentTasksViewMode = viewMode
-        appSettings.agentTasksKanbanGroupingMode = kanbanGroupingMode
         appSettings.selectedSpaceFilterRoomID = selectedSpaceFilterRoomID
         let userSession = UserSessionMock(.init(clientProxy: ClientProxyMock(.init(userID: "@alice:example.com"))))
         return AgentTasksScreenViewModel(userSession: userSession,
