@@ -89,7 +89,7 @@ class UserSessionFlowCoordinator: FlowCoordinatorProtocol {
         navigationRootCoordinator.setRootCoordinator(navigationTabCoordinator)
         
         agentIndexService = AgentIndexService(clientProxy: flowParameters.userSession.clientProxy,
-                                              roomSummaryProvider: flowParameters.userSession.clientProxy.roomSummaryProvider)
+                                              roomSummaryProvider: flowParameters.userSession.clientProxy.staticRoomSummaryProvider)
         agentIndexService.start()
         
         let chatsSplitCoordinator = NavigationSplitCoordinator(placeholderCoordinator: PlaceholderScreenCoordinator(hideBrandChrome: flowParameters.appSettings.hideBrandChrome))

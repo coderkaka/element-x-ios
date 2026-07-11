@@ -134,6 +134,72 @@ struct AgentTasksScreenViewModelTests {
         #expect(Set(ids).count == ids.count)
     }
     
+    // MARK: - 道 filter following
+
+    @Test
+    func selectedSpaceScopesTasksToItsDescendantsAndSurfacesItsName() {
+        let spaceService = SpaceServiceProxyMock()
+        spaceService.underlyingSpaceFilterPublisher = .init([
+            .init(room: .mock(id: "!space:example.com", name: "工程院", isSpace: true), level: 0, descendants: [Self.unresolvedTask.roomID])
+        ])
+        let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask, Self.resolvedTask],
+                                           spaceService: spaceService,
+                                           selectedSpaceFilterRoomID: "!space:example.com")
+
+        #expect(viewModel.context.viewState.unresolvedTasks == [Self.unresolvedTask])
+        #expect(viewModel.context.viewState.resolvedTasks == [])
+        #expect(viewModel.context.viewState.selectedSpaceFilterName == "工程院")
+    }
+
+    @Test
+    func noSelectedSpaceShowsEverythingUnfiltered() {
+        let spaceService = SpaceServiceProxyMock()
+        spaceService.underlyingSpaceFilterPublisher = .init([
+            .init(room: .mock(id: "!space:example.com", name: "工程院", isSpace: true), level: 0, descendants: [Self.unresolvedTask.roomID])
+        ])
+        let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask, Self.resolvedTask],
+                                           spaceService: spaceService,
+                                           selectedSpaceFilterRoomID: nil)
+
+        #expect(viewModel.context.viewState.unresolvedTasks == [Self.unresolvedTask])
+        #expect(viewModel.context.viewState.resolvedTasks == [Self.resolvedTask])
+        #expect(viewModel.context.viewState.selectedSpaceFilterName == nil)
+    }
+
+    @Test
+    func unknownSelectedSpaceRoomIDFallsBackToUnfiltered() {
+        // The persisted selection can point at a 道 that's no longer in `spaceFilterPublisher`
+        // (e.g. the space was left) — that must read as "unfiltered", not "show nothing".
+        let spaceService = SpaceServiceProxyMock()
+        spaceService.underlyingSpaceFilterPublisher = .init([
+            .init(room: .mock(id: "!space:example.com", name: "工程院", isSpace: true), level: 0, descendants: [Self.unresolvedTask.roomID])
+        ])
+        let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask, Self.resolvedTask],
+                                           spaceService: spaceService,
+                                           selectedSpaceFilterRoomID: "!no-longer-joined:example.com")
+
+        #expect(viewModel.context.viewState.unresolvedTasks == [Self.unresolvedTask])
+        #expect(viewModel.context.viewState.resolvedTasks == [Self.resolvedTask])
+        #expect(viewModel.context.viewState.selectedSpaceFilterName == nil)
+    }
+
+    @Test
+    func selectedSpaceAlsoScopesKanbanAndMetricTasks() {
+        let taskWithMetric = AgentTaskSummary(roomID: "!c:example.com", roomName: "Room C", taskID: "task-3",
+                                              title: "Score improvement", isResolved: false, doneStepCount: 0, totalStepCount: 1,
+                                              metric: .init(current: 100, target: 130, unit: "分"))
+        let spaceService = SpaceServiceProxyMock()
+        spaceService.underlyingSpaceFilterPublisher = .init([
+            .init(room: .mock(id: "!space:example.com", name: "工程院", isSpace: true), level: 0, descendants: [Self.unresolvedTask.roomID])
+        ])
+        let (viewModel, _) = makeViewModel(tasks: [Self.unresolvedTask, taskWithMetric],
+                                           spaceService: spaceService,
+                                           selectedSpaceFilterRoomID: "!space:example.com")
+
+        #expect(viewModel.context.viewState.kanbanColumns.map(\.tasks) == [[Self.unresolvedTask]])
+        #expect(viewModel.context.viewState.metricTasks == [])
+    }
+
     // MARK: - Helpers
     
     private static let unresolvedTask = AgentTaskSummary(roomID: "!a:example.com",
@@ -154,7 +220,9 @@ struct AgentTasksScreenViewModelTests {
     
     private func makeViewModel(tasks: [AgentTaskSummary],
                                spaceService: SpaceServiceProxyProtocol? = nil,
-                               appSettings: AppSettings = .volatile()) -> (AgentTasksScreenViewModel, CurrentValueSubject<[AgentTaskSummary], Never>) {
+                               appSettings: AppSettings = .volatile(),
+                               selectedSpaceFilterRoomID: String? = nil) -> (AgentTasksScreenViewModel, CurrentValueSubject<[AgentTaskSummary], Never>) {
+        appSettings.selectedSpaceFilterRoomID = selectedSpaceFilterRoomID
         let tasksSubject = CurrentValueSubject<[AgentTaskSummary], Never>(tasks)
         let indexService = AgentIndexServiceMock()
         indexService.underlyingTasksPublisher = tasksSubject.asCurrentValuePublisher()

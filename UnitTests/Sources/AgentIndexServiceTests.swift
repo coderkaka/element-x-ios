@@ -512,6 +512,32 @@ struct AgentIndexServiceTests {
         #expect(objectives[1].status == .done)
     }
     
+    // MARK: - Data source independence from the main provider's filtering
+
+    @Test
+    func mainProviderFilterChangesDoNotAffectTheIndex() async throws {
+        // Regression guard for the pre-fix bug: the index used to be built from the same
+        // roomSummaryProvider 政事堂 uses for search/未读 filtering, so filtering the home tab
+        // also silently filtered the 差事 tab's data. It's now built from
+        // `staticRoomSummaryProvider` — a separate, always-unfiltered provider — so driving
+        // search on a *different*, main-tab-style provider must have zero effect on it.
+        let rooms = [RoomSummary.mock(id: "!a:example.com", name: "Room A")]
+        let service = makeService(rooms: rooms, taskEvents: { _ in .success([Self.unresolvedTaskEventJSON]) })
+
+        let deferred = deferFulfillment(service.tasksPublisher) { !$0.isEmpty }
+        service.start()
+        let tasksBeforeSearch = try await deferred.fulfill()
+        #expect(tasksBeforeSearch.count == 1)
+
+        // Simulate 政事堂's main provider entering a search state that would exclude "Room A".
+        let mainProvider = RoomSummaryProviderMock(.init(state: .loaded(rooms)))
+        mainProvider.setFilter(.search(query: "no such room"))
+        #expect(mainProvider.roomListPublisher.value.isEmpty) // sanity: the main provider IS filtered
+
+        // The index, built from the separate static provider, is untouched.
+        #expect(service.tasksPublisher.value.count == 1)
+    }
+
     // MARK: - Cross-category independence
     
     //
@@ -643,8 +669,11 @@ struct AgentIndexServiceTests {
             }
         }
         
-        let roomSummaryProvider = RoomSummaryProviderMock(.init(state: .loaded(rooms)))
-        
+        // `StaticRoomSummaryProviderMock`, not `RoomSummaryProviderMock` — asserts at compile time
+        // that `AgentIndexService` only ever needs the unfiltered, `setFilter`-less provider type.
+        let roomSummaryProvider = StaticRoomSummaryProviderMock()
+        roomSummaryProvider.underlyingRoomListPublisher = .init(rooms)
+
         return AgentIndexService(clientProxy: clientProxy, roomSummaryProvider: roomSummaryProvider)
     }
 }

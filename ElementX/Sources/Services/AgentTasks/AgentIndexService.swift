@@ -15,7 +15,11 @@ import Foundation
 /// dance for a different state event type.
 class AgentIndexService: AgentIndexServiceProtocol {
     private let clientProxy: ClientProxyProtocol
-    private let roomSummaryProvider: RoomSummaryProviderProtocol
+    /// `staticRoomSummaryProvider`, not the main tab's `roomSummaryProvider` — the index must
+    /// stay full regardless of whatever search/未读 filtering 政事堂 has applied to the main
+    /// provider, since the 差事 tab's own 道 filter (applied in `AgentTasksScreenViewModel`) is
+    /// the only filtering this index should ever be subject to.
+    private let roomSummaryProvider: StaticRoomSummaryProviderProtocol
     private var cancellables = Set<AnyCancellable>()
     /// Cancelled and replaced on every rebuild so a slower, earlier-triggered rebuild can never
     /// overwrite a newer one's result with stale data.
@@ -41,7 +45,7 @@ class AgentIndexService: AgentIndexServiceProtocol {
         objectivesSubject.asCurrentValuePublisher()
     }
     
-    init(clientProxy: ClientProxyProtocol, roomSummaryProvider: RoomSummaryProviderProtocol) {
+    init(clientProxy: ClientProxyProtocol, roomSummaryProvider: StaticRoomSummaryProviderProtocol) {
         self.clientProxy = clientProxy
         self.roomSummaryProvider = roomSummaryProvider
     }

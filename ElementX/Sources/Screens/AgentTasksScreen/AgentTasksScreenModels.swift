@@ -32,7 +32,12 @@ struct AgentTasksScreenViewState: BindableState {
     var loadingMetricTaskIDs: Set<String> = []
     var viewMode = AgentTasksViewMode.list
     var terminology = AppTerminology(scenario: .imperial)
-    
+    /// The name of the 道 (space) tasks are currently scoped to, mirroring 政事堂's own
+    /// selection — `nil` means unfiltered (全部). Drives the indicator strip; the strip's actual
+    /// wording goes through `terminology.spaceFilterIndicator(name:)`, not stored pre-rendered,
+    /// so it stays correct if the 御案体/通俗版 toggle flips without a new space selection.
+    var selectedSpaceFilterName: String?
+
     var isEmpty: Bool {
         unresolvedTasks.isEmpty && resolvedTasks.isEmpty
     }

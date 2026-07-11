@@ -155,4 +155,11 @@ nonisolated struct AppTerminology {
     var objectiveUngrouped: String {
         pick("未挂靠标的", "未分组")
     }
+
+    /// The 差事 tab's indicator strip, shown only while it's scoped to one 道 (mirroring
+    /// whichever one is selected on 政事堂) — makes the filtering visible instead of tasks just
+    /// silently looking fewer.
+    func spaceFilterIndicator(name: String) -> String {
+        pick("道:\(name)", "分组:\(name)")
+    }
 }
