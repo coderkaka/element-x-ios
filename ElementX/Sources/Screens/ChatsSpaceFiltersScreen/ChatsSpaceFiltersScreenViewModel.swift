@@ -87,7 +87,7 @@ class ChatsSpaceFiltersScreenViewModel: ChatsSpaceFiltersScreenViewModelType, Ch
         case .down: currentIndex + 1
         }
         guard order.indices.contains(swapIndex) else { return } // Already at an edge.
-
+        
         order.swapAt(currentIndex, swapIndex)
         withAnimation(.spring(response: 0.3)) {
             appSettings.spaceFilterOrder = order

@@ -52,7 +52,7 @@ struct ChatsSpaceFiltersScreen: View {
             context.send(viewAction: .reorder(roomID: filter.room.id, direction: .up))
         }
         .disabled(index == nil || index == 0)
-
+        
         Button(UntranslatedL10n.actionMoveDown) {
             context.send(viewAction: .reorder(roomID: filter.room.id, direction: .down))
         }

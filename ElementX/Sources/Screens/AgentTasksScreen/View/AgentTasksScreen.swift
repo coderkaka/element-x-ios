@@ -11,12 +11,12 @@ import SwiftUI
 
 struct AgentTasksScreen: View {
     @Bindable var context: AgentTasksScreenViewModel.Context
-
+    
     @Namespace private var navigationTransitionNamespace
     private enum NavigationTransitionSourceID {
         case spaceFilters
     }
-
+    
     var body: some View {
         Group {
             // Kanban's status columns are always shown (even empty) as a fixed skeleton —
@@ -62,7 +62,7 @@ struct AgentTasksScreen: View {
                                             in: navigationTransitionNamespace))
         }
     }
-
+    
     /// The dynamic navigation title (fix-spacebar3 contract A0) — mirrors 政事堂's
     /// `HomeScreen.navigationTitleButton` verbatim: same chevron affordance, same tap target
     /// (`.spaceFilters`, the same panel the trailing icon button opens). 差事's toolbar has no
@@ -83,7 +83,7 @@ struct AgentTasksScreen: View {
         }
         .accessibilityLabel(L10n.screenRoomlistYourSpaces)
     }
-
+    
     /// The same 道 picker button/panel 政事堂 uses (fix-spacebar3 contract B) — selection is
     /// driven by `appSettings.selectedSpaceFilterRoomID`, the single source of truth both tabs
     /// observe, so picking a 道 here keeps 政事堂 in sync and vice versa.
