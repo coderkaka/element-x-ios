@@ -631,6 +631,68 @@ final class HomeScreenViewModelTests {
         #expect(appSettings.selectedSpaceFilterRoomID == nil)
     }
     
+    // MARK: - 道 filter bidirectional sync with the 差事 tab (fix-kanban contract C)
+    
+    @Test
+    func externalSpaceFilterSettingChangeUpdatesSpaceFilterSubject() async throws {
+        // Simulates the 差事 tab's own 道 menu writing the shared setting directly — 政事堂 must
+        // follow without the user touching its own chips.
+        let filterSubject = CurrentValueSubject<[SpaceServiceFilter], Never>(Self.levelZeroSpaceFilters)
+        setupViewModel(spaceFilterSubject: filterSubject)
+        
+        let readyDeferred = deferFulfillment(context.$viewState) { !$0.availableSpaceFilters.isEmpty }
+        try await readyDeferred.fulfill()
+        #expect(context.viewState.selectedSpaceFilter == nil)
+        
+        let deferred = deferFulfillment(context.$viewState) { $0.selectedSpaceFilter?.room.id == "space2" }
+        appSettings.selectedSpaceFilterRoomID = "space2"
+        try await deferred.fulfill()
+        
+        #expect(context.viewState.selectedSpaceFilter?.room.id == "space2")
+    }
+    
+    @Test
+    func externalSpaceFilterSettingChangeToNilClearsSpaceFilterSubject() async throws {
+        let filterSubject = CurrentValueSubject<[SpaceServiceFilter], Never>(Self.levelZeroSpaceFilters)
+        setupViewModel(spaceFilterSubject: filterSubject)
+        
+        let readyDeferred = deferFulfillment(context.$viewState) { !$0.availableSpaceFilters.isEmpty }
+        try await readyDeferred.fulfill()
+        
+        let selectedDeferred = deferFulfillment(context.$viewState) { $0.selectedSpaceFilter != nil }
+        appSettings.selectedSpaceFilterRoomID = "space2"
+        try await selectedDeferred.fulfill()
+        
+        let clearedDeferred = deferFulfillment(context.$viewState) { $0.selectedSpaceFilter == nil }
+        appSettings.selectedSpaceFilterRoomID = nil
+        try await clearedDeferred.fulfill()
+    }
+    
+    @Test
+    func selectingASpaceFilterOnHomeScreenWritesTheSettingExactlyOnce() async throws {
+        // Anti-loop: 政事堂 selecting a filter itself writes `selectedSpaceFilterRoomID`. If the
+        // subscription that keeps 政事堂 in sync with that same setting didn't guard against its
+        // own echo, this single user action would cause a second, redundant write.
+        let filterSubject = CurrentValueSubject<[SpaceServiceFilter], Never>(Self.levelZeroSpaceFilters)
+        setupViewModel(spaceFilterSubject: filterSubject)
+        
+        let readyDeferred = deferFulfillment(context.$viewState) { !$0.availableSpaceFilters.isEmpty }
+        try await readyDeferred.fulfill()
+        
+        var settingEmissions: [String?] = []
+        appSettings.selectedSpaceFilterRoomIDPublisher
+            .sink { settingEmissions.append($0) }
+            .store(in: &cancellables)
+        settingEmissions.removeAll() // drop the synchronous replay of the current (nil) value.
+        
+        let filter = try #require(Self.levelZeroSpaceFilters.first { $0.room.id == "space2" })
+        context.send(viewAction: .selectSpaceFilter(filter))
+        try await Task.sleep(for: .milliseconds(100))
+        
+        #expect(settingEmissions == ["space2"])
+        #expect(context.viewState.selectedSpaceFilter?.room.id == "space2")
+    }
+    
     // MARK: - Space Filter Reordering (G)
     
     @Test

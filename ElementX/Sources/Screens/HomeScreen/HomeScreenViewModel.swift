@@ -135,6 +135,35 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
             .store(in: &cancellables)
         
+        // Keeps 政事堂 in sync when the 道 filter is changed from elsewhere (the 差事 tab's own
+        // 道 menu, fix-kanban contract C) — `appSettings.selectedSpaceFilterRoomID` is the single
+        // source of truth both tabs observe. No `.receive(on:)` hop: `@UserPreference`'s setter
+        // publishes synchronously on whatever thread wrote it, matching the other appSettings
+        // subscriptions in this initializer (e.g. `roomListActivityVisibilityPublisher` below).
+        appSettings.selectedSpaceFilterRoomIDPublisher
+            .sink { [weak self] roomID in
+                guard let self else { return }
+                
+                // Anti-loop: `selectSpaceFilter` below writes this very setting after already
+                // updating `spaceFilterSubject`, so by the time that write's publish reaches
+                // here the two are already consistent — nothing further to do. This is also
+                // what makes 政事堂's own selection a no-op loop-wise, not just an external one.
+                guard spaceFilterSubject.value?.room.id != roomID else { return }
+                
+                guard let roomID else {
+                    spaceFilterSubject.send(nil)
+                    return
+                }
+                
+                if let match = state.topLevelSpaceFilters.first(where: { $0.room.id == roomID }) {
+                    spaceFilterSubject.send(match)
+                }
+                // No match (space list hasn't loaded yet, or the ID is genuinely stale): leave
+                // `spaceFilterSubject` as-is. `restorePersistedSpaceFilterIfNeeded` already
+                // handles the launch-time stale-ID cleanup once `availableSpaceFilters` arrives.
+            }
+            .store(in: &cancellables)
+        
         selectedRoomPublisher
             .weakAssign(to: \.state.selectedRoomID, on: self)
             .store(in: &cancellables)
@@ -388,6 +417,12 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     /// Restores the persisted 道 filter (`AppSettings.selectedSpaceFilterRoomID`) on the first
     /// non-empty `availableSpaceFilters` emission only — never again afterwards, so a user who
     /// explicitly returns to 全部 doesn't get bounced back into their old 道.
+    ///
+    /// Kept alongside the `selectedSpaceFilterRoomIDPublisher` subscription above rather than
+    /// folded into it (fix-kanban contract C): that subscription only fires on a *subsequent*
+    /// setting write, whereas the persisted value needs applying once `availableSpaceFilters`
+    /// itself first arrives — the two fire on different triggers, so keeping this one-shot path
+    /// separate is the conservative choice pending a closer look at unifying them.
     private func restorePersistedSpaceFilterIfNeeded(availableFilters: [SpaceServiceFilter]) {
         guard !hasRestoredSpaceFilter, !availableFilters.isEmpty else { return }
         hasRestoredSpaceFilter = true

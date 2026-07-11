@@ -118,14 +118,19 @@ nonisolated struct AppTerminology {
         pick(" · \(count) 件请旨待批", " · \(count) 件待办事项")
     }
     
-    /// The 差事 tab's kanban column for tasks whose room isn't under any joined 道 — same
-    /// wording in both scenarios since it's a fallback bucket, not a piece of vocabulary.
-    var kanbanUnassignedColumn: String {
-        "其他"
+    var kanbanViewA11yLabel: String {
+        pick("查看看板", "查看看板")
     }
     
-    var kanbanViewA11yLabel: String {
-        pick("按道分列查看", "按分组查看")
+    /// The 差事 tab kanban view's column-grouping switcher — group columns by task status
+    /// (default: 在办/已结, always shown even empty).
+    var kanbanGroupByStatusLabel: String {
+        pick("按状态", "按状态")
+    }
+    
+    /// The kanban view's other column-grouping option — group columns by 案(room).
+    var kanbanGroupByRoomLabel: String {
+        pick("按案", "按项目")
     }
     
     var listViewA11yLabel: String {
@@ -155,10 +160,10 @@ nonisolated struct AppTerminology {
     var objectiveUngrouped: String {
         pick("未挂靠标的", "未分组")
     }
-
-    /// The 差事 tab's indicator strip, shown only while it's scoped to one 道 (mirroring
-    /// whichever one is selected on 政事堂) — makes the filtering visible instead of tasks just
-    /// silently looking fewer.
+    
+    /// The 差事 tab's tappable 道 indicator, when scoped to one 道 (mirroring whichever one is
+    /// selected on 政事堂) — makes the filtering visible instead of tasks just silently looking
+    /// fewer, and doubles as the label for the menu that switches it.
     func spaceFilterIndicator(name: String) -> String {
         pick("道:\(name)", "分组:\(name)")
     }

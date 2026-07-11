@@ -47,6 +47,20 @@ struct AgentIndexServiceTests {
         #expect(event?.isResolved == true)
         #expect(event?.doneStepCount == 0)
         #expect(event?.totalStepCount == 0)
+        #expect(event?.updatedAt == nil)
+    }
+    
+    @Test
+    func taskStateEventParsingReadsOriginServerTimestampAsUpdatedAt() {
+        // `updatedAt` drives the 差事 tab's 按案 kanban column ordering — it comes from the
+        // state event's own `origin_server_ts` envelope field, not any `content` field.
+        let json = """
+        {"type":"io.element.agent.canvas.steps","state_key":"task-ts","origin_server_ts":1700000000000,"content":{"status":"in_progress"}}
+        """
+        
+        let event = AgentTaskStateEvent(parsingFrom: json)
+        
+        #expect(event?.updatedAt == Date(timeIntervalSince1970: 1_700_000_000))
     }
     
     @Test
@@ -513,7 +527,7 @@ struct AgentIndexServiceTests {
     }
     
     // MARK: - Data source independence from the main provider's filtering
-
+    
     @Test
     func mainProviderFilterChangesDoNotAffectTheIndex() async throws {
         // Regression guard for the pre-fix bug: the index used to be built from the same
@@ -523,21 +537,21 @@ struct AgentIndexServiceTests {
         // search on a *different*, main-tab-style provider must have zero effect on it.
         let rooms = [RoomSummary.mock(id: "!a:example.com", name: "Room A")]
         let service = makeService(rooms: rooms, taskEvents: { _ in .success([Self.unresolvedTaskEventJSON]) })
-
+        
         let deferred = deferFulfillment(service.tasksPublisher) { !$0.isEmpty }
         service.start()
         let tasksBeforeSearch = try await deferred.fulfill()
         #expect(tasksBeforeSearch.count == 1)
-
+        
         // Simulate 政事堂's main provider entering a search state that would exclude "Room A".
         let mainProvider = RoomSummaryProviderMock(.init(state: .loaded(rooms)))
         mainProvider.setFilter(.search(query: "no such room"))
         #expect(mainProvider.roomListPublisher.value.isEmpty) // sanity: the main provider IS filtered
-
+        
         // The index, built from the separate static provider, is untouched.
         #expect(service.tasksPublisher.value.count == 1)
     }
-
+    
     // MARK: - Cross-category independence
     
     //
@@ -673,7 +687,7 @@ struct AgentIndexServiceTests {
         // that `AgentIndexService` only ever needs the unfiltered, `setFilter`-less provider type.
         let roomSummaryProvider = StaticRoomSummaryProviderMock()
         roomSummaryProvider.underlyingRoomListPublisher = .init(rooms)
-
+        
         return AgentIndexService(clientProxy: clientProxy, roomSummaryProvider: roomSummaryProvider)
     }
 }
