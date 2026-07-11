@@ -61,10 +61,11 @@ enum HomeScreenViewAction {
     case selectPendingChoice(roomID: String)
 }
 
-/// The direction a 道 chip is nudged by the "左移"/"右移" context menu actions.
+/// The direction a 道 row is nudged by the "上移"/"下移" context menu actions in the (vertical)
+/// picker panel — renamed from the retired horizontal chip bar's "左移"/"右移".
 enum MoveDirection {
-    case left
-    case right
+    case up
+    case down
 }
 
 enum HomeScreenRoomListMode: CustomStringConvertible {

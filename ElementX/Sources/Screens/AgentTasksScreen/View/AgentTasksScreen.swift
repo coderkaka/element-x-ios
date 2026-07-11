@@ -33,6 +33,10 @@ struct AgentTasksScreen: View {
             }
         }
         .navigationTitle(context.viewState.navigationTitle)
+        // The `.principal` toolbar title button (`navigationTitleButton`) already renders the
+        // title — without `.inline` the large title also renders, showing it twice. The
+        // `.navigationTitle` itself stays for the back-button label/a11y.
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 settingsButton
@@ -42,6 +46,11 @@ struct AgentTasksScreen: View {
             }
             ToolbarItem(placement: .primaryAction) {
                 viewModeMenu
+            }
+            // Mirrors HomeScreen's own trailing-item spacing so the two buttons don't crowd
+            // together.
+            if #available(iOS 26, *) {
+                ToolbarSpacer(.fixed, placement: .primaryAction)
             }
             ToolbarItem(placement: .primaryAction) {
                 spaceFiltersButton

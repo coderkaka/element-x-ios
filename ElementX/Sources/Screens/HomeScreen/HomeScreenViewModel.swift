@@ -458,7 +458,15 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 state.bindings.spaceFiltersViewModel = nil
             case .manageSpaces:
                 state.bindings.spaceFiltersViewModel = nil
-                actionsSubject.send(.presentSpaceManagement)
+                // The panel is a SwiftUI `.sheet(item:)` — niling the binding only *starts* its
+                // dismiss animation. `presentSpaceManagement` (UserSessionFlowCoordinator) then
+                // presents another sheet via `setSheetCoordinator`, which silently drops if the
+                // panel is still mid-dismissal. Give the dismiss time to finish first, same fix as
+                // `startSettingsFlow`'s logout case.
+                Task { [weak self] in
+                    try? await Task.sleep(for: .milliseconds(100))
+                    self?.actionsSubject.send(.presentSpaceManagement)
+                }
             case .cancel:
                 state.bindings.spaceFiltersViewModel = nil
             }

@@ -177,7 +177,13 @@ class AgentTasksScreenViewModel: AgentTasksScreenViewModelType, AgentTasksScreen
                 state.bindings.spaceFiltersViewModel = nil
             case .manageSpaces:
                 state.bindings.spaceFiltersViewModel = nil
-                actionsSubject.send(.showSpaceManagement)
+                // See `HomeScreenViewModel`'s identical handler: the panel is a SwiftUI
+                // `.sheet(item:)`, so niling the binding only *starts* its dismiss animation —
+                // presenting another sheet before it finishes silently drops.
+                Task { [weak self] in
+                    try? await Task.sleep(for: .milliseconds(100))
+                    self?.actionsSubject.send(.showSpaceManagement)
+                }
             case .cancel:
                 state.bindings.spaceFiltersViewModel = nil
             }

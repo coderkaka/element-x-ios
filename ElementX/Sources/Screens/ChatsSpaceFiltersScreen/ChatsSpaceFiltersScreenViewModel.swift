@@ -83,13 +83,16 @@ class ChatsSpaceFiltersScreenViewModel: ChatsSpaceFiltersScreenViewModelType, Ch
         guard let currentIndex = order.firstIndex(of: roomID) else { return }
         
         let swapIndex = switch direction {
-        case .left: currentIndex - 1
-        case .right: currentIndex + 1
+        case .up: currentIndex - 1
+        case .down: currentIndex + 1
         }
         guard order.indices.contains(swapIndex) else { return } // Already at an edge.
-        
+
         order.swapAt(currentIndex, swapIndex)
-        appSettings.spaceFilterOrder = order
+        withAnimation(.spring(response: 0.3)) {
+            appSettings.spaceFilterOrder = order
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
         // `state.spaceFilterOrder` updates via the `spaceFilterOrderPublisher` subscription above.
     }
 }
