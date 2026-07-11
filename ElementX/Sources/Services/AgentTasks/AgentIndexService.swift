@@ -94,7 +94,8 @@ class AgentIndexService: AgentIndexServiceProtocol {
                                                       doneStepCount: stateEvent.doneStepCount,
                                                       totalStepCount: stateEvent.totalStepCount,
                                                       metric: stateEvent.metric,
-                                                      objectiveID: stateEvent.objectiveID))
+                                                      objectiveID: stateEvent.objectiveID,
+                                                      updatedAt: stateEvent.updatedAt))
                     }
                 case .failure(let error):
                     MXLog.error("Skipping room \(summary.id) tasks, failed to fetch \(AgentTaskStateEvent.eventType) state events: \(error)")

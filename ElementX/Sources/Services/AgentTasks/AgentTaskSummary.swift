@@ -42,7 +42,11 @@ nonisolated struct AgentTaskSummary: Identifiable, Equatable {
     /// The 标的(`AgentObjectiveSummary.objectiveID`) this task belongs to, if any — optional
     /// back-reference per `element-agent-protocol.md` §3.4; most tasks don't carry one.
     var objectiveID: String?
-    
+    /// The state event's Matrix `origin_server_ts` — drives the 差事 tab's 按案 kanban column
+    /// ordering (most-recently-active 案 first). `nil` only defensively (a real state event
+    /// always carries this in the envelope); a column with no timestamped tasks sorts last.
+    var updatedAt: Date?
+
     var id: String {
         "\(roomID)|\(taskID)"
     }
@@ -60,10 +64,12 @@ nonisolated struct AgentTaskStateEvent: Decodable {
     let totalStepCount: Int
     let metric: AgentTaskMetric?
     let objectiveID: String?
-    
+    let updatedAt: Date?
+
     private enum EventKeys: String, CodingKey {
         case stateKey = "state_key"
         case content
+        case originServerTimestamp = "origin_server_ts"
     }
     
     private struct Content: Decodable {
@@ -105,8 +111,11 @@ nonisolated struct AgentTaskStateEvent: Decodable {
         totalStepCount = steps.count
         metric = content.metric
         objectiveID = content.objectiveID
+        // Defensive `try?`: a missing/malformed timestamp must degrade to nil, not drop the task.
+        let timestampMs = try? event.decode(UInt64.self, forKey: .originServerTimestamp)
+        updatedAt = timestampMs.map { Date(timeIntervalSince1970: TimeInterval($0) / 1000) }
     }
-    
+
     init?(parsingFrom rawStateEventJSON: String) {
         guard let data = rawStateEventJSON.data(using: .utf8),
               let event = try? JSONDecoder().decode(Self.self, from: data) else {

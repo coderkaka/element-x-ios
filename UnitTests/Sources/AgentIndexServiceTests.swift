@@ -39,14 +39,28 @@ struct AgentIndexServiceTests {
         let json = """
         {"type":"io.element.agent.canvas.steps","state_key":"task-2","content":{"status":"done"}}
         """
-        
+
         let event = AgentTaskStateEvent(parsingFrom: json)
-        
+
         #expect(event?.taskID == "task-2")
         #expect(event?.title == nil)
         #expect(event?.isResolved == true)
         #expect(event?.doneStepCount == 0)
         #expect(event?.totalStepCount == 0)
+        #expect(event?.updatedAt == nil)
+    }
+
+    @Test
+    func taskStateEventParsingReadsOriginServerTimestampAsUpdatedAt() {
+        // `updatedAt` drives the 差事 tab's 按案 kanban column ordering — it comes from the
+        // state event's own `origin_server_ts` envelope field, not any `content` field.
+        let json = """
+        {"type":"io.element.agent.canvas.steps","state_key":"task-ts","origin_server_ts":1700000000000,"content":{"status":"in_progress"}}
+        """
+
+        let event = AgentTaskStateEvent(parsingFrom: json)
+
+        #expect(event?.updatedAt == Date(timeIntervalSince1970: 1_700_000_000))
     }
     
     @Test
