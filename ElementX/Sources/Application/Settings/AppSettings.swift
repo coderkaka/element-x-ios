@@ -130,6 +130,11 @@ final nonisolated class AppSettings: @unchecked Sendable {
     @UserPreference(defaultValue: Set<String>())
     var seenInvites: Set<String>
     
+    /// The Set of room identifiers whose already-locally-cached history has been backfilled into
+    /// the on-disk message search index — a one-time pass per room, not repeated every launch.
+    @UserPreference(defaultValue: Set<String>())
+    var searchIndexBackfilledRoomIDs: Set<String>
+    
     /// Defaults to `true` for new users, and we use a migration to set it to `false` for existing users.
     @UserPreference(defaultValue: true)
     var hasSeenNewSoundBanner: Bool

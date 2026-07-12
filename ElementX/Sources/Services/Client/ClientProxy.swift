@@ -273,6 +273,28 @@ class ClientProxy: ClientProxyProtocol {
         
         await setupSubscriptions()
         
+        // One-time-per-room backfill of the on-disk message search index from whatever's already
+        // cached locally — the index otherwise only ever sees genuinely new messages arriving
+        // after it existed. Low priority: this is a nice-to-have, not on any critical path.
+        staticRoomSummaryProvider.roomListPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { summaries in
+                let unbackfilledRoomIDs = summaries.map(\.id).filter { !appSettings.searchIndexBackfilledRoomIDs.contains($0) }
+                guard !unbackfilledRoomIDs.isEmpty else { return }
+                
+                Task(priority: .background) {
+                    for roomID in unbackfilledRoomIDs {
+                        do {
+                            try await client.reindexRoomForSearch(roomId: roomID)
+                            appSettings.searchIndexBackfilledRoomIDs.insert(roomID)
+                        } catch {
+                            MXLog.error("Failed backfilling the search index for room \(roomID): \(error)")
+                        }
+                    }
+                }
+            }
+            .store(in: &cancellables)
+        
         Task {
             do {
                 try await client.setMediaRetentionPolicy(policy: .init(maxCacheSize: nil,

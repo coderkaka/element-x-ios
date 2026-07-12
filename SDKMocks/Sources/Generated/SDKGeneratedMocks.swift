@@ -4188,6 +4188,42 @@ open class ClientSDKMock: MatrixRustSDK.Client, @unchecked Sendable {
         }
     }
 
+    //MARK: - reindexRoomForSearch
+
+    open var reindexRoomForSearchRoomIdThrowableError: Error?
+    private let reindexRoomForSearchRoomIdCallsCountLock = NSLock()
+    private var reindexRoomForSearchRoomIdUnderlyingCallsCount = 0
+    open var reindexRoomForSearchRoomIdCallsCount: Int {
+        get { reindexRoomForSearchRoomIdCallsCountLock.withLock { reindexRoomForSearchRoomIdUnderlyingCallsCount } }
+        set { reindexRoomForSearchRoomIdCallsCountLock.withLock { reindexRoomForSearchRoomIdUnderlyingCallsCount = newValue } }
+    }
+    open var reindexRoomForSearchRoomIdCalled: Bool {
+        return reindexRoomForSearchRoomIdCallsCount > 0
+    }
+    private let reindexRoomForSearchRoomIdReceivedRoomIdLock = NSLock()
+    private var reindexRoomForSearchRoomIdUnderlyingReceivedRoomId: String?
+    open var reindexRoomForSearchRoomIdReceivedRoomId: String? {
+        get { reindexRoomForSearchRoomIdReceivedRoomIdLock.withLock { reindexRoomForSearchRoomIdUnderlyingReceivedRoomId } }
+        set { reindexRoomForSearchRoomIdReceivedRoomIdLock.withLock { reindexRoomForSearchRoomIdUnderlyingReceivedRoomId = newValue } }
+    }
+    private let reindexRoomForSearchRoomIdReceivedInvocationsLock = NSLock()
+    private var reindexRoomForSearchRoomIdUnderlyingReceivedInvocations: [String] = []
+    open var reindexRoomForSearchRoomIdReceivedInvocations: [String] {
+        get { reindexRoomForSearchRoomIdReceivedInvocationsLock.withLock { reindexRoomForSearchRoomIdUnderlyingReceivedInvocations } }
+        set { reindexRoomForSearchRoomIdReceivedInvocationsLock.withLock { reindexRoomForSearchRoomIdUnderlyingReceivedInvocations = newValue } }
+    }
+    open var reindexRoomForSearchRoomIdClosure: ((String) async throws -> Void)?
+
+    open override func reindexRoomForSearch(roomId: String) async throws {
+        if let error = reindexRoomForSearchRoomIdThrowableError {
+            throw error
+        }
+        reindexRoomForSearchRoomIdCallsCountLock.withLock { reindexRoomForSearchRoomIdUnderlyingCallsCount += 1 }
+        reindexRoomForSearchRoomIdReceivedRoomId = roomId
+        reindexRoomForSearchRoomIdReceivedInvocationsLock.withLock { reindexRoomForSearchRoomIdUnderlyingReceivedInvocations.append(roomId) }
+        try await reindexRoomForSearchRoomIdClosure?(roomId)
+    }
+
     //MARK: - searchService
 
     private let searchServiceCallsCountLock = NSLock()
