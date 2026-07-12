@@ -30,7 +30,9 @@ struct SearchScreen: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
             
-            if context.viewState.rooms.isEmpty, context.viewState.messageResults.isEmpty {
+            if context.viewState.rooms.isEmpty,
+               context.viewState.messageResults.isEmpty,
+               !(context.viewState.isSearching && context.viewState.hasMoreHistoryToSearch) {
                 emptyState
             } else {
                 resultsList
@@ -126,6 +128,12 @@ struct SearchScreen: View {
                     }
                 } header: {
                     Text(UntranslatedL10n.screenSearchMessagesSectionTitle)
+                }
+            }
+            
+            if context.viewState.isSearching, context.viewState.hasMoreHistoryToSearch {
+                SearchOlderMessagesRow(isSearching: context.viewState.isSearchingOlderMessages) {
+                    context.send(viewAction: .searchOlderMessages)
                 }
             }
         }

@@ -13,6 +13,7 @@ final class MessageSearchProxy: MessageSearchProxyProtocol {
     private let searchService: SearchServiceProtocol
     private let eventStringBuilder: RoomEventStringBuilder
     private let userID: String
+    private let continueBackfilling: () async -> Bool
     
     private let resultsSubject = CurrentValueSubject<[MessageSearchResultItem], Never>([])
     var resultsPublisher: CurrentValuePublisher<[MessageSearchResultItem], Never> {
@@ -41,10 +42,14 @@ final class MessageSearchProxy: MessageSearchProxyProtocol {
         updatesContinuation.finish()
     }
     
-    init(searchService: SearchServiceProtocol, eventStringBuilder: RoomEventStringBuilder, userID: String) {
+    init(searchService: SearchServiceProtocol,
+         eventStringBuilder: RoomEventStringBuilder,
+         userID: String,
+         continueBackfilling: @escaping () async -> Bool) {
         self.searchService = searchService
         self.eventStringBuilder = eventStringBuilder
         self.userID = userID
+        self.continueBackfilling = continueBackfilling
         
         paginationStateSubject = CurrentValueSubject<MessageSearchPaginationState, Never>(.init(sdkState: searchService.paginationState()))
         
@@ -88,6 +93,10 @@ final class MessageSearchProxy: MessageSearchProxyProtocol {
             MXLog.error("Failed paginating message search with error: \(error)")
             return .failure(.paginationFailed)
         }
+    }
+    
+    func searchOlderMessages() async -> Bool {
+        await continueBackfilling()
     }
     
     // MARK: - Private

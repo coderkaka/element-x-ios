@@ -1132,6 +1132,13 @@ extension PreviewTests {
     }
 
     @Test
+    func searchOlderMessagesRow() async throws {
+        for (index, preview) in SearchOlderMessagesRow_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func searchScreen() async throws {
         for (index, preview) in SearchScreen_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)

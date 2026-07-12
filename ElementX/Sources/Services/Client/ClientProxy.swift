@@ -276,21 +276,19 @@ class ClientProxy: ClientProxyProtocol {
         // One-time-per-room backfill of the on-disk message search index from whatever's already
         // cached locally — the index otherwise only ever sees genuinely new messages arriving
         // after it existed. Low priority: this is a nice-to-have, not on any critical path.
+        // Each room's pass is capped (see `reindex_room_for_search`), so a room with a lot of
+        // history may not be fully searchable after this alone — `continueBackfillingSearchIndex()`
+        // picks up where it left off, for an explicit "search older messages" action.
         staticRoomSummaryProvider.roomListPublisher
             .receive(on: DispatchQueue.main)
-            .sink { summaries in
+            .sink { [weak self] summaries in
+                guard let self else { return }
                 let unbackfilledRoomIDs = summaries.map(\.id).filter { !appSettings.searchIndexBackfilledRoomIDs.contains($0) }
                 guard !unbackfilledRoomIDs.isEmpty else { return }
                 
                 Task(priority: .background) {
-                    for roomID in unbackfilledRoomIDs {
-                        do {
-                            try await client.reindexRoomForSearch(roomId: roomID)
-                            appSettings.searchIndexBackfilledRoomIDs.insert(roomID)
-                        } catch {
-                            MXLog.error("Failed backfilling the search index for room \(roomID): \(error)")
-                        }
-                    }
+                    _ = await self.reindexRoomsForSearch(unbackfilledRoomIDs)
+                    unbackfilledRoomIDs.forEach { appSettings.searchIndexBackfilledRoomIDs.insert($0) }
                 }
             }
             .store(in: &cancellables)
@@ -851,7 +849,36 @@ class ClientProxy: ClientProxyProtocol {
     func messageSearchProxy() -> MessageSearchProxyProtocol {
         MessageSearchProxy(searchService: client.searchService(),
                            eventStringBuilder: .messageSearchStringBuilder(userID: userID),
-                           userID: userID)
+                           userID: userID) { [weak self] in
+            guard let self else { return true }
+            let roomIDs = staticRoomSummaryProvider.roomListPublisher.value.map(\.id)
+            return await reindexRoomsForSearch(roomIDs)
+        }
+    }
+    
+    /// Indexes each room's currently-reachable local history for search (see
+    /// `reindex_room_for_search`), concurrently. Returns whether every room reached its
+    /// timeline start — `false` means at least one room has more history left to index.
+    private func reindexRoomsForSearch(_ roomIDs: [String]) async -> Bool {
+        await withTaskGroup(of: Bool.self) { group in
+            for roomID in roomIDs {
+                group.addTask { [weak self] in
+                    guard let self else { return true }
+                    do {
+                        return try await client.reindexRoomForSearch(roomId: roomID)
+                    } catch {
+                        MXLog.error("Failed indexing room \(roomID) for search: \(error)")
+                        return false
+                    }
+                }
+            }
+            
+            var allReachedStart = true
+            for await reachedStart in group where !reachedStart {
+                allReachedStart = false
+            }
+            return allReachedStart
+        }
     }
     
     func resolveRoomAlias(_ alias: String) async -> Result<ResolvedRoomAlias, ClientProxyError> {

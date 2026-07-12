@@ -647,6 +647,10 @@ extension AccessibilityTests {
         try await performAccessibilityAudit(named: "SFNumberedListView_Previews")
     }
 
+    func testSearchOlderMessagesRow() async throws {
+        try await performAccessibilityAudit(named: "SearchOlderMessagesRow_Previews")
+    }
+
     func testSearchScreen() async throws {
         try await performAccessibilityAudit(named: "SearchScreen_Previews")
     }

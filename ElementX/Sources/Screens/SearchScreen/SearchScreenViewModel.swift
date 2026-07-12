@@ -79,12 +79,26 @@ class SearchScreenViewModel: SearchScreenViewModelType, SearchScreenViewModelPro
             updateVisibleRange(edge: .bottom)
         case .reachedMessageResultsBottom:
             Task { _ = await messageSearchProxy.paginate() }
+        case .searchOlderMessages:
+            searchOlderMessages()
         case .cancel:
             actionsSubject.send(.cancel)
         }
     }
     
     // MARK: - Private
+    
+    private func searchOlderMessages() {
+        guard !state.isSearchingOlderMessages else { return }
+        state.isSearchingOlderMessages = true
+        
+        Task {
+            let fullyIndexed = await messageSearchProxy.searchOlderMessages()
+            state.hasMoreHistoryToSearch = !fullyIndexed
+            _ = await messageSearchProxy.search(query: state.bindings.searchQuery)
+            state.isSearchingOlderMessages = false
+        }
+    }
     
     private func updateFilter(for searchQuery: String) async {
         if searchQuery.isEmpty {

@@ -8602,6 +8602,34 @@ nonisolated class MessageSearchProxyMock: MessageSearchProxyProtocol, @unchecked
             return paginateReturnValue
         }
     }
+    //MARK: - searchOlderMessages
+
+    private let searchOlderMessagesCallsCountLock = NSLock()
+    private nonisolated(unsafe) var searchOlderMessagesUnderlyingCallsCount = 0
+    var searchOlderMessagesCallsCount: Int {
+        get { searchOlderMessagesCallsCountLock.withLock { searchOlderMessagesUnderlyingCallsCount } }
+        set { searchOlderMessagesCallsCountLock.withLock { searchOlderMessagesUnderlyingCallsCount = newValue } }
+    }
+    var searchOlderMessagesCalled: Bool {
+        return searchOlderMessagesCallsCount > 0
+    }
+
+    private let searchOlderMessagesReturnValueLock = NSLock()
+    private nonisolated(unsafe) var searchOlderMessagesUnderlyingReturnValue: Bool!
+    var searchOlderMessagesReturnValue: Bool! {
+        get { searchOlderMessagesReturnValueLock.withLock { searchOlderMessagesUnderlyingReturnValue } }
+        set { searchOlderMessagesReturnValueLock.withLock { searchOlderMessagesUnderlyingReturnValue = newValue } }
+    }
+    nonisolated(unsafe) var searchOlderMessagesClosure: (() async -> Bool)?
+
+    @concurrent func searchOlderMessages() async -> Bool {
+        searchOlderMessagesCallsCountLock.withLock { searchOlderMessagesUnderlyingCallsCount += 1 }
+        if let searchOlderMessagesClosure = searchOlderMessagesClosure {
+            return await searchOlderMessagesClosure()
+        } else {
+            return searchOlderMessagesReturnValue
+        }
+    }
 }
 nonisolated class NSEUserSessionMock: NSEUserSessionProtocol, @unchecked Sendable {
     nonisolated(unsafe) var inviteAvatarsVisibilityCallsCount = 0

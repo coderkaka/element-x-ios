@@ -81,6 +81,12 @@ struct HomeScreenContent: View {
                                     .background(Color.compound.bgCanvasDefault)
                             }
                         }
+                        
+                        if context.isSearchFieldFocused, !context.searchQuery.isEmpty, context.viewState.hasMoreHistoryToSearch {
+                            SearchOlderMessagesRow(isSearching: context.viewState.isSearchingOlderMessages) {
+                                context.send(viewAction: .searchOlderMessages)
+                            }
+                        }
                     }
                     .roomListSearchable(isEnabled: context.viewState.isRoomListSearchEnabled,
                                         isSearchFieldFocused: $context.isSearchFieldFocused,

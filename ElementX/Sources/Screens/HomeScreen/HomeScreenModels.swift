@@ -54,6 +54,7 @@ enum HomeScreenViewAction {
     
     case selectMessageResult(roomID: String, eventID: String)
     case reachedMessageResultsBottom
+    case searchOlderMessages
     
     case selectSpaceFilter(SpaceServiceFilter?)
     /// Opens the 道 picker panel (`ChatsSpaceFiltersScreen`) — sent by both the toolbar button
@@ -192,6 +193,11 @@ struct HomeScreenViewState: BindableState {
     /// Message content search results, populated while the inline search field is focused with a
     /// non-empty query — shares the same `MessageSearchResultItem` model and cell as `SearchScreen`.
     var messageResults: [MessageSearchResultItem] = []
+    
+    /// Whether there's still older, not-yet-indexed history that `searchOlderMessages` could
+    /// search — starts optimistic (`true`) since it isn't known until the first attempt returns.
+    var hasMoreHistoryToSearch = true
+    var isSearchingOlderMessages = false
 }
 
 /// Orders `filters` by their room ID's index in `order`. IDs not listed in `order` keep the SDK's

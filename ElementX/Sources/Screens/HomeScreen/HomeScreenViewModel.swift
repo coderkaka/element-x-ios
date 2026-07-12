@@ -375,6 +375,8 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             actionsSubject.send(.presentRoom(roomIdentifier: roomID, eventID: eventID))
         case .reachedMessageResultsBottom:
             Task { _ = await messageSearchProxy.paginate() }
+        case .searchOlderMessages:
+            searchOlderMessages()
         case .tappedPendingChoicesStrip:
             if state.pendingChoices.count == 1, let onlyPendingChoice = state.pendingChoices.first {
                 actionsSubject.send(.presentRoom(roomIdentifier: onlyPendingChoice.roomID))
@@ -401,6 +403,18 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     }
     
     // MARK: - Private
+    
+    private func searchOlderMessages() {
+        guard !state.isSearchingOlderMessages else { return }
+        state.isSearchingOlderMessages = true
+        
+        Task {
+            let fullyIndexed = await messageSearchProxy.searchOlderMessages()
+            state.hasMoreHistoryToSearch = !fullyIndexed
+            _ = await messageSearchProxy.search(query: state.bindings.searchQuery)
+            state.isSearchingOlderMessages = false
+        }
+    }
     
     private func updateFilter() {
         if state.shouldHideRoomList {

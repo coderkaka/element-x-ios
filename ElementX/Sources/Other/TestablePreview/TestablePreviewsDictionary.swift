@@ -164,6 +164,7 @@ enum TestablePreviewsDictionary {
             "RoomTaskProgressChipView_Previews" : RoomTaskProgressChipView_Previews.self,
             "RoomThreadListScreen_Previews" : RoomThreadListScreen_Previews.self,
             "SFNumberedListView_Previews" : SFNumberedListView_Previews.self,
+            "SearchOlderMessagesRow_Previews" : SearchOlderMessagesRow_Previews.self,
             "SearchScreen_Previews" : SearchScreen_Previews.self,
             "SecureBackupKeyBackupScreen_Previews" : SecureBackupKeyBackupScreen_Previews.self,
             "SecurityAndPrivacyScreen_Previews" : SecurityAndPrivacyScreen_Previews.self,

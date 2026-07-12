@@ -16,6 +16,13 @@ protocol MessageSearchProxyProtocol {
     func search(query: String) async -> Result<Void, MessageSearchError>
     /// Loads the next page of results. No-ops if a page is already loading or the end has been reached.
     func paginate() async -> Result<Void, MessageSearchError>
+    
+    /// Indexes another large batch of older history for rooms that haven't been fully searched yet,
+    /// picking up where the last pass (automatic or explicit) left off. Not meant to be called
+    /// frequently — each call can take a while, since it may page in a room's history from the
+    /// server. Returns `true` once every room's full history is indexed, `false` if there's still
+    /// more to search — call again to continue.
+    func searchOlderMessages() async -> Bool
 }
 
 enum MessageSearchError: Error {

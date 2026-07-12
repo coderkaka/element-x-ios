@@ -4212,16 +4212,27 @@ open class ClientSDKMock: MatrixRustSDK.Client, @unchecked Sendable {
         get { reindexRoomForSearchRoomIdReceivedInvocationsLock.withLock { reindexRoomForSearchRoomIdUnderlyingReceivedInvocations } }
         set { reindexRoomForSearchRoomIdReceivedInvocationsLock.withLock { reindexRoomForSearchRoomIdUnderlyingReceivedInvocations = newValue } }
     }
-    open var reindexRoomForSearchRoomIdClosure: ((String) async throws -> Void)?
 
-    open override func reindexRoomForSearch(roomId: String) async throws {
+    private let reindexRoomForSearchRoomIdReturnValueLock = NSLock()
+    open var reindexRoomForSearchRoomIdUnderlyingReturnValue: Bool!
+    open var reindexRoomForSearchRoomIdReturnValue: Bool! {
+        get { reindexRoomForSearchRoomIdReturnValueLock.withLock { reindexRoomForSearchRoomIdUnderlyingReturnValue } }
+        set { reindexRoomForSearchRoomIdReturnValueLock.withLock { reindexRoomForSearchRoomIdUnderlyingReturnValue = newValue } }
+    }
+    open var reindexRoomForSearchRoomIdClosure: ((String) async throws -> Bool)?
+
+    open override func reindexRoomForSearch(roomId: String) async throws -> Bool {
         if let error = reindexRoomForSearchRoomIdThrowableError {
             throw error
         }
         reindexRoomForSearchRoomIdCallsCountLock.withLock { reindexRoomForSearchRoomIdUnderlyingCallsCount += 1 }
         reindexRoomForSearchRoomIdReceivedRoomId = roomId
         reindexRoomForSearchRoomIdReceivedInvocationsLock.withLock { reindexRoomForSearchRoomIdUnderlyingReceivedInvocations.append(roomId) }
-        try await reindexRoomForSearchRoomIdClosure?(roomId)
+        if let reindexRoomForSearchRoomIdClosure = reindexRoomForSearchRoomIdClosure {
+            return try await reindexRoomForSearchRoomIdClosure(roomId)
+        } else {
+            return reindexRoomForSearchRoomIdReturnValue
+        }
     }
 
     //MARK: - searchService

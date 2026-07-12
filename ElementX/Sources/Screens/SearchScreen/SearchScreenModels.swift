@@ -17,6 +17,11 @@ struct SearchScreenViewState: BindableState {
     var messageResults = [MessageSearchResultItem]()
     var bindings: SearchScreenViewStateBindings
     
+    /// Whether there's still older, not-yet-indexed history that `searchOlderMessages` could
+    /// search — starts optimistic (`true`) since it isn't known until the first attempt returns.
+    var hasMoreHistoryToSearch = true
+    var isSearchingOlderMessages = false
+    
     var isSearching: Bool {
         !bindings.searchQuery.isEmpty
     }
@@ -33,6 +38,7 @@ enum SearchScreenViewAction {
     case reachedTop
     case reachedBottom
     case reachedMessageResultsBottom
+    case searchOlderMessages
     case cancel
 }
 
