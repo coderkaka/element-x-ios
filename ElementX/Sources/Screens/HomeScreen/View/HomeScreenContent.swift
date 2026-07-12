@@ -58,6 +58,29 @@ struct HomeScreenContent: View {
                         } header: {
                             topSection
                         }
+                        
+                        if !context.viewState.messageResults.isEmpty {
+                            Section {
+                                ForEach(context.viewState.messageResults) { result in
+                                    MessageSearchResultCell(result: result, mediaProvider: context.mediaProvider) {
+                                        context.send(viewAction: .selectMessageResult(roomID: result.roomID, eventID: result.eventID))
+                                    }
+                                    .onAppear {
+                                        if result == context.viewState.messageResults.last {
+                                            context.send(viewAction: .reachedMessageResultsBottom)
+                                        }
+                                    }
+                                }
+                            } header: {
+                                Text(UntranslatedL10n.screenSearchMessagesSectionTitle)
+                                    .font(.compound.bodySMSemibold)
+                                    .foregroundStyle(.compound.textSecondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(Color.compound.bgCanvasDefault)
+                            }
+                        }
                     }
                     .roomListSearchable(isEnabled: context.viewState.isRoomListSearchEnabled,
                                         isSearchFieldFocused: $context.isSearchFieldFocused,

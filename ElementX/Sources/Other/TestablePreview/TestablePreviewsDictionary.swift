@@ -103,6 +103,7 @@ enum TestablePreviewsDictionary {
             "MessageComposerTextField_Previews" : MessageComposerTextField_Previews.self,
             "MessageComposer_Previews" : MessageComposer_Previews.self,
             "MessageForwardingScreen_Previews" : MessageForwardingScreen_Previews.self,
+            "MessageSearchResultCell_Previews" : MessageSearchResultCell_Previews.self,
             "MessageText_Previews" : MessageText_Previews.self,
             "MessagesScreen_Previews" : MessagesScreen_Previews.self,
             "NoticeRoomTimelineView_Previews" : NoticeRoomTimelineView_Previews.self,

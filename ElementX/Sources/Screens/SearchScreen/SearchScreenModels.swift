@@ -14,7 +14,7 @@ enum SearchScreenViewModelAction {
 
 struct SearchScreenViewState: BindableState {
     var rooms = [SearchScreenRoom]()
-    var messageResults = [SearchScreenMessageResult]()
+    var messageResults = [MessageSearchResultItem]()
     var bindings: SearchScreenViewStateBindings
     
     var isSearching: Bool {
@@ -41,24 +41,4 @@ struct SearchScreenRoom: Identifiable, Equatable {
     let title: String
     let description: String
     let avatar: RoomAvatar
-}
-
-struct SearchScreenMessageResult: Identifiable, Equatable {
-    var id: String {
-        eventID
-    }
-    
-    let eventID: String
-    let roomID: String
-    let sender: TimelineItemSender
-    let body: AttributedString?
-    let timestamp: Date
-    
-    init(_ item: MessageSearchResultItem) {
-        eventID = item.eventID
-        roomID = item.roomID
-        sender = item.sender
-        body = item.body
-        timestamp = item.timestamp
-    }
 }

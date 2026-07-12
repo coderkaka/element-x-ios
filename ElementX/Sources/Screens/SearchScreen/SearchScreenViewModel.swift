@@ -41,7 +41,7 @@ class SearchScreenViewModel: SearchScreenViewModelType, SearchScreenViewModelPro
         messageSearchProxy.resultsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] results in
-                self?.state.messageResults = results.map(SearchScreenMessageResult.init)
+                self?.state.messageResults = results
             }
             .store(in: &cancellables)
         

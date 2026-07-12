@@ -691,6 +691,13 @@ extension PreviewTests {
     }
 
     @Test
+    func messageSearchResultCell() async throws {
+        for (index, preview) in MessageSearchResultCell_Previews._allPreviews.enumerated() {
+            try await assertSnapshots(matching: preview, step: index)
+        }
+    }
+
+    @Test
     func messageText() async throws {
         for (index, preview) in MessageText_Previews._allPreviews.enumerated() {
             try await assertSnapshots(matching: preview, step: index)

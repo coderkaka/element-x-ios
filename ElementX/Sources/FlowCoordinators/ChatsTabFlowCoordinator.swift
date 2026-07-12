@@ -404,8 +404,12 @@ class ChatsTabFlowCoordinator: FlowCoordinatorProtocol {
                 guard let self else { return }
                 
                 switch action {
-                case .presentRoom(let roomID):
-                    handleAppRoute(.room(roomID: roomID, via: []), animated: true)
+                case .presentRoom(let roomID, let eventID):
+                    if let eventID {
+                        handleAppRoute(.event(eventID: eventID, roomID: roomID, via: []), animated: true)
+                    } else {
+                        handleAppRoute(.room(roomID: roomID, via: []), animated: true)
+                    }
                 case .detachRoom(let roomID):
                     startRoomFlow(roomID: roomID, via: [], entryPoint: .room, detached: true, animated: true)
                 case .presentRoomDetails(let roomID):

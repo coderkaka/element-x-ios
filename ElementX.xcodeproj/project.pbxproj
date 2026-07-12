@@ -260,6 +260,7 @@
 		274CE3C986841D15FD530BF5 /* ShimmerModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97CE98208321C4D66E363612 /* ShimmerModifier.swift */; };
 		275EDE8849A2AC1D9309ED7C /* TemplateScreenViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B43456E73F8A2D52B69B9FB9 /* TemplateScreenViewModel.swift */; };
 		277FD4394EAFF323DA34997E /* HorizontalHighlightGradient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F4F0AB250EFA7B71FB2BDB2 /* HorizontalHighlightGradient.swift */; };
+		278E1709FD82743182A525B6 /* MessageSearchResultCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 998951B7A1BA8CA6C2812D30 /* MessageSearchResultCell.swift */; };
 		2797C9D9BA642370F1C85D78 /* Untranslated.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = F75DF9500D69A3AAF8339E69 /* Untranslated.stringsdict */; };
 		27F015B0D5436633B5B3C8C3 /* SecureBackupRecoveryKeyScreenViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7061BE2C0BF427C38AEDEF5E /* SecureBackupRecoveryKeyScreenViewModel.swift */; };
 		27FE48CA3AA38CD65DC87A94 /* MessagesScreenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F542D67D7862C751606D34EB /* MessagesScreenCoordinator.swift */; };
@@ -2601,6 +2602,7 @@
 		98C6A082F2B2A15E1B9BE280 /* TimelineItemThreadSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineItemThreadSummary.swift; sourceTree = "<group>"; };
 		98F4DFFFC62187D9A4D2030D /* ClassicAppAccountManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassicAppAccountManager.swift; sourceTree = "<group>"; };
 		997BF045585AF6DB2EBC5755 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		998951B7A1BA8CA6C2812D30 /* MessageSearchResultCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageSearchResultCell.swift; sourceTree = "<group>"; };
 		9A008E57D52B07B78DFAD1BB /* RoomFlowCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomFlowCoordinator.swift; sourceTree = "<group>"; };
 		9A028783CFFF861C5E44FFB1 /* BadgeLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BadgeLabel.swift; sourceTree = "<group>"; };
 		9A1C33355FFB0F0953C35036 /* ClientBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientBuilder.swift; sourceTree = "<group>"; };
@@ -4081,6 +4083,7 @@
 				C352359663A0E52BA20761EE /* LoadableImage.swift */,
 				FFECCE59967018204876D0A5 /* LocationMarkerView.swift */,
 				50E31AB0E77BB70E2BC77463 /* MatrixUserShareLink.swift */,
+				998951B7A1BA8CA6C2812D30 /* MessageSearchResultCell.swift */,
 				648DD1C10E4957CB791FE0B8 /* OverridableAvatarImage.swift */,
 				C705E605EF57C19DBE86FFA1 /* PlaceholderAvatarImage.swift */,
 				95547A6C69606B5282C765D3 /* RemoveItemButton.swift */,
@@ -8954,6 +8957,7 @@
 				C13128AAA787A4C2CBE4EE82 /* MessageForwardingScreenViewModelProtocol.swift in Sources */,
 				D7B26F64FA59CD961D637375 /* MessageSearchProxy.swift in Sources */,
 				D240EAFDAF20EBAE7C9221C4 /* MessageSearchProxyProtocol.swift in Sources */,
+				278E1709FD82743182A525B6 /* MessageSearchResultCell.swift in Sources */,
 				C97325EFDCCEE457432A9E82 /* MessageText.swift in Sources */,
 				3667591D16BF493A86253BE6 /* MessagesScreen.swift in Sources */,
 				27FE48CA3AA38CD65DC87A94 /* MessagesScreenCoordinator.swift in Sources */,

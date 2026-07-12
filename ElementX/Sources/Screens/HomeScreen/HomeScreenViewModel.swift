@@ -22,6 +22,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
     private let userIndicatorController: UserIndicatorControllerProtocol
     
     private let roomSummaryProvider: RoomSummaryProviderProtocol?
+    private let messageSearchProxy: MessageSearchProxyProtocol
     /// Unfiltered (can't be filtered) room list, used specifically for detecting pending 道
     /// invites — `roomSummaryProvider`'s list is scoped to whichever 道 filter chip is currently
     /// selected, so a newly-invited unrelated 道 would never show up in it until "全部" is tapped.
@@ -60,6 +61,7 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
         
         roomSummaryProvider = userSession.clientProxy.roomSummaryProvider
         staticRoomSummaryProvider = userSession.clientProxy.staticRoomSummaryProvider
+        messageSearchProxy = userSession.clientProxy.messageSearchProxy()
         
         super.init(initialViewState: .init(userID: userSession.clientProxy.userID,
                                            terminology: .init(scenario: appSettings.terminologyScenario),
@@ -241,6 +243,11 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
             .store(in: &cancellables)
         
+        messageSearchProxy.resultsPublisher
+            .receive(on: DispatchQueue.main)
+            .weakAssign(to: \.state.messageResults, on: self)
+            .store(in: &cancellables)
+        
         agentIndexService.tasksPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] tasks in
@@ -364,6 +371,10 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
             }
         case .declineInvite(let roomIdentifier):
             Task { await showDeclineInviteConfirmationAlert(roomID: roomIdentifier) }
+        case .selectMessageResult(let roomID, let eventID):
+            actionsSubject.send(.presentRoom(roomIdentifier: roomID, eventID: eventID))
+        case .reachedMessageResultsBottom:
+            Task { _ = await messageSearchProxy.paginate() }
         case .tappedPendingChoicesStrip:
             if state.pendingChoices.count == 1, let onlyPendingChoice = state.pendingChoices.first {
                 actionsSubject.send(.presentRoom(roomIdentifier: onlyPendingChoice.roomID))
@@ -411,6 +422,11 @@ class HomeScreenViewModel: HomeScreenViewModelType, HomeScreenViewModelProtocol 
                 }
             }
         }
+        
+        // Empty query when not actively searching clears any stale message results (mirrors
+        // `.excludeAll` above for the room list).
+        let messageSearchQuery = state.bindings.isSearchFieldFocused ? state.bindings.searchQuery : ""
+        Task { _ = await messageSearchProxy.search(query: messageSearchQuery) }
     }
     
     /// Restores the persisted 道 filter (`AppSettings.selectedSpaceFilterRoomID`) on the first

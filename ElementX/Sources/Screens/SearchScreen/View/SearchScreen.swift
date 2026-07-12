@@ -115,12 +115,14 @@ struct SearchScreen: View {
             if !context.viewState.messageResults.isEmpty {
                 Section {
                     ForEach(context.viewState.messageResults) { result in
-                        SearchScreenMessageResultCell(result: result, context: context)
-                            .onAppear {
-                                if result == context.viewState.messageResults.last {
-                                    context.send(viewAction: .reachedMessageResultsBottom)
-                                }
+                        MessageSearchResultCell(result: result, mediaProvider: context.mediaProvider) {
+                            context.send(viewAction: .selectMessageResult(roomID: result.roomID, eventID: result.eventID))
+                        }
+                        .onAppear {
+                            if result == context.viewState.messageResults.last {
+                                context.send(viewAction: .reachedMessageResultsBottom)
                             }
+                        }
                     }
                 } header: {
                     Text(UntranslatedL10n.screenSearchMessagesSectionTitle)
@@ -194,65 +196,6 @@ private struct SearchScreenRoomCell: View {
             RoomAvatarImage(avatar: room.avatar,
                             avatarSize: .room(on: .globalSearch),
                             mediaProvider: context.mediaProvider)
-                .dynamicTypeSize(dynamicTypeSize < .accessibility1 ? dynamicTypeSize : .accessibility1)
-                .accessibilityHidden(true)
-        }
-    }
-}
-
-private struct SearchScreenMessageResultCell: View {
-    let result: SearchScreenMessageResult
-    let context: SearchScreenViewModel.Context
-    
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    
-    var body: some View {
-        Button {
-            context.send(viewAction: .selectMessageResult(roomID: result.roomID, eventID: result.eventID))
-        } label: {
-            HStack(spacing: 12) {
-                avatar
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
-                        Text(result.sender.disambiguatedDisplayName ?? result.sender.id)
-                            .font(.compound.bodyMDSemibold)
-                            .foregroundStyle(.compound.textPrimary)
-                            .lineLimit(1)
-                        
-                        Spacer()
-                        
-                        Text(result.timestamp.formattedMinimal())
-                            .font(.compound.bodyXS)
-                            .foregroundStyle(.compound.textSecondary)
-                    }
-                    
-                    if let body = result.body {
-                        Text(body)
-                            .font(.compound.bodyMD)
-                            .foregroundStyle(.compound.textSecondary)
-                            .lineLimit(2)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-        }
-        .buttonStyle(SearchScreenRoomCellButtonStyle(isSelected: false))
-        .listRowInsets(.init())
-        .listRowSeparator(.hidden)
-        .rowDivider()
-    }
-    
-    @ViewBuilder
-    private var avatar: some View {
-        if dynamicTypeSize < .accessibility3 {
-            LoadableAvatarImage(url: result.sender.avatarURL,
-                                name: result.sender.disambiguatedDisplayName,
-                                contentID: result.sender.id,
-                                avatarSize: .user(on: .timeline),
-                                mediaProvider: context.mediaProvider)
                 .dynamicTypeSize(dynamicTypeSize < .accessibility1 ? dynamicTypeSize : .accessibility1)
                 .accessibilityHidden(true)
         }
