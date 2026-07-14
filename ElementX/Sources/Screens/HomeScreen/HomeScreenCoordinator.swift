@@ -21,7 +21,7 @@ struct HomeScreenCoordinatorParameters {
 }
 
 enum HomeScreenCoordinatorAction {
-    case presentRoom(roomIdentifier: String)
+    case presentRoom(roomIdentifier: String, eventID: String? = nil)
     case detachRoom(roomIdentifier: String)
     case presentRoomDetails(roomIdentifier: String)
     case presentReportRoom(roomIdentifier: String)
@@ -66,8 +66,8 @@ final class HomeScreenCoordinator: CoordinatorProtocol {
                 guard let self else { return }
                 
                 switch action {
-                case .presentRoom(let roomIdentifier):
-                    actionsSubject.send(.presentRoom(roomIdentifier: roomIdentifier))
+                case .presentRoom(let roomIdentifier, let eventID):
+                    actionsSubject.send(.presentRoom(roomIdentifier: roomIdentifier, eventID: eventID))
                 case .detachRoom(let roomIdentifier):
                     actionsSubject.send(.detachRoom(roomIdentifier: roomIdentifier))
                 case .presentRoomDetails(roomIdentifier: let roomIdentifier):

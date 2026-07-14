@@ -30,10 +30,12 @@ struct SearchScreen: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
             
-            if context.viewState.rooms.isEmpty {
+            if context.viewState.rooms.isEmpty,
+               context.viewState.messageResults.isEmpty,
+               !(context.viewState.isSearching && context.viewState.hasMoreHistoryToSearch) {
                 emptyState
             } else {
-                roomList
+                resultsList
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
@@ -92,20 +94,47 @@ struct SearchScreen: View {
         }
     }
     
-    private var roomList: some View {
+    private var resultsList: some View {
         List {
-            ForEach(context.viewState.rooms) { room in
-                SearchScreenRoomCell(room: room,
-                                     context: context,
-                                     isLast: room == context.viewState.rooms.last,
-                                     isSelected: isHardwareKeyboardConnected && selectedRoomID == room.id)
-                    .onAppear {
-                        if room == context.viewState.rooms.first {
-                            context.send(viewAction: .reachedTop)
-                        } else if room == context.viewState.rooms.last {
-                            context.send(viewAction: .reachedBottom)
+            if !context.viewState.rooms.isEmpty {
+                Section {
+                    ForEach(context.viewState.rooms) { room in
+                        SearchScreenRoomCell(room: room,
+                                             context: context,
+                                             isLast: room == context.viewState.rooms.last,
+                                             isSelected: isHardwareKeyboardConnected && selectedRoomID == room.id)
+                            .onAppear {
+                                if room == context.viewState.rooms.first {
+                                    context.send(viewAction: .reachedTop)
+                                } else if room == context.viewState.rooms.last {
+                                    context.send(viewAction: .reachedBottom)
+                                }
+                            }
+                    }
+                }
+            }
+            
+            if !context.viewState.messageResults.isEmpty {
+                Section {
+                    ForEach(context.viewState.messageResults) { result in
+                        MessageSearchResultCell(result: result, mediaProvider: context.mediaProvider) {
+                            context.send(viewAction: .selectMessageResult(roomID: result.roomID, eventID: result.eventID))
+                        }
+                        .onAppear {
+                            if result == context.viewState.messageResults.last {
+                                context.send(viewAction: .reachedMessageResultsBottom)
+                            }
                         }
                     }
+                } header: {
+                    Text(UntranslatedL10n.screenSearchMessagesSectionTitle)
+                }
+            }
+            
+            if context.viewState.isSearching, context.viewState.hasMoreHistoryToSearch {
+                SearchOlderMessagesRow(isSearching: context.viewState.isSearchingOlderMessages) {
+                    context.send(viewAction: .searchOlderMessages)
+                }
             }
         }
         .compoundList(.plain)
@@ -242,13 +271,20 @@ private final class KeyNavigatingSearchTextField: UISearchTextField {
 
 struct SearchScreen_Previews: PreviewProvider, TestablePreview {
     static let emptyViewModel = SearchScreenViewModel(roomSummaryProvider: RoomSummaryProviderMock(.init(state: .loaded([]))),
+                                                      messageSearchProxy: makeMessageSearchProxy(),
                                                       mediaProvider: MediaProviderMock(.init()))
     static let loadedViewModel = SearchScreenViewModel(roomSummaryProvider: RoomSummaryProviderMock(.init(state: .loaded(.mockRooms))),
+                                                       messageSearchProxy: makeMessageSearchProxy(),
                                                        mediaProvider: MediaProviderMock(.init()),
                                                        initialSearchQuery: "Foundation")
     static let noResultsViewModel = SearchScreenViewModel(roomSummaryProvider: RoomSummaryProviderMock(.init(state: .loaded([]))),
+                                                          messageSearchProxy: makeMessageSearchProxy(),
                                                           mediaProvider: MediaProviderMock(.init()),
                                                           initialSearchQuery: "John Doe")
+    static let messageResultsViewModel = SearchScreenViewModel(roomSummaryProvider: RoomSummaryProviderMock(.init(state: .loaded([]))),
+                                                               messageSearchProxy: makeMessageSearchProxy(results: mockMessageResults),
+                                                               mediaProvider: MediaProviderMock(.init()),
+                                                               initialSearchQuery: "design doc")
     
     static var previews: some View {
         ElementNavigationStack {
@@ -265,5 +301,28 @@ struct SearchScreen_Previews: PreviewProvider, TestablePreview {
             SearchScreen(context: loadedViewModel.context)
         }
         .previewDisplayName("Loaded")
+        
+        ElementNavigationStack {
+            SearchScreen(context: messageResultsViewModel.context)
+        }
+        .previewDisplayName("Message results")
     }
+    
+    static func makeMessageSearchProxy(results: [MessageSearchResultItem] = []) -> MessageSearchProxyProtocol {
+        let proxy = MessageSearchProxyMock()
+        proxy.underlyingResultsPublisher = .init(results)
+        proxy.underlyingPaginationStatePublisher = .init(.idle(endReached: true))
+        return proxy
+    }
+    
+    static let mockMessageResults: [MessageSearchResultItem] = [
+        .init(eventID: "$1", roomID: "!room1:matrix.org", roomName: "Design Team",
+              sender: TimelineItemSender(id: "@alice:matrix.org", displayName: "Alice"),
+              body: AttributedString("Hey, did you see the new design doc? I left some comments."),
+              timestamp: .now),
+        .init(eventID: "$2", roomID: "!room2:matrix.org", roomName: "Product",
+              sender: TimelineItemSender(id: "@bob:matrix.org", displayName: "Bob"),
+              body: AttributedString("The design doc looks good, approving it."),
+              timestamp: .now.addingTimeInterval(-3600))
+    ]
 }

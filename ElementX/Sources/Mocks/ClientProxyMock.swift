@@ -60,6 +60,12 @@ extension ClientProxyMock {
         
         roomDirectorySearchProxyReturnValue = configuration.roomDirectorySearchProxy
         
+        let messageSearchProxy = MessageSearchProxyMock()
+        messageSearchProxy.underlyingResultsPublisher = .init([])
+        messageSearchProxy.underlyingPaginationStatePublisher = .init(.idle(endReached: true))
+        messageSearchProxy.searchQueryReturnValue = .success(())
+        messageSearchProxyReturnValue = messageSearchProxy
+        
         actionsPublisher = PassthroughSubject<ClientProxyAction, Never>().eraseToAnyPublisher()
         loadingStatePublisher = .init(.notLoading)
         verificationStatePublisher = .init(.unknown)

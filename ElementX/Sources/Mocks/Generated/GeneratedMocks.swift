@@ -3749,6 +3749,34 @@ nonisolated class ClientProxyMock: ClientProxyProtocol, @unchecked Sendable {
             return roomDirectorySearchProxyReturnValue
         }
     }
+    //MARK: - messageSearchProxy
+
+    private let messageSearchProxyCallsCountLock = NSLock()
+    private nonisolated(unsafe) var messageSearchProxyUnderlyingCallsCount = 0
+    var messageSearchProxyCallsCount: Int {
+        get { messageSearchProxyCallsCountLock.withLock { messageSearchProxyUnderlyingCallsCount } }
+        set { messageSearchProxyCallsCountLock.withLock { messageSearchProxyUnderlyingCallsCount = newValue } }
+    }
+    var messageSearchProxyCalled: Bool {
+        return messageSearchProxyCallsCount > 0
+    }
+
+    private let messageSearchProxyReturnValueLock = NSLock()
+    private nonisolated(unsafe) var messageSearchProxyUnderlyingReturnValue: MessageSearchProxyProtocol!
+    var messageSearchProxyReturnValue: MessageSearchProxyProtocol! {
+        get { messageSearchProxyReturnValueLock.withLock { messageSearchProxyUnderlyingReturnValue } }
+        set { messageSearchProxyReturnValueLock.withLock { messageSearchProxyUnderlyingReturnValue = newValue } }
+    }
+    nonisolated(unsafe) var messageSearchProxyClosure: (() -> MessageSearchProxyProtocol)?
+
+    func messageSearchProxy() -> MessageSearchProxyProtocol {
+        messageSearchProxyCallsCountLock.withLock { messageSearchProxyUnderlyingCallsCount += 1 }
+        if let messageSearchProxyClosure = messageSearchProxyClosure {
+            return messageSearchProxyClosure()
+        } else {
+            return messageSearchProxyReturnValue
+        }
+    }
     //MARK: - resolveRoomAlias
 
     private let resolveRoomAliasCallsCountLock = NSLock()
@@ -5996,6 +6024,48 @@ nonisolated class JoinedRoomProxyMock: JoinedRoomProxyProtocol, @unchecked Senda
             return await editEventIDNewContentClosure(eventID, newContent)
         } else {
             return editEventIDNewContentReturnValue
+        }
+    }
+    //MARK: - sendThreadReply
+
+    private let sendThreadReplyBodyThreadRootEventIDCallsCountLock = NSLock()
+    private nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDUnderlyingCallsCount = 0
+    var sendThreadReplyBodyThreadRootEventIDCallsCount: Int {
+        get { sendThreadReplyBodyThreadRootEventIDCallsCountLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingCallsCount } }
+        set { sendThreadReplyBodyThreadRootEventIDCallsCountLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingCallsCount = newValue } }
+    }
+    var sendThreadReplyBodyThreadRootEventIDCalled: Bool {
+        return sendThreadReplyBodyThreadRootEventIDCallsCount > 0
+    }
+    private let sendThreadReplyBodyThreadRootEventIDReceivedArgumentsLock = NSLock()
+    private nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedArguments: (body: String, threadRootEventID: String)?
+    var sendThreadReplyBodyThreadRootEventIDReceivedArguments: (body: String, threadRootEventID: String)? {
+        get { sendThreadReplyBodyThreadRootEventIDReceivedArgumentsLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedArguments } }
+        set { sendThreadReplyBodyThreadRootEventIDReceivedArgumentsLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedArguments = newValue } }
+    }
+    private let sendThreadReplyBodyThreadRootEventIDReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedInvocations: [(body: String, threadRootEventID: String)] = []
+    var sendThreadReplyBodyThreadRootEventIDReceivedInvocations: [(body: String, threadRootEventID: String)] {
+        get { sendThreadReplyBodyThreadRootEventIDReceivedInvocationsLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedInvocations } }
+        set { sendThreadReplyBodyThreadRootEventIDReceivedInvocationsLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedInvocations = newValue } }
+    }
+
+    private let sendThreadReplyBodyThreadRootEventIDReturnValueLock = NSLock()
+    private nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDUnderlyingReturnValue: Result<Void, RoomProxyError>!
+    var sendThreadReplyBodyThreadRootEventIDReturnValue: Result<Void, RoomProxyError>! {
+        get { sendThreadReplyBodyThreadRootEventIDReturnValueLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReturnValue } }
+        set { sendThreadReplyBodyThreadRootEventIDReturnValueLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReturnValue = newValue } }
+    }
+    nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDClosure: ((String, String) async -> Result<Void, RoomProxyError>)?
+
+    @concurrent func sendThreadReply(body: String, threadRootEventID: String) async -> Result<Void, RoomProxyError> {
+        sendThreadReplyBodyThreadRootEventIDCallsCountLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingCallsCount += 1 }
+        sendThreadReplyBodyThreadRootEventIDReceivedArguments = (body: body, threadRootEventID: threadRootEventID)
+        sendThreadReplyBodyThreadRootEventIDReceivedInvocationsLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedInvocations.append((body: body, threadRootEventID: threadRootEventID)) }
+        if let sendThreadReplyBodyThreadRootEventIDClosure = sendThreadReplyBodyThreadRootEventIDClosure {
+            return await sendThreadReplyBodyThreadRootEventIDClosure(body, threadRootEventID)
+        } else {
+            return sendThreadReplyBodyThreadRootEventIDReturnValue
         }
     }
     //MARK: - sendTypingNotification
@@ -8489,6 +8559,117 @@ nonisolated class MediaProviderMock: MediaProviderProtocol, @unchecked Sendable 
             return await loadFileFromSourceFilenameClosure(source, filename)
         } else {
             return loadFileFromSourceFilenameReturnValue
+        }
+    }
+}
+nonisolated class MessageSearchProxyMock: MessageSearchProxyProtocol, @unchecked Sendable {
+    var resultsPublisher: CurrentValuePublisher<[MessageSearchResultItem], Never> {
+        get { return underlyingResultsPublisher }
+        set(value) { underlyingResultsPublisher = value }
+    }
+    nonisolated(unsafe) var underlyingResultsPublisher: CurrentValuePublisher<[MessageSearchResultItem], Never>!
+    var paginationStatePublisher: CurrentValuePublisher<MessageSearchPaginationState, Never> {
+        get { return underlyingPaginationStatePublisher }
+        set(value) { underlyingPaginationStatePublisher = value }
+    }
+    nonisolated(unsafe) var underlyingPaginationStatePublisher: CurrentValuePublisher<MessageSearchPaginationState, Never>!
+
+    //MARK: - search
+
+    private let searchQueryCallsCountLock = NSLock()
+    private nonisolated(unsafe) var searchQueryUnderlyingCallsCount = 0
+    var searchQueryCallsCount: Int {
+        get { searchQueryCallsCountLock.withLock { searchQueryUnderlyingCallsCount } }
+        set { searchQueryCallsCountLock.withLock { searchQueryUnderlyingCallsCount = newValue } }
+    }
+    var searchQueryCalled: Bool {
+        return searchQueryCallsCount > 0
+    }
+    private let searchQueryReceivedQueryLock = NSLock()
+    private nonisolated(unsafe) var searchQueryUnderlyingReceivedQuery: String?
+    var searchQueryReceivedQuery: String? {
+        get { searchQueryReceivedQueryLock.withLock { searchQueryUnderlyingReceivedQuery } }
+        set { searchQueryReceivedQueryLock.withLock { searchQueryUnderlyingReceivedQuery = newValue } }
+    }
+    private let searchQueryReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var searchQueryUnderlyingReceivedInvocations: [String] = []
+    var searchQueryReceivedInvocations: [String] {
+        get { searchQueryReceivedInvocationsLock.withLock { searchQueryUnderlyingReceivedInvocations } }
+        set { searchQueryReceivedInvocationsLock.withLock { searchQueryUnderlyingReceivedInvocations = newValue } }
+    }
+
+    private let searchQueryReturnValueLock = NSLock()
+    private nonisolated(unsafe) var searchQueryUnderlyingReturnValue: Result<Void, MessageSearchError>!
+    var searchQueryReturnValue: Result<Void, MessageSearchError>! {
+        get { searchQueryReturnValueLock.withLock { searchQueryUnderlyingReturnValue } }
+        set { searchQueryReturnValueLock.withLock { searchQueryUnderlyingReturnValue = newValue } }
+    }
+    nonisolated(unsafe) var searchQueryClosure: ((String) async -> Result<Void, MessageSearchError>)?
+
+    @concurrent func search(query: String) async -> Result<Void, MessageSearchError> {
+        searchQueryCallsCountLock.withLock { searchQueryUnderlyingCallsCount += 1 }
+        searchQueryReceivedQuery = query
+        searchQueryReceivedInvocationsLock.withLock { searchQueryUnderlyingReceivedInvocations.append(query) }
+        if let searchQueryClosure = searchQueryClosure {
+            return await searchQueryClosure(query)
+        } else {
+            return searchQueryReturnValue
+        }
+    }
+    //MARK: - paginate
+
+    private let paginateCallsCountLock = NSLock()
+    private nonisolated(unsafe) var paginateUnderlyingCallsCount = 0
+    var paginateCallsCount: Int {
+        get { paginateCallsCountLock.withLock { paginateUnderlyingCallsCount } }
+        set { paginateCallsCountLock.withLock { paginateUnderlyingCallsCount = newValue } }
+    }
+    var paginateCalled: Bool {
+        return paginateCallsCount > 0
+    }
+
+    private let paginateReturnValueLock = NSLock()
+    private nonisolated(unsafe) var paginateUnderlyingReturnValue: Result<Void, MessageSearchError>!
+    var paginateReturnValue: Result<Void, MessageSearchError>! {
+        get { paginateReturnValueLock.withLock { paginateUnderlyingReturnValue } }
+        set { paginateReturnValueLock.withLock { paginateUnderlyingReturnValue = newValue } }
+    }
+    nonisolated(unsafe) var paginateClosure: (() async -> Result<Void, MessageSearchError>)?
+
+    @concurrent func paginate() async -> Result<Void, MessageSearchError> {
+        paginateCallsCountLock.withLock { paginateUnderlyingCallsCount += 1 }
+        if let paginateClosure = paginateClosure {
+            return await paginateClosure()
+        } else {
+            return paginateReturnValue
+        }
+    }
+    //MARK: - searchOlderMessages
+
+    private let searchOlderMessagesCallsCountLock = NSLock()
+    private nonisolated(unsafe) var searchOlderMessagesUnderlyingCallsCount = 0
+    var searchOlderMessagesCallsCount: Int {
+        get { searchOlderMessagesCallsCountLock.withLock { searchOlderMessagesUnderlyingCallsCount } }
+        set { searchOlderMessagesCallsCountLock.withLock { searchOlderMessagesUnderlyingCallsCount = newValue } }
+    }
+    var searchOlderMessagesCalled: Bool {
+        return searchOlderMessagesCallsCount > 0
+    }
+
+    private let searchOlderMessagesReturnValueLock = NSLock()
+    private nonisolated(unsafe) var searchOlderMessagesUnderlyingReturnValue: Bool!
+    var searchOlderMessagesReturnValue: Bool! {
+        get { searchOlderMessagesReturnValueLock.withLock { searchOlderMessagesUnderlyingReturnValue } }
+        set { searchOlderMessagesReturnValueLock.withLock { searchOlderMessagesUnderlyingReturnValue = newValue } }
+    }
+    nonisolated(unsafe) var searchOlderMessagesClosure: (() async -> Bool)?
+
+    @concurrent func searchOlderMessages() async -> Bool {
+        searchOlderMessagesCallsCountLock.withLock { searchOlderMessagesUnderlyingCallsCount += 1 }
+        if let searchOlderMessagesClosure = searchOlderMessagesClosure {
+            return await searchOlderMessagesClosure()
+        } else {
+            return searchOlderMessagesReturnValue
         }
     }
 }

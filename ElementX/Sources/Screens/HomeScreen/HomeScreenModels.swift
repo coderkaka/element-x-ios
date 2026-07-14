@@ -11,7 +11,7 @@ import Foundation
 import UIKit
 
 enum HomeScreenViewModelAction {
-    case presentRoom(roomIdentifier: String)
+    case presentRoom(roomIdentifier: String, eventID: String? = nil)
     case detachRoom(roomIdentifier: String)
     case presentRoomDetails(roomIdentifier: String)
     case presentReportRoom(roomIdentifier: String)
@@ -51,6 +51,10 @@ enum HomeScreenViewAction {
     
     case acceptInvite(roomIdentifier: String)
     case declineInvite(roomIdentifier: String)
+    
+    case selectMessageResult(roomID: String, eventID: String)
+    case reachedMessageResultsBottom
+    case searchOlderMessages
     
     case selectSpaceFilter(SpaceServiceFilter?)
     /// Opens the 道 picker panel (`ChatsSpaceFiltersScreen`) — sent by both the toolbar button
@@ -185,6 +189,15 @@ struct HomeScreenViewState: BindableState {
     
     /// Outstanding `AgentPendingChoiceSummary` items across every room, 道-filtered when a space is selected.
     var pendingChoices: [HomeScreenPendingChoice] = []
+    
+    /// Message content search results, populated while the inline search field is focused with a
+    /// non-empty query — shares the same `MessageSearchResultItem` model and cell as `SearchScreen`.
+    var messageResults: [MessageSearchResultItem] = []
+    
+    /// Whether there's still older, not-yet-indexed history that `searchOlderMessages` could
+    /// search — starts optimistic (`true`) since it isn't known until the first attempt returns.
+    var hasMoreHistoryToSearch = true
+    var isSearchingOlderMessages = false
 }
 
 /// Orders `filters` by their room ID's index in `order`. IDs not listed in `order` keep the SDK's

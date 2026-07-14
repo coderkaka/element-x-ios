@@ -20,6 +20,12 @@ nonisolated struct SessionDirectories: Hashable, Codable {
         cacheDirectory.path(percentEncoded: false)
     }
     
+    /// Where the on-disk message search index is stored, so it persists across app relaunches
+    /// instead of being rebuilt from scratch every time.
+    var searchIndexPath: String {
+        dataDirectory.appending(component: "search-index").path(percentEncoded: false)
+    }
+    
     // MARK: Data Management
     
     /// Removes the directories from disk if they have been created.

@@ -251,6 +251,8 @@ protocol ClientProxyProtocol: AnyObject {
     
     func roomDirectorySearchProxy() -> RoomDirectorySearchProxyProtocol
     
+    func messageSearchProxy() -> MessageSearchProxyProtocol
+    
     func resolveRoomAlias(_ alias: String) async -> Result<ResolvedRoomAlias, ClientProxyError>
     
     func isAliasAvailable(_ alias: String) async -> Result<Bool, ClientProxyError>

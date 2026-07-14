@@ -262,11 +262,27 @@ class TimelineInteractionHandler {
     }
     
     func sendChoiceRequestResponse(requestEventID: String, body: String) {
+        // Send the answer as a falling-back thread reply rooted at the card so it stays out of the
+        // main timeline: the user's feedback comes from the card itself flipping to its resolved state
+        // (the agent writes `resolved_selection` onto the choice's state event, which the card renders),
+        // so the raw reply is just plumbing the agent needs and doesn't need to be seen. It targets the
+        // card, which is how the agent associates the answer with the approval.
+        //
+        // We deliberately send raw rather than via `roomProxy.threadTimeline(...).sendMessage(...)`:
+        // opening a thread timeline registers then drops a thread subscriber, and that removal triggers
+        // an event-cache linked-chunk auto-shrink that races with the incoming replies, aborting the
+        // thread-summary computation so the card never gets a native thread summary. Sending raw leaves
+        // the thread untouched by subscribers, letting the SDK compute the summary and the timeline show
+        // its native thread entry. Falls back to a plain main-timeline reply if threads are disabled.
         Task {
-            await timelineController.sendMessage(body,
-                                                 html: nil,
-                                                 inReplyToEventID: requestEventID,
-                                                 intentionalMentions: .empty)
+            if appSettings.threadsEnabled {
+                _ = await roomProxy.sendThreadReply(body: body, threadRootEventID: requestEventID)
+            } else {
+                await timelineController.sendMessage(body,
+                                                     html: nil,
+                                                     inReplyToEventID: requestEventID,
+                                                     intentionalMentions: .empty)
+            }
         }
     }
     

@@ -13,6 +13,7 @@ typealias SearchScreenViewModelType = StateStoreViewModelV2<SearchScreenViewStat
 
 class SearchScreenViewModel: SearchScreenViewModelType, SearchScreenViewModelProtocol {
     private let roomSummaryProvider: RoomSummaryProviderProtocol
+    private let messageSearchProxy: MessageSearchProxyProtocol
     private var searchQueryObservationTask: Task<Void, Never>?
     
     private let actionsSubject: PassthroughSubject<SearchScreenViewModelAction, Never> = .init()
@@ -21,9 +22,11 @@ class SearchScreenViewModel: SearchScreenViewModelType, SearchScreenViewModelPro
     }
     
     init(roomSummaryProvider: RoomSummaryProviderProtocol,
+         messageSearchProxy: MessageSearchProxyProtocol,
          mediaProvider: MediaProviderProtocol,
          initialSearchQuery: String = "") {
         self.roomSummaryProvider = roomSummaryProvider
+        self.messageSearchProxy = messageSearchProxy
         
         super.init(initialViewState: SearchScreenViewState(bindings: .init(searchQuery: initialSearchQuery)),
                    mediaProvider: mediaProvider)
@@ -35,10 +38,17 @@ class SearchScreenViewModel: SearchScreenViewModelType, SearchScreenViewModelPro
             }
             .store(in: &cancellables)
         
+        messageSearchProxy.resultsPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] results in
+                self?.state.messageResults = results
+            }
+            .store(in: &cancellables)
+        
         searchQueryObservationTask = Task { [weak self] in
             guard let stream = self?.context.observe(\.viewState.bindings.searchQuery).removeDuplicates() else { return }
             for await searchQuery in stream {
-                self?.updateFilter(for: searchQuery)
+                await self?.updateFilter(for: searchQuery)
             }
         }
         
@@ -58,13 +68,19 @@ class SearchScreenViewModel: SearchScreenViewModelType, SearchScreenViewModelPro
         case .appeared:
             // The provider is shared, so other consumers may have changed its filter while we were off-screen.
             // Re-apply ours on every appearance to keep the displayed results in sync with the query.
-            updateFilter(for: state.bindings.searchQuery)
+            Task { await updateFilter(for: state.bindings.searchQuery) }
         case .selectRoom(let roomID):
             actionsSubject.send(.presentRoom(roomID: roomID))
+        case .selectMessageResult(let roomID, let eventID):
+            actionsSubject.send(.presentRoom(roomID: roomID, eventID: eventID))
         case .reachedTop:
             updateVisibleRange(edge: .top)
         case .reachedBottom:
             updateVisibleRange(edge: .bottom)
+        case .reachedMessageResultsBottom:
+            Task { _ = await messageSearchProxy.paginate() }
+        case .searchOlderMessages:
+            searchOlderMessages()
         case .cancel:
             actionsSubject.send(.cancel)
         }
@@ -72,12 +88,25 @@ class SearchScreenViewModel: SearchScreenViewModelType, SearchScreenViewModelPro
     
     // MARK: - Private
     
-    private func updateFilter(for searchQuery: String) {
+    private func searchOlderMessages() {
+        guard !state.isSearchingOlderMessages else { return }
+        state.isSearchingOlderMessages = true
+        
+        Task {
+            let fullyIndexed = await messageSearchProxy.searchOlderMessages()
+            state.hasMoreHistoryToSearch = !fullyIndexed
+            _ = await messageSearchProxy.search(query: state.bindings.searchQuery)
+            state.isSearchingOlderMessages = false
+        }
+    }
+    
+    private func updateFilter(for searchQuery: String) async {
         if searchQuery.isEmpty {
             roomSummaryProvider.setFilter(.excludeAll)
         } else {
             roomSummaryProvider.setFilter(.search(query: searchQuery))
         }
+        _ = await messageSearchProxy.search(query: searchQuery)
     }
     
     private func updateRooms(with summaries: [RoomSummary]) {

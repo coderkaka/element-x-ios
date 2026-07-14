@@ -40,7 +40,7 @@ final class HomeScreenViewModelTests {
         viewModel.actions
             .sink { action in
                 switch action {
-                case .presentRoom(let roomID):
+                case .presentRoom(let roomID, _):
                     correctResult = true
                     selectedRoomID = roomID
                 default:
@@ -895,8 +895,8 @@ private extension [HomeScreenRoom] {
 extension HomeScreenViewModelAction: @MainActor @retroactive Equatable {
     public static func == (lhs: HomeScreenViewModelAction, rhs: HomeScreenViewModelAction) -> Bool {
         switch (lhs, rhs) {
-        case (.presentRoom(let lhsID), .presentRoom(let rhsID)):
-            lhsID == rhsID
+        case (.presentRoom(let lhsID, let lhsEventID), .presentRoom(let rhsID, let rhsEventID)):
+            lhsID == rhsID && lhsEventID == rhsEventID
         case (.presentRoomDetails(let lhsID), .presentRoomDetails(let rhsID)):
             lhsID == rhsID
         case (.presentReportRoom(let lhsID), .presentReportRoom(let rhsID)):
