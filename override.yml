@@ -5,4 +5,4 @@ settings:
   CLASSIC_APP_GROUP_IDENTIFIER: group.com.zhangqiongtest.vector
 packages:
   MatrixRustSDK:
-    path: ../matrix-rust-sdk-pinned
+    path: ../matrix-rust-sdk
