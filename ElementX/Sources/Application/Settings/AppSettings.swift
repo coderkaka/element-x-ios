@@ -135,6 +135,13 @@ final nonisolated class AppSettings: @unchecked Sendable {
     @UserPreference(defaultValue: Set<String>())
     var searchIndexBackfilledRoomIDs: Set<String>
     
+    /// The on-disk message search index's schema version this device last backfilled against.
+    /// A room's persisted index self-heals (gets wiped) if its schema no longer matches what the
+    /// SDK expects, which silently discards that room's data — so `searchIndexBackfilledRoomIDs`
+    /// must be reset whenever this changes, or such rooms would never be backfilled again.
+    @UserPreference(defaultValue: 0)
+    var searchIndexSchemaVersion: Int
+    
     /// Defaults to `true` for new users, and we use a migration to set it to `false` for existing users.
     @UserPreference(defaultValue: true)
     var hasSeenNewSoundBanner: Bool

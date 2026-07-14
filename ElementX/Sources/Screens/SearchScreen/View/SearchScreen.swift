@@ -316,11 +316,11 @@ struct SearchScreen_Previews: PreviewProvider, TestablePreview {
     }
     
     static let mockMessageResults: [MessageSearchResultItem] = [
-        .init(eventID: "$1", roomID: "!room1:matrix.org",
+        .init(eventID: "$1", roomID: "!room1:matrix.org", roomName: "Design Team",
               sender: TimelineItemSender(id: "@alice:matrix.org", displayName: "Alice"),
               body: AttributedString("Hey, did you see the new design doc? I left some comments."),
               timestamp: .now),
-        .init(eventID: "$2", roomID: "!room2:matrix.org",
+        .init(eventID: "$2", roomID: "!room2:matrix.org", roomName: "Product",
               sender: TimelineItemSender(id: "@bob:matrix.org", displayName: "Bob"),
               body: AttributedString("The design doc looks good, approving it."),
               timestamp: .now.addingTimeInterval(-3600))

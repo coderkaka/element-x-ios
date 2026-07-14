@@ -55,7 +55,7 @@ struct SearchScreenViewModelTests {
     
     @Test
     func messageResultsArePublished() async throws {
-        let result = MessageSearchResultItem(eventID: "$1", roomID: "2", sender: .test, body: AttributedString("Hello"), timestamp: .now)
+        let result = MessageSearchResultItem(eventID: "$1", roomID: "2", roomName: nil, sender: .test, body: AttributedString("Hello"), timestamp: .now)
         let deferred = deferFulfillment(context.observe(\.viewState.messageResults)) { $0.count == 1 }
         messageResultsSubject.send([result])
         try await deferred.fulfill()

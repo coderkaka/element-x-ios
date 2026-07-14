@@ -14,6 +14,9 @@ final class MessageSearchProxy: MessageSearchProxyProtocol {
     private let eventStringBuilder: RoomEventStringBuilder
     private let userID: String
     private let continueBackfilling: () async -> Bool
+    /// Returns a `roomID -> display name` snapshot, used to label cross-room results. Called on
+    /// the main actor; the resulting (Sendable) map is passed into the off-main diff computation.
+    private let roomDisplayNames: () -> [String: String]
     
     private let resultsSubject = CurrentValueSubject<[MessageSearchResultItem], Never>([])
     var resultsPublisher: CurrentValuePublisher<[MessageSearchResultItem], Never> {
@@ -45,10 +48,12 @@ final class MessageSearchProxy: MessageSearchProxyProtocol {
     init(searchService: SearchServiceProtocol,
          eventStringBuilder: RoomEventStringBuilder,
          userID: String,
+         roomDisplayNames: @escaping () -> [String: String] = { [:] },
          continueBackfilling: @escaping () async -> Bool) {
         self.searchService = searchService
         self.eventStringBuilder = eventStringBuilder
         self.userID = userID
+        self.roomDisplayNames = roomDisplayNames
         self.continueBackfilling = continueBackfilling
         
         paginationStateSubject = CurrentValueSubject<MessageSearchPaginationState, Never>(.init(sdkState: searchService.paginationState()))
@@ -102,26 +107,29 @@ final class MessageSearchProxy: MessageSearchProxyProtocol {
     // MARK: - Private
     
     private func updateResultsWithDiffs(_ updates: [SearchServiceResultsUpdate]) async {
-        // Building the results and applying the CollectionDifference can be expensive for large
-        // search batches, so compute off the main actor and only hop back to publish.
-        results = await Self.updatedResults(from: updates, on: results, eventStringBuilder: eventStringBuilder, userID: userID)
+        // Snapshot the room names on the main actor, then compute the results (and apply the
+        // CollectionDifference, which can be expensive for large batches) off the main actor.
+        let roomNames = roomDisplayNames()
+        results = await Self.updatedResults(from: updates, on: results, eventStringBuilder: eventStringBuilder, userID: userID, roomNames: roomNames)
     }
     
     @concurrent
     private static func updatedResults(from updates: [SearchServiceResultsUpdate],
                                        on currentResults: [MessageSearchResultItem],
                                        eventStringBuilder: RoomEventStringBuilder,
-                                       userID: String) async -> [MessageSearchResultItem] {
+                                       userID: String,
+                                       roomNames: [String: String]) async -> [MessageSearchResultItem] {
         updates.reduce(currentResults) { currentItems, diff in
-            processDiff(diff, on: currentItems, eventStringBuilder: eventStringBuilder, userID: userID)
+            processDiff(diff, on: currentItems, eventStringBuilder: eventStringBuilder, userID: userID, roomNames: roomNames)
         }
     }
     
     private nonisolated static func processDiff(_ diff: SearchServiceResultsUpdate,
                                                 on currentItems: [MessageSearchResultItem],
                                                 eventStringBuilder: RoomEventStringBuilder,
-                                                userID: String) -> [MessageSearchResultItem] {
-        guard let collectionDiff = buildDiff(from: diff, on: currentItems, eventStringBuilder: eventStringBuilder, userID: userID) else {
+                                                userID: String,
+                                                roomNames: [String: String]) -> [MessageSearchResultItem] {
+        guard let collectionDiff = buildDiff(from: diff, on: currentItems, eventStringBuilder: eventStringBuilder, userID: userID, roomNames: roomNames) else {
             return currentItems
         }
         
@@ -135,11 +143,12 @@ final class MessageSearchProxy: MessageSearchProxyProtocol {
     private nonisolated static func buildDiff(from diff: SearchServiceResultsUpdate,
                                               on currentItems: [MessageSearchResultItem],
                                               eventStringBuilder: RoomEventStringBuilder,
-                                              userID: String) -> CollectionDifference<MessageSearchResultItem>? {
+                                              userID: String,
+                                              roomNames: [String: String]) -> CollectionDifference<MessageSearchResultItem>? {
         var changes = [CollectionDifference<MessageSearchResultItem>.Change]()
         
         func item(for result: SearchServiceResult) -> MessageSearchResultItem {
-            buildResult(for: result, eventStringBuilder: eventStringBuilder, userID: userID)
+            buildResult(for: result, eventStringBuilder: eventStringBuilder, userID: userID, roomNames: roomNames)
         }
         
         switch diff {
@@ -196,7 +205,8 @@ final class MessageSearchProxy: MessageSearchProxyProtocol {
     
     private nonisolated static func buildResult(for result: SearchServiceResult,
                                                 eventStringBuilder: RoomEventStringBuilder,
-                                                userID: String) -> MessageSearchResultItem {
+                                                userID: String,
+                                                roomNames: [String: String]) -> MessageSearchResultItem {
         switch result {
         case .message(let roomID, let message):
             let sender = TimelineItemSender(senderID: message.sender, senderProfile: message.senderProfile)
@@ -204,6 +214,7 @@ final class MessageSearchProxy: MessageSearchProxyProtocol {
             
             return MessageSearchResultItem(eventID: message.eventId,
                                            roomID: roomID,
+                                           roomName: roomNames[roomID],
                                            sender: sender,
                                            body: body,
                                            timestamp: Date(timeIntervalSince1970: TimeInterval(message.timestamp / 1000)))

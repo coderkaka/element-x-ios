@@ -42,6 +42,19 @@ struct MessageSearchResultCell: View {
                             .foregroundStyle(.compound.textSecondary)
                             .lineLimit(2)
                     }
+                    
+                    // Which room the message is in - useful when searching across all rooms.
+                    // Rendered as a subtle chip so it reads as a distinct tag.
+                    if let roomName = result.roomName {
+                        Text(roomName)
+                            .font(.compound.bodyXSSemibold)
+                            .foregroundStyle(.compound.textSecondary)
+                            .lineLimit(1)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(.compound.bgSubtleSecondary, in: Capsule())
+                            .padding(.top, 2)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -83,6 +96,7 @@ struct MessageSearchResultCell_Previews: PreviewProvider, TestablePreview {
         List {
             MessageSearchResultCell(result: .init(eventID: "$1",
                                                   roomID: "!room1:matrix.org",
+                                                  roomName: "Design Team",
                                                   sender: TimelineItemSender(id: "@alice:matrix.org", displayName: "Alice"),
                                                   body: AttributedString("Hey, did you see the new design doc? I left some comments."),
                                                   timestamp: .now),

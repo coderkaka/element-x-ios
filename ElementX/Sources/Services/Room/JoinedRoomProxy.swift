@@ -482,6 +482,28 @@ class JoinedRoomProxy: JoinedRoomProxyProtocol {
         }
     }
     
+    func sendThreadReply(body: String, threadRootEventID: String) async -> Result<Void, RoomProxyError> {
+        let content: [String: Any] = [
+            "msgtype": "m.text",
+            "body": body,
+            "m.relates_to": [
+                "rel_type": "m.thread",
+                "event_id": threadRootEventID,
+                "is_falling_back": true,
+                "m.in_reply_to": ["event_id": threadRootEventID]
+            ]
+        ]
+        
+        do {
+            let data = try JSONSerialization.data(withJSONObject: content)
+            try await room.sendRaw(eventType: "m.room.message", content: String(decoding: data, as: UTF8.self))
+            return .success(())
+        } catch {
+            MXLog.error("Failed sending thread reply with error: \(error)")
+            return .failure(.sdkError(error))
+        }
+    }
+    
     func ignoreDeviceTrustAndResend(devices: [String: [String]], sendHandle: SendHandleProxy) async -> Result<Void, RoomProxyError> {
         do {
             try await room.ignoreDeviceTrustAndResend(devices: devices, sendHandle: sendHandle.underlyingHandle)

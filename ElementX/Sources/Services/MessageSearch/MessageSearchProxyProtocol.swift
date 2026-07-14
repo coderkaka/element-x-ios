@@ -44,6 +44,9 @@ nonisolated struct MessageSearchResultItem: Identifiable, Equatable {
     
     let eventID: String
     let roomID: String
+    /// The display name of the room the message is in, for cross-room search results. `nil` if the
+    /// room's name couldn't be resolved.
+    let roomName: String?
     let sender: TimelineItemSender
     let body: AttributedString?
     let timestamp: Date

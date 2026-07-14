@@ -14,6 +14,24 @@ import OrderedCollections
 
 // swiftlint:disable:next type_body_length
 class ClientProxy: ClientProxyProtocol {
+    /// Bump whenever the on-disk message search index's schema changes (e.g. a tokenizer or
+    /// accepted-message-type change in `matrix-sdk-search`), or after fixing a backfill bug that
+    /// could have left already-marked-backfilled rooms with an incomplete index, so
+    /// `searchIndexBackfilledRoomIDs` gets invalidated and every room is backfilled again -
+    /// marking a room "backfilled" doesn't mean its data survived intact.
+    ///
+    /// - v2: fixed a startup/continuation backfill race.
+    /// - v3: backfill now fetches real history via `/messages` instead of the event cache's
+    ///   back-pagination, which never fetched anything for rooms the user hadn't opened.
+    /// - v4: force a re-backfill to exercise the temporary per-room type-breakdown diagnostic.
+    /// - v5: the CJK tokenizer name gained a version suffix, so the on-disk index self-heals
+    ///   (wipe + rebuild); re-backfill so every message is re-tokenised with the current tokenizer,
+    ///   which fixes older messages indexed by a previous tokenizer no longer being searchable.
+    /// - v6: the indexer now covers all message types (incl. agent cards / custom msgtypes) and
+    ///   indexes an edit's own text when its original isn't resolvable during backfill; re-backfill
+    ///   so previously-skipped events (cards, edit-only text) get picked up.
+    private static let currentSearchIndexSchemaVersion = 6
+    
     private let client: ClientProtocol
     private let networkMonitor: NetworkMonitorProtocol
     private let appSettings: AppSettings
@@ -149,6 +167,13 @@ class ClientProxy: ClientProxyProtocol {
     
     private var cancellables = Set<AnyCancellable>()
     
+    /// Room IDs with a search-index backfill currently running. `roomListPublisher` can emit
+    /// repeatedly while sync is still streaming rooms in, and each emission re-filters against
+    /// `searchIndexBackfilledRoomIDs`, which is only updated once a room's backfill *finishes* -
+    /// without this, the same room could be queued into multiple overlapping background backfills
+    /// that race on the same on-disk index and corrupt/empty it out.
+    private var roomIDsCurrentlyBeingBackfilledForSearch = Set<String>()
+    
     /// Will be `true` whilst the app cleans up and forces a logout. Prevents the sync service from restarting
     /// before the client is released which ends up running in a loop. This is a workaround until the sync service
     /// can tell us *what* error occurred so we can handle restarts more gracefully.
@@ -272,6 +297,15 @@ class ClientProxy: ClientProxyProtocol {
         loadUserAvatarURLFromCache()
         
         await setupSubscriptions()
+        
+        // A room's persisted search index self-heals (silently wiping its data) if its on-disk
+        // schema predates a tokenizer/schema change, so the "already backfilled" bookkeeping below
+        // would otherwise never notice and that room would stay unindexed forever. Reset it once
+        // per schema bump so every room gets re-backfilled.
+        if appSettings.searchIndexSchemaVersion != Self.currentSearchIndexSchemaVersion {
+            appSettings.searchIndexBackfilledRoomIDs = []
+            appSettings.searchIndexSchemaVersion = Self.currentSearchIndexSchemaVersion
+        }
         
         // One-time-per-room backfill of the on-disk message search index from whatever's already
         // cached locally — the index otherwise only ever sees genuinely new messages arriving
@@ -849,7 +883,14 @@ class ClientProxy: ClientProxyProtocol {
     func messageSearchProxy() -> MessageSearchProxyProtocol {
         MessageSearchProxy(searchService: client.searchService(),
                            eventStringBuilder: .messageSearchStringBuilder(userID: userID),
-                           userID: userID) { [weak self] in
+                           userID: userID,
+                           roomDisplayNames: { [weak self] in
+                               guard let self else { return [:] }
+                               return staticRoomSummaryProvider.roomListPublisher.value
+                                   .reduce(into: [String: String]()) { names, summary in
+                                       names[summary.id] = summary.name
+                                   }
+                           }) { [weak self] in
             guard let self else { return true }
             let roomIDs = staticRoomSummaryProvider.roomListPublisher.value.map(\.id)
             return await reindexRoomsForSearch(roomIDs)
@@ -859,9 +900,22 @@ class ClientProxy: ClientProxyProtocol {
     /// Indexes each room's currently-reachable local history for search (see
     /// `reindex_room_for_search`), concurrently. Returns whether every room reached its
     /// timeline start — `false` means at least one room has more history left to index.
+    ///
+    /// Two independent call sites can ask to backfill the same room around the same time (the
+    /// one-time startup pass and the user-triggered "search older messages" continuation) -
+    /// `roomIDsCurrentlyBeingBackfilledForSearch` skips a room already being processed, so two
+    /// overlapping calls can't race on the same on-disk index and corrupt/empty it out.
     private func reindexRoomsForSearch(_ roomIDs: [String]) async -> Bool {
-        await withTaskGroup(of: Bool.self) { group in
-            for roomID in roomIDs {
+        let roomIDsToProcess = roomIDs.filter { !roomIDsCurrentlyBeingBackfilledForSearch.contains($0) }
+        guard !roomIDsToProcess.isEmpty else { return true }
+        
+        roomIDsCurrentlyBeingBackfilledForSearch.formUnion(roomIDsToProcess)
+        defer { roomIDsCurrentlyBeingBackfilledForSearch.subtract(roomIDsToProcess) }
+        
+        MXLog.info("Backfilling search index for \(roomIDsToProcess.count) room(s)")
+        
+        let allReachedStart = await withTaskGroup(of: Bool.self) { group in
+            for roomID in roomIDsToProcess {
                 group.addTask { [weak self] in
                     guard let self else { return true }
                     do {
@@ -879,6 +933,9 @@ class ClientProxy: ClientProxyProtocol {
             }
             return allReachedStart
         }
+        
+        MXLog.info("Finished backfilling search index for \(roomIDsToProcess.count) room(s), reached start of all rooms' timelines: \(allReachedStart)")
+        return allReachedStart
     }
     
     func resolveRoomAlias(_ alias: String) async -> Result<ResolvedRoomAlias, ClientProxyError> {

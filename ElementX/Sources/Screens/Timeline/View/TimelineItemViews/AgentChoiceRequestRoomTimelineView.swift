@@ -53,6 +53,10 @@ struct AgentChoiceRequestRoomTimelineView: View {
                 } else {
                     singleSelectView
                 }
+                
+                if showThreadEntry {
+                    threadEntryButton
+                }
             }
         }
         .task(id: eventID) {
@@ -109,6 +113,34 @@ struct AgentChoiceRequestRoomTimelineView: View {
         Text(UntranslatedL10n.screenRoomTimelineAgentChoiceCancelled)
             .font(.compound.bodySM)
             .foregroundColor(.compound.textSecondary)
+    }
+    
+    /// A resolved card's response is sent as a reply into the card's thread, so it never appears in
+    /// the main timeline. The SDK doesn't surface a native thread summary for these cards (a thread
+    /// linked-chunk shrink race aborts the summary update — see investigation notes), so we offer our
+    /// own entry that opens the thread directly. If the SDK ever does provide a summary the bubble
+    /// styler renders its own entry, so we step aside to avoid a duplicate.
+    private var showThreadEntry: Bool {
+        guard context.viewState.areThreadsEnabled, timelineItem.properties.threadSummary == nil else { return false }
+        guard let resolvedSelection = stateContent?.resolvedSelection else { return false }
+        return !resolvedSelection.isEmpty
+    }
+    
+    private var threadEntryButton: some View {
+        Button {
+            context.send(viewAction: .displayThread(itemID: timelineItem.id))
+        } label: {
+            HStack(spacing: 4) {
+                CompoundIcon(\.threads, size: .xSmall, relativeTo: .compound.bodyXS)
+                Text(L10n.commonThread)
+            }
+            .font(.compound.bodyXSSemibold)
+            .foregroundColor(.compound.textPrimary)
+            .padding(.vertical, 7)
+            .padding(.horizontal, 8)
+            .background(Color.compound.bgSubtlePrimary)
+            .cornerRadius(8)
+        }
     }
     
     private func toggle(_ optionID: String) {
