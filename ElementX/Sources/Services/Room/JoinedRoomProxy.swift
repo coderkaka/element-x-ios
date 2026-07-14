@@ -482,7 +482,7 @@ class JoinedRoomProxy: JoinedRoomProxyProtocol {
         }
     }
     
-    func sendThreadReply(body: String, threadRootEventID: String) async -> Result<Void, RoomProxyError> {
+    func sendThreadReply(body: String, threadRootEventID: String, replyToEventID: String) async -> Result<Void, RoomProxyError> {
         let content: [String: Any] = [
             "msgtype": "m.text",
             "body": body,
@@ -490,7 +490,7 @@ class JoinedRoomProxy: JoinedRoomProxyProtocol {
                 "rel_type": "m.thread",
                 "event_id": threadRootEventID,
                 "is_falling_back": true,
-                "m.in_reply_to": ["event_id": threadRootEventID]
+                "m.in_reply_to": ["event_id": replyToEventID]
             ]
         ]
         

@@ -44,7 +44,7 @@ enum TimelineViewPollAction {
 }
 
 enum TimelineViewChoiceRequestAction {
-    case sendResponse(requestEventID: String, body: String)
+    case sendResponse(requestEventID: String, threadRootEventID: String?, body: String)
 }
 
 enum TimelineAudioPlayerAction {

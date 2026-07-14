@@ -6028,44 +6028,44 @@ nonisolated class JoinedRoomProxyMock: JoinedRoomProxyProtocol, @unchecked Senda
     }
     //MARK: - sendThreadReply
 
-    private let sendThreadReplyBodyThreadRootEventIDCallsCountLock = NSLock()
-    private nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDUnderlyingCallsCount = 0
-    var sendThreadReplyBodyThreadRootEventIDCallsCount: Int {
-        get { sendThreadReplyBodyThreadRootEventIDCallsCountLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingCallsCount } }
-        set { sendThreadReplyBodyThreadRootEventIDCallsCountLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingCallsCount = newValue } }
+    private let sendThreadReplyBodyThreadRootEventIDReplyToEventIDCallsCountLock = NSLock()
+    private nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingCallsCount = 0
+    var sendThreadReplyBodyThreadRootEventIDReplyToEventIDCallsCount: Int {
+        get { sendThreadReplyBodyThreadRootEventIDReplyToEventIDCallsCountLock.withLock { sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingCallsCount } }
+        set { sendThreadReplyBodyThreadRootEventIDReplyToEventIDCallsCountLock.withLock { sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingCallsCount = newValue } }
     }
-    var sendThreadReplyBodyThreadRootEventIDCalled: Bool {
-        return sendThreadReplyBodyThreadRootEventIDCallsCount > 0
+    var sendThreadReplyBodyThreadRootEventIDReplyToEventIDCalled: Bool {
+        return sendThreadReplyBodyThreadRootEventIDReplyToEventIDCallsCount > 0
     }
-    private let sendThreadReplyBodyThreadRootEventIDReceivedArgumentsLock = NSLock()
-    private nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedArguments: (body: String, threadRootEventID: String)?
-    var sendThreadReplyBodyThreadRootEventIDReceivedArguments: (body: String, threadRootEventID: String)? {
-        get { sendThreadReplyBodyThreadRootEventIDReceivedArgumentsLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedArguments } }
-        set { sendThreadReplyBodyThreadRootEventIDReceivedArgumentsLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedArguments = newValue } }
+    private let sendThreadReplyBodyThreadRootEventIDReplyToEventIDReceivedArgumentsLock = NSLock()
+    private nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingReceivedArguments: (body: String, threadRootEventID: String, replyToEventID: String)?
+    var sendThreadReplyBodyThreadRootEventIDReplyToEventIDReceivedArguments: (body: String, threadRootEventID: String, replyToEventID: String)? {
+        get { sendThreadReplyBodyThreadRootEventIDReplyToEventIDReceivedArgumentsLock.withLock { sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingReceivedArguments } }
+        set { sendThreadReplyBodyThreadRootEventIDReplyToEventIDReceivedArgumentsLock.withLock { sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingReceivedArguments = newValue } }
     }
-    private let sendThreadReplyBodyThreadRootEventIDReceivedInvocationsLock = NSLock()
-    private nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedInvocations: [(body: String, threadRootEventID: String)] = []
-    var sendThreadReplyBodyThreadRootEventIDReceivedInvocations: [(body: String, threadRootEventID: String)] {
-        get { sendThreadReplyBodyThreadRootEventIDReceivedInvocationsLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedInvocations } }
-        set { sendThreadReplyBodyThreadRootEventIDReceivedInvocationsLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedInvocations = newValue } }
+    private let sendThreadReplyBodyThreadRootEventIDReplyToEventIDReceivedInvocationsLock = NSLock()
+    private nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingReceivedInvocations: [(body: String, threadRootEventID: String, replyToEventID: String)] = []
+    var sendThreadReplyBodyThreadRootEventIDReplyToEventIDReceivedInvocations: [(body: String, threadRootEventID: String, replyToEventID: String)] {
+        get { sendThreadReplyBodyThreadRootEventIDReplyToEventIDReceivedInvocationsLock.withLock { sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingReceivedInvocations } }
+        set { sendThreadReplyBodyThreadRootEventIDReplyToEventIDReceivedInvocationsLock.withLock { sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingReceivedInvocations = newValue } }
     }
 
-    private let sendThreadReplyBodyThreadRootEventIDReturnValueLock = NSLock()
-    private nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDUnderlyingReturnValue: Result<Void, RoomProxyError>!
-    var sendThreadReplyBodyThreadRootEventIDReturnValue: Result<Void, RoomProxyError>! {
-        get { sendThreadReplyBodyThreadRootEventIDReturnValueLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReturnValue } }
-        set { sendThreadReplyBodyThreadRootEventIDReturnValueLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReturnValue = newValue } }
+    private let sendThreadReplyBodyThreadRootEventIDReplyToEventIDReturnValueLock = NSLock()
+    private nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingReturnValue: Result<Void, RoomProxyError>!
+    var sendThreadReplyBodyThreadRootEventIDReplyToEventIDReturnValue: Result<Void, RoomProxyError>! {
+        get { sendThreadReplyBodyThreadRootEventIDReplyToEventIDReturnValueLock.withLock { sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingReturnValue } }
+        set { sendThreadReplyBodyThreadRootEventIDReplyToEventIDReturnValueLock.withLock { sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingReturnValue = newValue } }
     }
-    nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDClosure: ((String, String) async -> Result<Void, RoomProxyError>)?
+    nonisolated(unsafe) var sendThreadReplyBodyThreadRootEventIDReplyToEventIDClosure: ((String, String, String) async -> Result<Void, RoomProxyError>)?
 
-    @concurrent func sendThreadReply(body: String, threadRootEventID: String) async -> Result<Void, RoomProxyError> {
-        sendThreadReplyBodyThreadRootEventIDCallsCountLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingCallsCount += 1 }
-        sendThreadReplyBodyThreadRootEventIDReceivedArguments = (body: body, threadRootEventID: threadRootEventID)
-        sendThreadReplyBodyThreadRootEventIDReceivedInvocationsLock.withLock { sendThreadReplyBodyThreadRootEventIDUnderlyingReceivedInvocations.append((body: body, threadRootEventID: threadRootEventID)) }
-        if let sendThreadReplyBodyThreadRootEventIDClosure = sendThreadReplyBodyThreadRootEventIDClosure {
-            return await sendThreadReplyBodyThreadRootEventIDClosure(body, threadRootEventID)
+    @concurrent func sendThreadReply(body: String, threadRootEventID: String, replyToEventID: String) async -> Result<Void, RoomProxyError> {
+        sendThreadReplyBodyThreadRootEventIDReplyToEventIDCallsCountLock.withLock { sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingCallsCount += 1 }
+        sendThreadReplyBodyThreadRootEventIDReplyToEventIDReceivedArguments = (body: body, threadRootEventID: threadRootEventID, replyToEventID: replyToEventID)
+        sendThreadReplyBodyThreadRootEventIDReplyToEventIDReceivedInvocationsLock.withLock { sendThreadReplyBodyThreadRootEventIDReplyToEventIDUnderlyingReceivedInvocations.append((body: body, threadRootEventID: threadRootEventID, replyToEventID: replyToEventID)) }
+        if let sendThreadReplyBodyThreadRootEventIDReplyToEventIDClosure = sendThreadReplyBodyThreadRootEventIDReplyToEventIDClosure {
+            return await sendThreadReplyBodyThreadRootEventIDReplyToEventIDClosure(body, threadRootEventID, replyToEventID)
         } else {
-            return sendThreadReplyBodyThreadRootEventIDReturnValue
+            return sendThreadReplyBodyThreadRootEventIDReplyToEventIDReturnValue
         }
     }
     //MARK: - sendTypingNotification

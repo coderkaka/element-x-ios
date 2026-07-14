@@ -56,7 +56,7 @@ Add tests that enable threads, create `.live` and `.thread(rootEventID:)` timeli
 
 - [ ] **Step 2: Run the targeted tests and verify RED**
 
-Run: `swift run tools ci unit-tests --test-filter TimelineViewModelTests`
+Run: `swift run tools ci run-tests --scheme UnitTests --test-name TimelineViewModelTests`
 
 Expected: compile failure because the action and proxy do not yet accept separate thread-root and reply-target IDs.
 
@@ -94,7 +94,7 @@ Expected: `JoinedRoomProxyMock` exposes the new three-argument method.
 
 - [ ] **Step 3: Run targeted tests and verify GREEN**
 
-Run: `swift run tools ci unit-tests --test-filter TimelineViewModelTests`
+Run: `swift run tools ci run-tests --scheme UnitTests --test-name TimelineViewModelTests`
 
 Expected: new choice response tests pass.
 

@@ -437,8 +437,10 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
     
     private func handleChoiceRequestAction(_ action: TimelineViewChoiceRequestAction) {
         switch action {
-        case let .sendResponse(requestEventID, body):
-            timelineInteractionHandler.sendChoiceRequestResponse(requestEventID: requestEventID, body: body)
+        case let .sendResponse(requestEventID, threadRootEventID, body):
+            timelineInteractionHandler.sendChoiceRequestResponse(requestEventID: requestEventID,
+                                                                 threadRootEventID: threadRootEventID,
+                                                                 body: body)
         }
     }
     
@@ -542,9 +544,16 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
             }
             .store(in: &cancellables)
         
-        // Custom state event types aren't delivered by sliding sync, so agent task state changes
-        // can't be observed directly — instead, any room activity re-checks the tracked state events.
-        roomProxy.infoPublisher
+        // Custom state event types aren't delivered by sliding sync, so re-check them after timeline
+        // activity settles. Room-info updates don't fire for ordinary messages or state changes.
+        timelineController.callbacks
+            .filter { callback in
+                if case .updatedTimelineItems = callback {
+                    true
+                } else {
+                    false
+                }
+            }
             .debounce(for: .seconds(0.3), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.refreshFetchedStateEvents()
@@ -1274,7 +1283,7 @@ class TimelineViewModel: TimelineViewModelType, TimelineViewModelProtocol {
     }
     
     /// Re-fetches every state event the timeline has already asked for, picking up any changes
-    /// the agent has made since. Called (debounced) on room updates because custom state event
+    /// the agent has made since. Called (debounced) on timeline updates because custom state event
     /// types aren't delivered by sliding sync, so there's no push signal to react to directly.
     private func refreshFetchedStateEvents() {
         for key in state.fetchedStateEvents.keys {

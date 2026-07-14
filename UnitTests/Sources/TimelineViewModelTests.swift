@@ -620,6 +620,62 @@ final class TimelineViewModelTests {
     }
     
     @Test
+    func timelineUpdateRefreshesFetchedChoiceState() async throws {
+        let choice = AgentChoiceRequestRoomTimelineItem(eventID: "choice", question: "Approve?")
+        let roomProxy = JoinedRoomProxyMock(.init(name: ""))
+        var isResolved = false
+        roomProxy.getStateEventRawEventTypeStateKeyClosure = { _, _ in
+            .success(isResolved ? #"{"content":{"resolved_selection":["approve"]}}"# : #"{"content":{"status":"pending"}}"#)
+        }
+        let timelineController = TimelineControllerMock(.init(timelineItems: [choice]))
+        let viewModel = makeViewModel(roomProxy: roomProxy, timelineController: timelineController)
+        
+        let initiallyPending = deferFulfillment(viewModel.context.$viewState) {
+            $0.roomTaskSummary.pendingChoices.map(\.eventID) == ["choice"]
+        }
+        try await initiallyPending.fulfill()
+        try await Task.sleep(for: .milliseconds(500))
+        
+        isResolved = true
+        let resolved = deferFulfillment(viewModel.context.$viewState) {
+            $0.roomTaskSummary.pendingChoices.isEmpty
+        }
+        timelineController.callbacks.send(.updatedTimelineItems(timelineItems: [choice], isSwitchingTimelines: false))
+        try await resolved.fulfill()
+    }
+    
+    @Test
+    func choiceResponseUsesCorrectThreadRoot() async {
+        let testCases: [(timelineKind: TimelineKind, threadRootEventID: String?, expectedThreadRootEventID: String)] = [
+            (.live, nil, "choice"),
+            (.thread(rootEventID: "root"), "root", "root")
+        ]
+        
+        for testCase in testCases {
+            let roomProxy = JoinedRoomProxyMock(.init(name: ""))
+            let appSettings = AppSettings.volatile()
+            appSettings.threadsEnabled = true
+            let viewModel = makeViewModel(roomProxy: roomProxy,
+                                          timelineController: TimelineControllerMock(.init(timelineKind: testCase.timelineKind)),
+                                          appSettings: appSettings)
+            
+            await withCheckedContinuation { continuation in
+                roomProxy.sendThreadReplyBodyThreadRootEventIDReplyToEventIDClosure = { body, threadRootEventID, replyToEventID in
+                    #expect(body == "Selected")
+                    #expect(threadRootEventID == testCase.expectedThreadRootEventID)
+                    #expect(replyToEventID == "choice")
+                    continuation.resume()
+                    return .success(())
+                }
+                
+                viewModel.context.send(viewAction: .handleChoiceRequestAction(.sendResponse(requestEventID: "choice",
+                                                                                            threadRootEventID: testCase.threadRootEventID,
+                                                                                            body: "Selected")))
+            }
+        }
+    }
+    
+    @Test
     func chipTapWithSingleActiveTaskGoesStraightToDetail() async throws {
         // Given a timeline whose summary holds exactly one active task and nothing else.
         let items = [
@@ -1060,21 +1116,20 @@ final class TimelineViewModelTests {
     
     private func makeViewModel(roomProxy: JoinedRoomProxyProtocol? = nil,
                                focussedEventID: String? = nil,
-                               timelineController: TimelineControllerProtocol) -> TimelineViewModel {
-        let appSettings = AppSettings.volatile()
-        
-        return TimelineViewModel(roomProxy: roomProxy ?? JoinedRoomProxyMock(.init(name: "")),
-                                 focussedEventID: focussedEventID,
-                                 timelineController: timelineController,
-                                 userSession: UserSessionMock(.init()),
-                                 mediaPlayerProvider: MediaPlayerProviderMock(),
-                                 userIndicatorController: UserIndicatorControllerMock(),
-                                 appMediator: AppMediatorMock(.init()),
-                                 appSettings: appSettings,
-                                 analyticsService: AnalyticsServiceMock(.init()),
-                                 emojiProvider: EmojiProvider(appSettings: appSettings),
-                                 linkMetadataProvider: LinkMetadataProvider(),
-                                 timelineControllerFactory: TimelineControllerFactoryMock(.init()))
+                               timelineController: TimelineControllerProtocol,
+                               appSettings: AppSettings = .volatile()) -> TimelineViewModel {
+        TimelineViewModel(roomProxy: roomProxy ?? JoinedRoomProxyMock(.init(name: "")),
+                          focussedEventID: focussedEventID,
+                          timelineController: timelineController,
+                          userSession: UserSessionMock(.init()),
+                          mediaPlayerProvider: MediaPlayerProviderMock(),
+                          userIndicatorController: UserIndicatorControllerMock(),
+                          appMediator: AppMediatorMock(.init()),
+                          appSettings: appSettings,
+                          analyticsService: AnalyticsServiceMock(.init()),
+                          emojiProvider: EmojiProvider(appSettings: appSettings),
+                          linkMetadataProvider: LinkMetadataProvider(),
+                          timelineControllerFactory: TimelineControllerFactoryMock(.init()))
     }
 }
 

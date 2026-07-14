@@ -146,12 +146,12 @@ protocol JoinedRoomProxyProtocol: RoomProxyProtocol {
     
     func edit(eventID: String, newContent: RoomMessageEventContentWithoutRelation) async -> Result<Void, RoomProxyError>
     
-    /// Sends a plain-text message as a falling-back thread reply rooted at `threadRootEventID`, without
-    /// opening a thread-focused timeline. Going through a thread timeline would register (then drop) a
-    /// thread subscriber, whose removal triggers an event-cache linked-chunk auto-shrink that races with
-    /// the incoming replies and aborts the thread-summary computation — so the root never gets a native
+    /// Sends a plain-text message as a falling-back thread reply to `replyToEventID`, rooted at
+    /// `threadRootEventID`, without opening a thread-focused timeline. Going through a thread timeline
+    /// would register (then drop) a thread subscriber, whose removal triggers an event-cache linked-chunk
+    /// auto-shrink that races with the incoming replies and aborts the thread-summary computation — so the root never gets a native
     /// thread summary. Sending raw keeps the thread untouched by subscribers, letting the summary compute.
-    func sendThreadReply(body: String, threadRootEventID: String) async -> Result<Void, RoomProxyError>
+    func sendThreadReply(body: String, threadRootEventID: String, replyToEventID: String) async -> Result<Void, RoomProxyError>
     
     /// https://spec.matrix.org/v1.9/client-server-api/#typing-notifications
     @discardableResult func sendTypingNotification(isTyping: Bool) async -> Result<Void, RoomProxyError>

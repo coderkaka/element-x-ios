@@ -261,12 +261,13 @@ class TimelineInteractionHandler {
         }
     }
     
-    func sendChoiceRequestResponse(requestEventID: String, body: String) {
-        // Send the answer as a falling-back thread reply rooted at the card so it stays out of the
+    func sendChoiceRequestResponse(requestEventID: String, threadRootEventID: String?, body: String) {
+        // Send the answer as a falling-back thread reply so it stays out of the
         // main timeline: the user's feedback comes from the card itself flipping to its resolved state
         // (the agent writes `resolved_selection` onto the choice's state event, which the card renders),
         // so the raw reply is just plumbing the agent needs and doesn't need to be seen. It targets the
-        // card, which is how the agent associates the answer with the approval.
+        // card, which is how the agent associates the answer with the approval. Reuse the existing
+        // thread root when the card is already in a thread, as Matrix doesn't support nested threads.
         //
         // We deliberately send raw rather than via `roomProxy.threadTimeline(...).sendMessage(...)`:
         // opening a thread timeline registers then drops a thread subscriber, and that removal triggers
@@ -276,7 +277,9 @@ class TimelineInteractionHandler {
         // its native thread entry. Falls back to a plain main-timeline reply if threads are disabled.
         Task {
             if appSettings.threadsEnabled {
-                _ = await roomProxy.sendThreadReply(body: body, threadRootEventID: requestEventID)
+                _ = await roomProxy.sendThreadReply(body: body,
+                                                    threadRootEventID: threadRootEventID ?? requestEventID,
+                                                    replyToEventID: requestEventID)
             } else {
                 await timelineController.sendMessage(body,
                                                      html: nil,
