@@ -53,3 +53,4 @@ Secrets/vendor/*
 
 # superpowers scratch/session state (progress ledgers, brainstorm mockups)
 /.superpowers/
+/.worktrees/
